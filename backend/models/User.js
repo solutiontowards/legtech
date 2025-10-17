@@ -27,5 +27,13 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// If user role admin to auto active user don't need to revarify user
+userSchema.pre("save", function (next) {
+  if (this.role === "admin") {
+    this.isActive = true;
+  }
+  next();
+});
+
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 export default User;
