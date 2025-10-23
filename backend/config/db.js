@@ -10,7 +10,10 @@ const connectDB = async () => {
       console.error(`Database connection error: ${err}`);
     });
 
-    await mongoose.connect(`${process.env.MONGODB_URI}/legtech`);
+    await mongoose.connect(`${process.env.MONGODB_URI}/legtech`, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
   } catch (error) {
     console.error(`Could not connect to database: ${error.message}`);
     process.exit(1);

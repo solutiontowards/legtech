@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
+import bcrypt from 'bcryptjs';
 
-const userSchema = new mongoose.Schema(
+
+const Schema = mongoose.Schema;
+
+const userSchema = new Schema(
   {
     name: {
       type: String,
@@ -13,16 +17,11 @@ const userSchema = new mongoose.Schema(
       sparse: true,
     },
     mobile: { type: String, required: true, unique: true },
-    password: { type: String, required: true, select: false },
-    role: {
-      type: String,
-      required: true,
-      enum: ["retailer", "admin"],
-      default: "retailer",
-    },
-    isActive: { type: Boolean, default: false },
+    passwordHash: { type: String, required: true },
+    role: { type: String, enum: ["admin", "retailer"], default: "retailer" },
     isVerified: { type: Boolean, default: false },
-    wallet: { type: Number, default: 0 },
+    isOtpVerified: { type: Boolean, default: false },
+    walletId: { type: Schema.Types.ObjectId, ref: "Wallet" },
   },
   { timestamps: true }
 );
@@ -34,6 +33,12 @@ userSchema.pre("save", function (next) {
   }
   next();
 });
+
+userSchema.methods.setPassword = async function (password) {
+  this.passwordHash = await bcrypt.hash(password, 10);
+};
+
+this.passwordHash = await bcrypt.hash(password, 10);
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 export default User;

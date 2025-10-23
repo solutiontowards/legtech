@@ -1,0 +1,17 @@
+import mongoose from "mongoose";
+const Schema = mongoose.Schema;
+
+const TransactionSchema = new Schema(
+  {
+    walletId: { type: Schema.Types.ObjectId, ref: "Wallet" },
+    type: { type: String, enum: ["debit", "credit"] },
+    amount: Number,
+    meta: Schema.Types.Mixed,
+  },
+  { timestamps: true }
+);
+
+const Transaction =
+  mongoose.models.Transaction ||
+  mongoose.model("Transaction", TransactionSchema);
+export default Transaction;
