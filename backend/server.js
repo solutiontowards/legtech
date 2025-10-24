@@ -8,11 +8,29 @@ import "dotenv/config";
 import connectDB from "./config/db.js";
 const app = express();
 
+
+import authRoutes from './routes/auth.js';
+import adminRoutes from './routes/admin.js';
+import serviceRoutes from './routes/services.js';
+import submissionRoutes from './routes/submissions.js';
+import walletRoutes from './routes/wallet.js';
+import uploadRoutes from './routes/upload.js';
+
+
 app.use(helmet());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan("dev"));
+
+
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/submissions', submissionRoutes);
+app.use('/api/wallet', walletRoutes);
+app.use('/api/upload', uploadRoutes);
+
 
 app.use(
   cors({
