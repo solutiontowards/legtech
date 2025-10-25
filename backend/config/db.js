@@ -3,14 +3,15 @@ import mongoose from "mongoose";
 const connectDB = async () => {
   try {
     mongoose.connection.on("connected", () => {
-      console.log("Database Connected");
+      console.log("Database Connected:", mongoose.connection.name);
     });
 
     mongoose.connection.on("error", (err) => {
       console.error(`Database connection error: ${err}`);
     });
 
-    await mongoose.connect(`${process.env.MONGODB_URI}/legtech`, {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      dbName: "legtech", 
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
