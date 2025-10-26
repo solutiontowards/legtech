@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+
     async function fetchMe() {
         try {
             const res = await api.get('/auth/me');
@@ -32,4 +33,4 @@ export const AuthProvider = ({ children }) => {
 }
 
 
-export default AuthProvider;
+export const useAuth = () => useContext(AuthContext)
