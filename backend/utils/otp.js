@@ -69,7 +69,7 @@ export async function resendOtp(mobile, purpose, sendFn) {
 
 export async function verifyOtp(mobile, code, purpose) {
   const otp = await Otp.findOne({ mobile, purpose }).sort({ createdAt: -1 });
-  if (!otp || otp.used) throw new Error("OTP not found or already used");
+  if (!otp || otp.used) throw new Error("Maximum attempts reached. Please Resend OTP");
   if (otp.locked) throw new Error("OTP locked due to too many wrong attempts");
   if (otp.expiresAt < new Date()) throw new Error("OTP expired");
   const ok = await bcrypt.compare(code, otp.codeHash);
@@ -81,7 +81,7 @@ export async function verifyOtp(mobile, code, purpose) {
     }
     await otp.save();
     const left = Math.max(0, MAX_ATTEMPTS - otp.attempts);
-    throw new Error(`Invalid OTP. attemptsLeft=${left}`);
+    throw new Error(`Invalid OTP. Attempts Left=${left}`);
   }
   otp.used = true;
   await otp.save();

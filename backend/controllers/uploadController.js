@@ -1,10 +1,21 @@
-import asyncHandler from 'express-async-handler';
-import { uploadSingle } from '../utils/s3.js';
+import multer from "multer";
+import multerS3 from "multer-s3";
+import { S3Client } from "@aws-sdk/client-s3";
 
-export const uploadImage = [
-  uploadSingle.single('file'),
-  asyncHandler(async (req,res) => {
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    res.json({ ok: true, url: req.file.location, meta: { originalname: req.file.originalname, size: req.file.size, mimetype: req.file.mimetype } });
-  })
-];
+export const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+export const uploadImage = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: process.env.S3_BUCKET,
+    key: (req, file, cb) => {
+      cb(null, `uploads/${Date.now()}-${file.originalname}`);
+    },
+  }),
+});

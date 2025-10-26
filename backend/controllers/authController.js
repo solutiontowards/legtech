@@ -10,7 +10,7 @@ const WA_API_URL = 'https://wa.panmitra.in/send-message';
 const WA_API_KEY = 'CwoPN5UEKt3hoqReQP8KGTN23lfZsX';
 const WA_SENDER = '917872652252'; 
 
-// ✅ Helper function for sending WhatsApp message via Panmitra API
+// Helper function for sending WhatsApp message via Panmitra API
 async function sendWhatsApp(mobile, code) {
   const number = mobile.startsWith('+') ? mobile.replace('+', '') : `91${mobile}`;
   const message = `Your verification code is ${code}. It expires in ${process.env.OTP_TTL_MINUTES || 5} minutes.`;
@@ -29,7 +29,7 @@ async function sendWhatsApp(mobile, code) {
   }
 }
 
-// ✅ Send OTP for Register or Login
+// Send OTP for Register or Login
 export const sendOtp = asyncHandler(async (req, res) => {
   const { mobile, purpose } = req.body;
   if (!mobile || !purpose) return res.status(400).json({ error: 'Mobile and purpose required' });
@@ -44,7 +44,7 @@ export const sendOtp = asyncHandler(async (req, res) => {
   res.json({ ok: true, message: 'OTP sent successfully', expiresAt: otp.expiresAt });
 });
 
-// ✅ Resend OTP
+// Resend OTP
 export const resendOtpController = asyncHandler(async (req, res) => {
   const { mobile, purpose } = req.body;
   if (!mobile || !purpose) return res.status(400).json({ error: 'Mobile and purpose required' });
@@ -57,20 +57,41 @@ export const resendOtpController = asyncHandler(async (req, res) => {
   }
 });
 
-// ✅ Verify Register OTP & Create Retailer
-export const verifyRegisterOtp = asyncHandler(async (req, res) => {
-  const { mobile, code, name, email, password } = req.body;
-  if (!mobile || !code || !password) return res.status(400).json({ error: 'Required fields missing' });
+// Verify OTP
+export const verifyOtpController = asyncHandler(async (req, res) => {
+  const { mobile, code, purpose } = req.body;
+  if (!mobile || !code || !purpose) return res.status(400).json({ error: 'Mobile, code, and purpose required' });
+  if (!['register', 'login'].includes(purpose)) return res.status(400).json({ error: 'Invalid purpose' });
 
   try {
-    await verifyOtp(mobile, code, 'register');
+    await verifyOtp(mobile, code, purpose);
+    res.json({ ok: true, message: 'OTP verified successfully' });
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Register User (assumes OTP is already verified)
+export const verifyRegisterOtp = asyncHandler(async (req, res) => {
+  const { mobile, name, email, password } = req.body;
+
+  if (!mobile || !name || !email || !password) {
+    return res.status(400).json({ error: 'Required fields missing' });
   }
 
-  const existing = await User.findOne({ mobile });
-  if (existing) return res.status(400).json({ error: 'Already registered' });
+  // Check if mobile is already registered
+  const existingMobile = await User.findOne({ mobile });
+  if (existingMobile) {
+    return res.status(400).json({ error: 'Mobile number already registered' });
+  }
 
+  // Check if email is already registered
+  const existingEmail = await User.findOne({ email });
+  if (existingEmail) {
+    return res.status(400).json({ error: 'Email already registered' });
+  }
+
+  // Create new retailer user
   const user = new User({
     name,
     email,
@@ -83,6 +104,7 @@ export const verifyRegisterOtp = asyncHandler(async (req, res) => {
   await user.setPassword(password);
   await user.save();
 
+  // Create wallet for the user
   const wallet = await Wallet.create({ retailerId: user._id, balance: 0 });
   user.walletId = wallet._id;
   await user.save();
@@ -93,35 +115,59 @@ export const verifyRegisterOtp = asyncHandler(async (req, res) => {
     user: { id: user._id, mobile: user.mobile, isVerified: user.isVerified },
   });
 });
-
-// ✅ Login Step 1 – Verify Password & Send OTP
-export const loginInit = asyncHandler(async (req, res) => {
+// Retailer Login Step 1 – Verify Password & Send OTP
+export const retailerLoginInit = asyncHandler(async (req, res) => {
   const { mobile, password } = req.body;
   if (!mobile || !password) return res.status(400).json({ error: 'Mobile and password required' });
 
   const user = await User.findOne({ mobile });
   if (!user) return res.status(400).json({ error: 'Invalid credentials' });
 
+  if (user.role !== 'retailer') {
+    return res.status(403).json({ error: 'Access denied: Retailer login required' });
+  }
+
   const ok = await user.comparePassword(password);
   if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
 
   const otp = await createAndSendOtp(mobile, 'login', (m, code) => sendWhatsApp(m, code));
-  res.json({ ok: true, message: 'OTP sent for login', expiresAt: otp.expiresAt });
+  res.json({ ok: true, message: 'OTP sent for retailer login', expiresAt: otp.expiresAt });
 });
 
-// ✅ Login Step 2 – Verify OTP & Issue Token
-export const verifyLoginOtp = asyncHandler(async (req, res) => {
+// Admin Login Step 1 – Verify Password & Send OTP
+export const adminLoginInit = asyncHandler(async (req, res) => {
+  const { mobile, password } = req.body;
+  if (!mobile || !password) return res.status(400).json({ error: 'Mobile and password required' });
+
+  const user = await User.findOne({ mobile });
+  if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
+  if (user.role !== 'admin') {
+    return res.status(403).json({ error: 'Access denied: Admin login required' });
+  }
+
+  const ok = await user.comparePassword(password);
+  if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
+
+  const otp = await createAndSendOtp(mobile, 'login', (m, code) => sendWhatsApp(m, code));
+  res.json({ ok: true, message: 'OTP sent for admin login', expiresAt: otp.expiresAt });
+});
+
+// Retailer OTP Verification
+export const retailerVerifyLoginOtp = asyncHandler(async (req, res) => {
   const { mobile, code } = req.body;
   if (!mobile || !code) return res.status(400).json({ error: 'Mobile and code required' });
+
+  const user = await User.findOne({ mobile });
+  if (!user || user.role !== 'retailer') {
+    return res.status(403).json({ error: 'Access denied: Retailer login required' });
+  }
 
   try {
     await verifyOtp(mobile, code, 'login');
   } catch (err) {
     return res.status(400).json({ error: err.message });
   }
-
-  const user = await User.findOne({ mobile });
-  if (!user) return res.status(400).json({ error: 'User not found' });
 
   const token = signToken({ id: user._id, role: user.role });
   res.cookie('token', token, {
@@ -133,18 +179,50 @@ export const verifyLoginOtp = asyncHandler(async (req, res) => {
 
   res.json({
     ok: true,
-    message: 'Login successful',
+    message: 'Retailer login successful',
     user: { id: user._id, role: user.role, isVerified: user.isVerified },
   });
 });
 
-// ✅ Logout
+// Admin OTP Verification
+export const adminVerifyLoginOtp = asyncHandler(async (req, res) => {
+  const { mobile, code } = req.body;
+  if (!mobile || !code) return res.status(400).json({ error: 'Mobile and code required' });
+
+  const user = await User.findOne({ mobile });
+  if (!user || user.role !== 'admin') {
+    return res.status(403).json({ error: 'Access denied: Admin login required' });
+  }
+
+  try {
+    await verifyOtp(mobile, code, 'login');
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+
+  const token = signToken({ id: user._id, role: user.role });
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.json({
+    ok: true,
+    message: 'Admin login successful',
+    user: { id: user._id, role: user.role, isVerified: user.isVerified },
+  });
+});
+
+
+// Logout
 export const logout = asyncHandler(async (req, res) => {
   res.clearCookie('token');
   res.json({ ok: true, message: 'Logged out successfully' });
 });
 
-// ✅ Get Authenticated User
+// Get Authenticated User
 export const me = asyncHandler(async (req, res) => {
   res.json({ ok: true, user: req.user });
 });
