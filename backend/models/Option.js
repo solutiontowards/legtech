@@ -27,6 +27,7 @@ const OptionSchema = new Schema(
     },
     name: { type: String, required: true },
     slug: { type: String, required: true },
+    isActive: { type: Boolean, default: true },
     image: String,
     imageMeta: Schema.Types.Mixed,
     price: { type: Number, default: 0 },

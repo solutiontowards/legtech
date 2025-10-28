@@ -7,6 +7,7 @@ const SubServiceSchema = new Schema(
     name: { type: String, required: true },
     slug: { type: String, required: true },
     description: String,
+    isActive: { type: Boolean, default: true },
     image: String,
     imageMeta: Schema.Types.Mixed,
     options: [{ type: Schema.Types.ObjectId, ref: "Option" }],

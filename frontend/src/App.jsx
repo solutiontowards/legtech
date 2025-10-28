@@ -14,6 +14,10 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import VerifyRetailer from "./pages/admin/VerifyRetailer";
+import AddService from "./pages/admin/services/AdminServices";
+import AdminServices from "./pages/admin/services/AdminServices";
+import AddServices from "./pages/admin/services/AddServices";
+import AllRetailer from "./pages/admin/retailer/AllRetailer";
 
 const App = () => {
   useEffect(() => {
@@ -37,17 +41,22 @@ const App = () => {
       <Route path="/admin" element={<AdminLogin />} />
 
       {/* ---------- Protected Admin Routes ---------- */}
-      <Route
-        path="/admin"
-        element={
-          <AdminProtectRoute>
-            <DashboardLayout />
-          </AdminProtectRoute>
-        }
-      >
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="verify-retailers" element={<VerifyRetailer />} />
-      </Route>
+   <Route
+  path="/admin"
+  element={
+    <AdminProtectRoute>
+      <DashboardLayout />
+    </AdminProtectRoute>
+  }
+>
+  <Route path="dashboard" element={<AdminDashboard />} />
+  <Route path="verify-retailers" element={<VerifyRetailer />} />
+  <Route path="retailers" element={<AllRetailer />} />
+  <Route path="services" element={<AdminServices />} /> 
+  <Route path="add-service" element={<AddServices />} />
+  <Route path="edit-service/:slug" element={<AddServices />} />
+</Route>
+
 
       {/* ---------- 404 Fallback ---------- */}
       <Route path="*" element={<NotFound />} />

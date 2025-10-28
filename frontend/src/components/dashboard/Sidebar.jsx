@@ -12,6 +12,9 @@ import {
   LogOut,
   ChevronDown,
   Briefcase,
+  ServerCog,
+  Layers,
+  BriefcaseBusiness,
 } from "lucide-react"
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
@@ -37,6 +40,16 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         { to: "/admin/register-retailer", text: "Add New" },
       ],
     },
+
+    {
+      id: "services",
+      text: "Services Managment",
+      icon: BriefcaseBusiness,
+      submenu: [
+        { to: "/admin/services", text: "Services" },
+
+      ],
+    },
     { id: "analytics", to: "/admin/analytics", text: "Analytics", icon: PieChart },
   ]
 
@@ -56,9 +69,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed md:relative top-0 left-0 h-screen z-40 transition-all duration-300 ${
-          isOpen ? "w-64" : "w-0 md:w-20"
-        } bg-green-50 border-r border-green-200 overflow-hidden flex flex-col`}
+        className={`fixed md:relative top-0 left-0 h-screen z-40 transition-all duration-300 ${isOpen ? "w-64" : "w-0 md:w-20"
+          } bg-green-50 border-r border-green-200 overflow-hidden flex flex-col`}
       >
         {/* Logo */}
         <div className="p-4 border-b border-green-200">
@@ -94,8 +106,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                   <NavLink
                     to={link.to}
                     className={({ isActive }) =>
-                      `w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-green-700 hover:bg-green-200 ${
-                        isActive ? activeClass : ""
+                      `w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-green-700 hover:bg-green-200 ${isActive ? activeClass : ""
                       }`
                     }
                     title={!isOpen ? link.text : ""}
@@ -116,9 +127,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                       </div>
                       {isOpen && (
                         <ChevronDown
-                          className={`h-4 w-4 flex-shrink-0 transition-transform ${
-                            isExpanded ? "rotate-180" : ""
-                          }`}
+                          className={`h-4 w-4 flex-shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""
+                            }`}
                         />
                       )}
                     </button>
@@ -130,8 +140,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                             key={idx}
                             to={subitem.to}
                             className={({ isActive }) =>
-                              `block w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-colors text-green-600 hover:bg-green-200 hover:text-green-900 ${
-                                isActive ? "bg-green-200 text-green-900 font-semibold" : ""
+                              `block w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-colors text-green-600 hover:bg-green-200 hover:text-green-900 ${isActive ? "bg-green-200 text-green-900 font-semibold" : ""
                               }`
                             }
                           >
@@ -153,8 +162,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             <NavLink
               to={user?.role === "admin" ? "/admin/settings" : "/retailer/settings"}
               className={({ isActive }) =>
-                `w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors text-green-700 hover:bg-green-200 ${
-                  isActive ? activeClass : ""
+                `w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors text-green-700 hover:bg-green-200 ${isActive ? activeClass : ""
                 }`
               }
             >
@@ -174,8 +182,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             <NavLink
               to={user?.role === "admin" ? "/admin/settings" : "/retailer/settings"}
               className={({ isActive }) =>
-                `w-full p-2 rounded-lg transition-colors text-green-700 hover:bg-green-200 flex justify-center ${
-                  isActive ? "bg-green-200 text-green-900" : ""
+                `w-full p-2 rounded-lg transition-colors text-green-700 hover:bg-green-200 flex justify-center ${isActive ? "bg-green-200 text-green-900" : ""
                 }`
               }
               title="Settings"

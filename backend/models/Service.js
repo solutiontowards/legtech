@@ -14,6 +14,10 @@ const ServiceSchema = new Schema({
   description: {
     type: String,
   },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
   image: String,
   imageMeta: Schema.Types.Mixed,
   subServices:[{type:Schema.Types.ObjectId,ref:'SubService'}]

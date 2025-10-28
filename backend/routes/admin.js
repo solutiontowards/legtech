@@ -10,10 +10,19 @@ router.use(authorize('admin'));
 
 router.get('/pending-retailers', admin.getPendingRetailers);
 router.post('/verify-retailer', admin.verifyRetailer);
+router.get('/retailers', admin.getRetailers);
 
 router.post('/service', admin.createService);
 router.post('/sub-service', admin.createSubService);
 router.post('/option', admin.createOption);
 router.post('/form-field', admin.createFormField);
+
+router.put('/service/:id', admin.updateService);
+router.put('/sub-service/:id', admin.updateSubService);
+router.put('/option/:id', admin.updateOption);
+
+// Get service by ID
+router.get('/service/id/:id', admin.getServiceById);
+router.get('/service/slug/:slug', admin.getServiceBySlug);
 
 export default router;

@@ -11,6 +11,13 @@ export const getPendingRetailers = asyncHandler(async (req,res)=>{
   res.json({ ok:true, pending });
 });
 
+
+// Get all retailers Retailer
+export const getRetailers = asyncHandler(async (req,res)=>{
+  const retailers = await User.find({ role: 'retailer' });
+  res.json({ ok:true, retailers });
+});
+
 export const verifyRetailer = asyncHandler(async (req,res)=>{
   const { retailerId, verified } = req.body;
   const user = await User.findById(retailerId);
@@ -20,27 +27,242 @@ export const verifyRetailer = asyncHandler(async (req,res)=>{
   res.json({ ok:true, user });
 });
 
-// create service
-export const createService = asyncHandler(async (req,res)=>{
-  const { name, slug, description, image, imageMeta } = req.body;
-  const svc = await Service.create({ name, slug, description, image, imageMeta });
-  res.json({ ok:true, svc });
+// ===================== CREATE SERVICE =====================
+export const createService = asyncHandler(async (req, res) => {
+  const { name, slug, description, image, imageMeta, isActive = true } = req.body;
+
+  const existingService = await Service.findOne({ name: name.trim() });
+  if (existingService) {
+    return res.status(400).json({
+      ok: false,
+      message: "Service with this name already exists",
+    });
+  }
+
+  const generatedSlug =
+    slug ||
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const svc = await Service.create({
+    name: name.trim(),
+    slug: generatedSlug,
+    description,
+    image,
+    imageMeta,
+    isActive,
+  });
+
+  res.status(201).json({ ok: true, svc });
 });
 
-// create sub-service
-export const createSubService = asyncHandler(async (req,res)=>{
-  const { serviceId, name, slug, description, image, imageMeta } = req.body;
-  const sub = await SubService.create({ serviceId, name, slug, description, image, imageMeta });
+
+// ===================== UPDATE SERVICE =====================
+export const updateService = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { name, slug, description, image, imageMeta, isActive } = req.body;
+
+  const service = await Service.findById(id);
+  if (!service) {
+    return res.status(404).json({ ok: false, message: "Service not found" });
+  }
+
+  // Check duplicate name
+  if (name && name.trim() !== service.name) {
+    const exists = await Service.findOne({ name: name.trim() });
+    if (exists) {
+      return res.status(400).json({ ok: false, message: "Service name already exists" });
+    }
+  }
+
+  service.name = name?.trim() || service.name;
+  service.slug =
+    slug ||
+    name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") ||
+    service.slug;
+  service.description = description ?? service.description;
+  service.image = image ?? service.image;
+  service.imageMeta = imageMeta ?? service.imageMeta;
+  if (typeof isActive === "boolean") service.isActive = isActive;
+
+  await service.save();
+  res.json({ ok: true, service });
+});
+
+
+// Get service by ID (for edit)
+export const getServiceById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const service = await Service.findById(id);
+  if (!service) {
+    return res.status(404).json({ ok: false, message: "Service not found" });
+  }
+  res.json({ ok: true, service });
+});
+
+
+// Get service by slug for edit
+export const getServiceBySlug = asyncHandler(async (req, res) => {
+  const { slug } = req.params;
+  const service = await Service.findOne({ slug });  
+  if (!service) {
+    return res.status(404).json({ ok: false, message: "Service not found" });
+  }
+  res.json({ ok: true, service });
+});
+
+
+// ===================== CREATE SUB-SERVICE =====================
+export const createSubService = asyncHandler(async (req, res) => {
+  const { serviceId, name, slug, description, image, imageMeta, isActive = true } = req.body;
+
+  const existingSub = await SubService.findOne({ name: name.trim(), serviceId });
+  if (existingSub) {
+    return res.status(400).json({
+      ok: false,
+      message: "Sub-service with this name already exists under the selected service",
+    });
+  }
+
+  const generatedSlug =
+    slug ||
+    name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const sub = await SubService.create({
+    serviceId,
+    name: name.trim(),
+    slug: generatedSlug,
+    description,
+    image,
+    imageMeta,
+    isActive,
+  });
+
   await Service.findByIdAndUpdate(serviceId, { $push: { subServices: sub._id } });
-  res.json({ ok:true, sub });
+
+  res.status(201).json({ ok: true, sub });
 });
 
-// create option
-export const createOption = asyncHandler(async (req,res)=>{
-  const { subServiceId, name, slug, price, image, imageMeta, externalLink, isExternal, formFields } = req.body;
-  const option = await Option.create({ subServiceId, name, slug, price, image, imageMeta, externalLink, isExternal, formFields });
+
+// ===================== UPDATE SUB-SERVICE =====================
+export const updateSubService = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { name, slug, description, image, imageMeta, isActive } = req.body;
+
+  const sub = await SubService.findById(id);
+  if (!sub) return res.status(404).json({ ok: false, message: "Sub-service not found" });
+
+  // Duplicate name check within same service
+  if (name && name.trim() !== sub.name) {
+    const exists = await SubService.findOne({ name: name.trim(), serviceId: sub.serviceId });
+    if (exists)
+      return res
+        .status(400)
+        .json({ ok: false, message: "Sub-service name already exists under this service" });
+  }
+
+  sub.name = name?.trim() || sub.name;
+  sub.slug =
+    slug ||
+    name?.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") ||
+    sub.slug;
+  sub.description = description ?? sub.description;
+  sub.image = image ?? sub.image;
+  sub.imageMeta = imageMeta ?? sub.imageMeta;
+  if (typeof isActive === "boolean") sub.isActive = isActive;
+
+  await sub.save();
+  res.json({ ok: true, sub });
+});
+
+
+// ===================== CREATE OPTION =====================
+export const createOption = asyncHandler(async (req, res) => {
+  const {
+    subServiceId,
+    name,
+    slug,
+    price,
+    image,
+    imageMeta,
+    externalLink,
+    isExternal,
+    formFields,
+    isActive = true,
+  } = req.body;
+
+  const existingOption = await Option.findOne({ name: name.trim(), subServiceId });
+  if (existingOption) {
+    return res.status(400).json({
+      ok: false,
+      message: "Option with this name already exists under the selected sub-service",
+    });
+  }
+
+  const generatedSlug =
+    slug ||
+    name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const option = await Option.create({
+    subServiceId,
+    name: name.trim(),
+    slug: generatedSlug,
+    price,
+    image,
+    imageMeta,
+    externalLink,
+    isExternal,
+    formFields,
+    isActive,
+  });
+
   await SubService.findByIdAndUpdate(subServiceId, { $push: { options: option._id } });
-  res.json({ ok:true, option });
+  res.status(201).json({ ok: true, option });
+});
+
+
+// ===================== UPDATE OPTION =====================
+export const updateOption = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { name, slug, price, image, imageMeta, externalLink, isExternal, formFields, isActive } =
+    req.body;
+
+  const option = await Option.findById(id);
+  if (!option) return res.status(404).json({ ok: false, message: "Option not found" });
+
+  if (name && name.trim() !== option.name) {
+    const exists = await Option.findOne({ name: name.trim(), subServiceId: option.subServiceId });
+    if (exists)
+      return res
+        .status(400)
+        .json({ ok: false, message: "Option name already exists under this sub-service" });
+  }
+
+  option.name = name?.trim() || option.name;
+  option.slug =
+    slug ||
+    name?.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") ||
+    option.slug;
+  option.price = price ?? option.price;
+  option.image = image ?? option.image;
+  option.imageMeta = imageMeta ?? option.imageMeta;
+  option.externalLink = externalLink ?? option.externalLink;
+  option.isExternal = isExternal ?? option.isExternal;
+  option.formFields = formFields ?? option.formFields;
+  if (typeof isActive === "boolean") option.isActive = isActive;
+
+  await option.save();
+  res.json({ ok: true, option });
 });
 
 // add form field (optional)
@@ -53,3 +275,6 @@ export const createFormField = asyncHandler(async (req,res)=>{
   await option.save();
   res.json({ ok:true, option });
 });
+
+
+
