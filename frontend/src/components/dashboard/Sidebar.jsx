@@ -37,7 +37,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       submenu: [
         { to: "/admin/verify-retailers", text: "Verify Retailers" },
         { to: "/admin/retailers", text: "All Retailers" },
-        { to: "/admin/register-retailer", text: "Add New" },
       ],
     },
 
@@ -47,10 +46,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       icon: BriefcaseBusiness,
       submenu: [
         { to: "/admin/services", text: "Services" },
+        { to: "/admin/subservices", text: "Sub Services" },
+        { to: "/admin/subservice-option", text: "Options" },
 
       ],
     },
-    { id: "analytics", to: "/admin/analytics", text: "Analytics", icon: PieChart },
   ]
 
   const links = user?.role === "admin" ? adminLinks : retailerLinks

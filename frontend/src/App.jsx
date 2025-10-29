@@ -18,6 +18,10 @@ import AddService from "./pages/admin/services/AdminServices";
 import AdminServices from "./pages/admin/services/AdminServices";
 import AddServices from "./pages/admin/services/AddServices";
 import AllRetailer from "./pages/admin/retailer/AllRetailer";
+import AdminSubServices from "./pages/admin/subservices/AdminSubServices";
+import AddSubServices from "./pages/admin/subservices/AddSubServices";
+import AdminServicesOption from "./pages/admin/service-option/AdminSubServicesOption";
+import AddSubServicesOption from "./pages/admin/service-option/AddSubServicesOption";
 
 const App = () => {
   useEffect(() => {
@@ -41,21 +45,29 @@ const App = () => {
       <Route path="/admin" element={<AdminLogin />} />
 
       {/* ---------- Protected Admin Routes ---------- */}
-   <Route
-  path="/admin"
-  element={
-    <AdminProtectRoute>
-      <DashboardLayout />
-    </AdminProtectRoute>
-  }
->
-  <Route path="dashboard" element={<AdminDashboard />} />
-  <Route path="verify-retailers" element={<VerifyRetailer />} />
-  <Route path="retailers" element={<AllRetailer />} />
-  <Route path="services" element={<AdminServices />} /> 
-  <Route path="add-service" element={<AddServices />} />
-  <Route path="edit-service/:slug" element={<AddServices />} />
-</Route>
+      <Route
+        path="/admin"
+        element={
+          <AdminProtectRoute>
+            <DashboardLayout />
+          </AdminProtectRoute>
+        }
+      >
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="verify-retailers" element={<VerifyRetailer />} />
+        <Route path="retailers" element={<AllRetailer />} />
+        <Route path="services" element={<AdminServices />} />
+        <Route path="add-service" element={<AddServices />} />
+        <Route path="edit-service/:slug" element={<AddServices />} />
+        <Route path="subservices" element={<AdminSubServices />} />
+        <Route path="add-subservice" element={<AddSubServices />} />
+        <Route path="edit-subservice/:serviceSlug/:subServiceSlug" element={<AddSubServices />} />
+        <Route path="subservice-option" element={<AdminServicesOption />} />
+        <Route path="add-subservice-option" element={<AddSubServicesOption />} />
+        <Route path="edit-subservice-option/:serviceSlug/:subServiceSlug/:optionSlug" element={<AddSubServicesOption />} />
+
+
+      </Route>
 
 
       {/* ---------- 404 Fallback ---------- */}

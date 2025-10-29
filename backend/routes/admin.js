@@ -25,4 +25,15 @@ router.put('/option/:id', admin.updateOption);
 router.get('/service/id/:id', admin.getServiceById);
 router.get('/service/slug/:slug', admin.getServiceBySlug);
 
+// Get sub service bty  slug
+router.get('/sub-service/slug/:serviceSlug/:subServiceSlug', admin.getSubServiceBySlug);
+
+router.get('/option/slug/:serviceSlug/:subServiceSlug/:optionSlug', admin.getOptionBySlug);
+
+router.get('/service-count', admin.getServiceCount);
+router.get('/pending-retailer-count', admin.getPendingRetailerCount);
+router.get('/retailer-count', admin.getRetailerCount);
+
+
+
 export default router;

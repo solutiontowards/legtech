@@ -9,6 +9,11 @@ export const updateService = (id, payload) => api.put(`/admin/service/${id}`, pa
 export const getServiceBySlug = (slug) => api.get(`/admin/service/slug/${slug}`);
 export const createSubService = (payload) => api.post('/admin/sub-service', payload);
 export const updateSubService = (id, payload) => api.put(`/admin/sub-service/${id}`, payload);
+export const getSubServiceBySlug = (serviceSlug, subServiceSlug) => api.get(`/admin/sub-service/slug/${serviceSlug}/${subServiceSlug}`);
+export const getOptionBySlug = (serviceSlug, subServiceSlug, optionSlug) => api.get(`/admin/option/slug/${serviceSlug}/${subServiceSlug}/${optionSlug}`);
 export const createOption = (payload) => api.post('/admin/option', payload);
 export const updateOption = (id, payload) => api.put(`/admin/option/${id}`, payload);
 export const createFormField = (payload) => api.post('/admin/form-field', payload);
+export const getServiceCount = () => api.get('/admin/service-count');
+export const getPendingRetailerCount = () => api.get('/admin/pending-retailer-count');
+export const getRetailerCount = () => api.get('/admin/retailer-count');

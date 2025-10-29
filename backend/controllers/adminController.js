@@ -181,6 +181,17 @@ export const updateSubService = asyncHandler(async (req, res) => {
   res.json({ ok: true, sub });
 });
 
+// getSubServiceBySlug 
+export const getSubServiceBySlug = asyncHandler(async (req, res) => {
+  const { serviceSlug, subServiceSlug } = req.params;
+  const service = await Service.findOne({ slug: serviceSlug });
+  if (!service) return res.status(404).json({ error: 'Service not found' });
+  const subService = await SubService.findOne({ serviceId: service._id, slug: subServiceSlug });
+  if (!subService) return res.status(404).json({ error: 'Sub-service not found' });
+  res.json({ ok: true, subService });
+});
+
+
 
 // ===================== CREATE OPTION =====================
 export const createOption = asyncHandler(async (req, res) => {
@@ -265,6 +276,24 @@ export const updateOption = asyncHandler(async (req, res) => {
   res.json({ ok: true, option });
 });
 
+// Get option by slug for edit
+export const getOptionBySlug = asyncHandler(async (req, res) => {
+  const { serviceSlug, subServiceSlug, optionSlug } = req.params;
+
+  const service = await Service.findOne({ slug: serviceSlug });
+  if (!service) return res.status(404).json({ ok: false, message: "Service not found" });
+
+  const subService = await SubService.findOne({ serviceId: service._id, slug: subServiceSlug });
+  if (!subService) return res.status(404).json({ ok: false, message: "Sub-service not found" });
+
+  const option = await Option.findOne({ subServiceId: subService._id, slug: optionSlug });
+  if (!option) return res.status(404).json({ ok: false, message: "Option not found" });
+
+  res.json({ ok: true, option });
+});
+
+
+
 // add form field (optional)
 export const createFormField = asyncHandler(async (req,res)=>{
   const { optionId, label, name, type, placeholder, required, accept, isPdf } = req.body;
@@ -278,3 +307,20 @@ export const createFormField = asyncHandler(async (req,res)=>{
 
 
 
+// Get Couting for service count in number lenth for count
+export const getServiceCount = asyncHandler(async (req, res) => {
+  const count = await Service.countDocuments();
+  res.json({ ok: true, count });
+});
+
+// get pending reatiler count
+export const getPendingRetailerCount = asyncHandler(async (req, res) => {
+  const count = await User.countDocuments({ role: 'retailer', isVerified: false });
+  res.json({ ok: true, count });
+});
+
+// get retailer count
+export const getRetailerCount= asyncHandler(async (req, res) => {
+  const count = await User.countDocuments({ role: 'retailer' });
+  res.json({ ok: true, count });
+});
