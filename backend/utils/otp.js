@@ -38,6 +38,8 @@ export async function createAndSendOtp(mobile, purpose, sendFn) {
       await sendFn(mobile, plain);
     } catch (err) {
       console.error("OTP send error", err);
+      // Re-throw the error so the calling function (controller) can catch it
+      throw err;
     }
   } else {
     console.log(`OTP for ${mobile} = ${plain}`);
@@ -62,8 +64,14 @@ export async function resendOtp(mobile, purpose, sendFn) {
   otp.attempts = 0;
   otp.expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
   await otp.save();
-  if (sendFn) await sendFn(mobile, plain);
-  else console.log(`Resent OTP for ${mobile} = ${plain}`);
+  if (sendFn) {
+    try {
+      await sendFn(mobile, plain);
+    } catch (err) {
+      console.error("OTP resend error", err);
+      throw err; // Re-throw
+    }
+  } else console.log(`Resent OTP for ${mobile} = ${plain}`);
   return otp;
 }
 

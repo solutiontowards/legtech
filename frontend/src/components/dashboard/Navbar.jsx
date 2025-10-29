@@ -1,15 +1,29 @@
-"use client"
 
-import { useState } from "react"
-import { useAuth } from "../../context/AuthContext"
-import { Menu, X, Bell, LogOut, ChevronDown, Wallet, Phone, PhoneCall } from "lucide-react"
+import { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { Menu, X, LogOut, ChevronDown, Wallet, PhoneCall } from "lucide-react";
+import { getWalletBalance } from "../../api/retailer";
 
 const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
-  const { user, logout } = useAuth()
-  const [profileOpen, setProfileOpen] = useState(false)
+  const { user } = useAuth();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(null);
 
-  const walletBalance = "₹500.00"
-  const phoneNumber = "8250883776"
+  const phoneNumber = "8250883776";
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (user && user.role === "retailer") {
+        try {
+          const { data } = await getWalletBalance();
+          setWalletBalance(data.balance);
+        } catch (error) {
+          console.error("Failed to fetch wallet balance:", error);
+        }
+      }
+    };
+    fetchBalance();
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-40 border-b bg-green-50 border-r border-green-200 ">
@@ -22,8 +36,6 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
           >
             {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-
-
         </div>
 
         {/* Right section - Controls */}
@@ -35,12 +47,14 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
           </div>
 
           {/* Wallet balance */}
-          <div className="flex items-center space-x-2 px-3 py-2 rounded-full border-2 border-green-600">
-            <Wallet className="h-4 w-4 text-green-700" />
-            <span className="text-sm font-medium text-green-700">{walletBalance}</span>
-          </div>
-
-
+          {user?.role === "retailer" && (
+            <div className="flex items-center space-x-2 px-3 py-2 rounded-full border-2 border-green-600">
+              <Wallet className="h-4 w-4 text-green-700" />
+              <span className="text-sm font-medium text-green-700">
+                {walletBalance !== null ? `₹${walletBalance.toFixed(2)}` : "Loading..."}
+              </span>
+            </div>
+          )}
 
           {/* User profile dropdown */}
           <div className="relative">
@@ -81,13 +95,10 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
               </div>
             )}
           </div>
-
-
-
         </div>
       </div>
     </header>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;

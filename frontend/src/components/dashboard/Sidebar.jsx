@@ -15,6 +15,7 @@ import {
   ServerCog,
   Layers,
   BriefcaseBusiness,
+  ServerCogIcon,
 } from "lucide-react"
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
@@ -29,7 +30,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   ]
 
   const adminLinks = [
-    { id: "overview", to: "/admin/dashboard", text: "Overview", icon: LayoutDashboard },
+    { id: "Dashboard", to: "/admin/dashboard", text: "Dashboard", icon: LayoutDashboard },
     {
       id: "retailers",
       text: "Retailers",
@@ -47,8 +48,23 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       submenu: [
         { to: "/admin/services", text: "Services" },
         { to: "/admin/subservices", text: "Sub Services" },
-        { to: "/admin/subservice-option", text: "Options" },
+        { to: "/admin/subservice-option", text: "Services Options" },
 
+      ],
+    },
+
+    { id: "Service-Requests", to: "/admin/service-requests", text: "Service Requests", icon: LayoutDashboard },
+
+
+
+
+            {
+      id: "user",
+      text: "User Managment",
+      icon: ServerCogIcon,
+      submenu: [
+        { to: "/admin/add-user", text: "Add New User" },
+        { to: "/admin/admin-list", text: "Admin List" },
       ],
     },
   ]

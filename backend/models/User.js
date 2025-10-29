@@ -20,6 +20,7 @@ const userSchema = new Schema(
     role: { type: String, enum: ["admin", "retailer"], default: "retailer" },
     isVerified: { type: Boolean, default: false },
     isOtpVerified: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
     walletId: { type: Schema.Types.ObjectId, ref: "Wallet" },
   },
   { timestamps: true }
@@ -28,7 +29,7 @@ const userSchema = new Schema(
 // If user role is admin, auto-activate user
 userSchema.pre("save", function (next) {
   if (this.role === "admin") {
-    this.isActive = true;
+    this.isVerified = true;
   }
   next();
 });

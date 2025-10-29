@@ -22,6 +22,11 @@ import AdminSubServices from "./pages/admin/subservices/AdminSubServices";
 import AddSubServices from "./pages/admin/subservices/AddSubServices";
 import AdminServicesOption from "./pages/admin/service-option/AdminSubServicesOption";
 import AddSubServicesOption from "./pages/admin/service-option/AddSubServicesOption";
+import AdminServiceRequest from "./pages/admin/AdminServiceRequest";
+import AdminViewSubmission from "./pages/admin/AdminViewSubmission"; // Ensure this is imported
+import AddNewUser from "./pages/admin/AddNewUser";
+import ActiveUsers from "./pages/admin/AdminList";
+import AdminList from "./pages/admin/AdminList";
 
 const App = () => {
   useEffect(() => {
@@ -39,10 +44,10 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/admin" element={<AdminLogin />} />
       </Route>
 
       {/* ---------- Admin Login ---------- */}
-      <Route path="/admin" element={<AdminLogin />} />
 
       {/* ---------- Protected Admin Routes ---------- */}
       <Route
@@ -65,6 +70,11 @@ const App = () => {
         <Route path="subservice-option" element={<AdminServicesOption />} />
         <Route path="add-subservice-option" element={<AddSubServicesOption />} />
         <Route path="edit-subservice-option/:serviceSlug/:subServiceSlug/:optionSlug" element={<AddSubServicesOption />} />
+        <Route path="service-requests" element={<AdminServiceRequest />} />
+        <Route path="view-submission/:id" element={<AdminViewSubmission />} /> \
+        <Route path="add-user" element={<AddNewUser />} />
+        <Route path="admin-list" element={<AdminList />} />
+      
 
 
       </Route>

@@ -26,3 +26,13 @@ export const creditWallet = asyncHandler(async (req,res)=>{
   wallet.transactions.push(tx._id); await wallet.save();
   res.json({ ok:true, wallet });
 });
+
+
+// Get Wallet Balance
+export const getWalletBalance = asyncHandler(async (req, res) => {
+  const wallet = await Wallet.findOne({ retailerId: req.user._id });
+  if (!wallet) {
+    return res.status(404).json({ error: "Wallet not found" });
+  }
+  res.json({ ok: true, balance: wallet.balance });
+});

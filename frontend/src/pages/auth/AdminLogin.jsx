@@ -117,7 +117,7 @@ export default function AdminLogin() {
                 timer: 2000,
                 showConfirmButton: false,
             });
-            setTimeout(() => navigate('/admin/dashboard'), 2000);
+            navigate('/admin/dashboard')
         } catch (err) {
             Swal.fire({
                 icon: 'error',
@@ -257,7 +257,7 @@ export default function AdminLogin() {
                             </button>
                         )}
 
-                       
+
                     </div>
                 </div>
 

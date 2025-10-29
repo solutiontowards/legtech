@@ -1,25 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { getRetailers, updateUser } from "../../../api/admin";
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getAdmins, updateUser } from "../../api/admin";
 
-const AllRetailer = () => {
+const AdminList = () => {
   const [list, setList] = useState([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const itemsPerPage = 10;
 
-  // Load all retailers
+  // Load all admins
   async function load() {
     try {
       setLoading(true);
-      const { data } = await getRetailers();
-      setList(data?.retailers || []);
+      const { data } = await getAdmins();
+      setList(data?.admins || []);
     } catch (err) {
-      toast.error("Failed to load retailers");
+      toast.error("Failed to load admins");
     } finally {
       setLoading(false);
     }
@@ -33,7 +33,7 @@ const AllRetailer = () => {
   const handleToggleStatus = async (userId, currentStatus) => {
     try {
       await updateUser({ userId, isActive: !currentStatus });
-      toast.success("Retailer status updated successfully!");
+      toast.success("Admin status updated successfully!");
       // Update local state to reflect the change instantly
       setList(list.map(user => user._id === userId ? { ...user, isActive: !currentStatus } : user));
     } catch (err) {
@@ -41,12 +41,13 @@ const AllRetailer = () => {
       console.error(err);
     }
   };
+
   // Search filter
   const filtered = list.filter(
-    (r) =>
-      r.name?.toLowerCase().includes(search.toLowerCase()) ||
-      r.email?.toLowerCase().includes(search.toLowerCase()) ||
-      r.mobile?.includes(search)
+    (admin) =>
+      admin.name?.toLowerCase().includes(search.toLowerCase()) ||
+      admin.email?.toLowerCase().includes(search.toLowerCase()) ||
+      admin.mobile?.includes(search)
   );
 
   // Pagination logic
@@ -59,38 +60,38 @@ const AllRetailer = () => {
     const cleanData = list.map(
       ({ passwordHash, __v, walletId, ...rest }) => ({
         ...rest,
-        isVerified: rest.isVerified ? "Yes" : "No",
+        isVerified: rest.isVerified ? "Active" : "Inactive",
         createdAt: new Date(rest.createdAt).toLocaleString(),
       })
     );
     const ws = XLSX.utils.json_to_sheet(cleanData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "All Retailers");
-    XLSX.writeFile(wb, "AllRetailers.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "All Admins");
+    XLSX.writeFile(wb, "AllAdmins.xlsx");
   };
 
   // Export to PDF
   const exportToPDF = () => {
     const doc = new jsPDF();
-    doc.text("All Retailers", 14, 15);
+    doc.text("All Admins", 14, 15);
 
-    const tableData = list.map((r, i) => [
+    const tableData = list.map((admin, i) => [
       startIndex + i + 1,
-      r.name || "-",
-      r.email || "-",
-      r.mobile || "-",
-      new Date(r.createdAt).toLocaleDateString(),
-      r.isVerified ? "Verified" : "Pending",
+      admin.name || "-",
+      admin.email || "-",
+      admin.mobile || "-",
+      new Date(admin.createdAt).toLocaleDateString(),
+      "Active", // Admins are always active
     ]);
 
     autoTable(doc, {
-      head: [["#", "Name", "Email", "Mobile", "Registered On", "Status"]],
+      head: [["#", "Name", "Email", "Mobile", "Created On", "Status"]],
       body: tableData,
       startY: 25,
       styles: { fontSize: 10 },
     });
 
-    doc.save("AllRetailers.pdf");
+    doc.save("AllAdmins.pdf");
   };
 
   return (
@@ -98,7 +99,7 @@ const AllRetailer = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <h2 className="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">
-          All Retailers
+          All Admins
         </h2>
 
         <div className="flex items-center gap-2">
@@ -112,16 +113,10 @@ const AllRetailer = () => {
               setCurrentPage(1);
             }}
           />
-          <button
-            onClick={exportToExcel}
-            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-          >
+          <button onClick={exportToExcel} className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
             Export Excel
           </button>
-          <button
-            onClick={exportToPDF}
-            className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
-          >
+          <button onClick={exportToPDF} className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
             Export PDF
           </button>
         </div>
@@ -136,48 +131,37 @@ const AllRetailer = () => {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Mobile</th>
-              <th className="px-4 py-3">Registered On</th>
-              <th className="px-4 py-3 text-center">Admin Varification</th>
+              <th className="px-4 py-3">Created On</th>
               <th className="px-4 py-3 text-center">Status</th>
               <th className="px-4 py-3 text-center">Activity</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan="7" className="text-center py-6 text-gray-500">Loading retailers...</td>
-              </tr>
+              <tr><td colSpan="7" className="text-center py-6 text-gray-500">Loading admins...</td></tr>
             ) : visible.length > 0 ? (
-              visible.map((r, index) => (
-                <tr key={r._id} className="border-b hover:bg-gray-50">
+              visible.map((admin, index) => (
+                <tr key={admin._id} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-3">{startIndex + index + 1}</td>
-                  <td className="px-4 py-3 font-medium text-gray-800">{r.name || "-"}</td>
-                  <td className="px-4 py-3 text-gray-600">{r.email || "-"}</td>
-                  <td className="px-4 py-3">{r.mobile}</td>
-                  <td className="px-4 py-3 text-gray-600">{new Date(r.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 font-medium text-gray-800">{admin.name || "-"}</td>
+                  <td className="px-4 py-3 text-gray-600">{admin.email || "-"}</td>
+                  <td className="px-4 py-3">{admin.mobile}</td>
+                  <td className="px-4 py-3 text-gray-600">{new Date(admin.createdAt).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${r.isVerified ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
-                      {r.isVerified ? "Verified" : "Pending"}
-                    </span>
-                  </td>
-
-                     <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${r.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-                      {r.isActive ? "Active" : "Inactive"}
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${admin.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                      {admin.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={r.isActive} onChange={() => handleToggleStatus(r._id, r.isActive)} className="sr-only peer" />
+                      <input type="checkbox" checked={admin.isActive} onChange={() => handleToggleStatus(admin._id, admin.isActive)} className="sr-only peer" />
                       <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                   </td>
                 </tr>
               ))
             ) : (
-              <tr>
-                <td colSpan="7" className="text-center py-6 text-gray-500 font-medium">No retailers found.</td>
-              </tr>
+              <tr><td colSpan="7" className="text-center py-6 text-gray-500 font-medium">No admins found.</td></tr>
             )}
           </tbody>
         </table>
@@ -195,4 +179,4 @@ const AllRetailer = () => {
   );
 };
 
-export default AllRetailer;
+export default AdminList;

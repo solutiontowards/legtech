@@ -1,9 +1,10 @@
 import asyncHandler from 'express-async-handler';
 import User from '../models/User.js';
+import Wallet from '../models/Wallet.js';
 import Service from '../models/Service.js';
 import SubService from '../models/SubService.js';
 import Option from '../models/Option.js';
-import FormField from '../models/Option.js'; // if used
+import { adminListSubmissions, getSubmissionById, updateSubmissionStatus } from './submissionController.js';
 
 // list pending retailers
 export const getPendingRetailers = asyncHandler(async (req,res)=>{
@@ -18,6 +19,47 @@ export const getRetailers = asyncHandler(async (req,res)=>{
   res.json({ ok:true, retailers });
 });
 
+// Get all Admin 
+export const getAdmins = asyncHandler(async (req,res)=>{
+  const admins = await User.find({ role: 'admin' });
+  res.json({ ok:true, admins });
+});
+
+
+
+
+// Activate or Deactivate a User
+export const updateUser = asyncHandler(async (req, res) => {
+  const { userId, isActive } = req.body;
+
+  // Validation checks
+  if (!userId) {
+    return res.status(400).json({ error: "User ID is required" });
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  user.isActive = isActive;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: `User ${isActive ? "activated" : "deactivated"} successfully`,
+    user,
+  });
+});
+
+
+
+
+
+
+
+
+
 export const verifyRetailer = asyncHandler(async (req,res)=>{
   const { retailerId, verified } = req.body;
   const user = await User.findById(retailerId);
@@ -25,6 +67,48 @@ export const verifyRetailer = asyncHandler(async (req,res)=>{
   user.isVerified = verified === true;
   await user.save();
   res.json({ ok:true, user });
+});
+
+// ===================== CREATE USER (ADMIN/RETAILER) BY ADMIN =====================
+export const createUser = asyncHandler(async (req, res) => {
+  const { name, email, mobile, password, role } = req.body;
+
+  if (!name || !email || !mobile || !password || !role) {
+    return res.status(400).json({ ok: false, message: "All fields are required" });
+  }
+
+  if (!['admin', 'retailer'].includes(role)) {
+    return res.status(400).json({ ok: false, message: "Invalid user role specified" });
+  }
+
+  const existingUser = await User.findOne({ $or: [{ email }, { mobile }] });
+  if (existingUser) {
+    return res.status(400).json({ ok: false, message: "User with this email or mobile already exists" });
+  }
+
+  const user = new User({
+    name,
+    email,
+    mobile,
+    role,
+    isVerified: true, // Instantly verified as it's created by an admin
+    isOtpVerified: true, // OTP is bypassed
+  });
+
+  await user.setPassword(password);
+
+  // Create a wallet only if the user is a retailer
+  if (role === 'retailer') {
+    const wallet = await Wallet.create({ retailerId: user._id, balance: 0 });
+    user.walletId = wallet._id;
+  }
+
+  await user.save();
+
+  // Don't send back the password hash
+  user.passwordHash = undefined;
+
+  res.status(201).json({ ok: true, message: `User (${role}) created successfully`, user });
 });
 
 // ===================== CREATE SERVICE =====================
@@ -324,3 +408,10 @@ export const getRetailerCount= asyncHandler(async (req, res) => {
   const count = await User.countDocuments({ role: 'retailer' });
   res.json({ ok: true, count });
 });
+
+// ===================== SUBMISSIONS =====================
+export {
+  adminListSubmissions,
+  getSubmissionById,
+  updateSubmissionStatus
+};

@@ -40,13 +40,46 @@ export const verifyRazorpayPayment = asyncHandler(async (req,res)=>{
 });
 
 export const listRetailerSubmissions = asyncHandler(async (req,res)=>{
-  const subs = await Submission.find({ retailerId: req.user._id }).populate('optionId').sort({ createdAt: -1 });
+  const subs = await Submission.find({ retailerId: req.user._id })
+    .populate('optionId', 'name')
+    .populate('serviceId', 'name')
+    .sort({ createdAt: -1 });
   res.json({ ok:true, subs });
 });
 
 export const adminListSubmissions = asyncHandler(async (req,res)=>{
-  const subs = await Submission.find().populate('retailerId').populate('optionId').sort({ createdAt: -1 });
+  const subs = await Submission.find()
+    .populate('retailerId', 'name')
+    .populate('serviceId', 'name')
+    .populate({
+      path: 'optionId',
+      select: 'name',
+      populate: {
+        path: 'subServiceId',
+        select: 'name'
+      }
+    })
+    .sort({ createdAt: -1 });
   res.json({ ok:true, subs });
+});
+
+export const getSubmissionById = asyncHandler(async (req,res)=>{
+  const { submissionId } = req.params;
+  const submission = await Submission.findById(submissionId)
+    .populate('retailerId', 'name email')
+    .populate('serviceId', 'name')
+    .populate({
+      path: 'optionId',
+      populate: {
+        path: 'subServiceId',
+        select: 'name',
+      }
+
+
+      
+    });
+  if (!submission) return res.status(404).json({ error: 'Submission not found' });
+  res.json({ ok:true, submission });
 });
 
 export const updateSubmissionStatus = asyncHandler(async (req,res)=>{

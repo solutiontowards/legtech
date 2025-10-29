@@ -11,6 +11,9 @@ router.use(authorize('admin'));
 router.get('/pending-retailers', admin.getPendingRetailers);
 router.post('/verify-retailer', admin.verifyRetailer);
 router.get('/retailers', admin.getRetailers);
+router.get('/admins', admin.getAdmins);
+router.post('/user', admin.createUser); 
+router.put('/user', admin.updateUser);
 
 router.post('/service', admin.createService);
 router.post('/sub-service', admin.createSubService);
@@ -33,6 +36,11 @@ router.get('/option/slug/:serviceSlug/:subServiceSlug/:optionSlug', admin.getOpt
 router.get('/service-count', admin.getServiceCount);
 router.get('/pending-retailer-count', admin.getPendingRetailerCount);
 router.get('/retailer-count', admin.getRetailerCount);
+
+// Submission Management
+router.get('/submissions', admin.adminListSubmissions);
+router.get('/submission/:submissionId', admin.getSubmissionById);
+router.put('/submission/:submissionId/status', admin.updateSubmissionStatus);
 
 
 

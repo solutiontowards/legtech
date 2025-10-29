@@ -16,16 +16,24 @@ async function sendWhatsApp(mobile, code) {
   const message = `Your verification code is ${code}. It expires in ${process.env.OTP_TTL_MINUTES || 5} minutes.`;
 
   try {
-    await axios.post(WA_API_URL, {
+    const response = await axios.post(WA_API_URL, {
       api_key: WA_API_KEY,
       sender: WA_SENDER,
       number,
       message,
     });
+
+    // The Panmitra API might return a success status code (200) but an error in the body
+    if (response.data.status === false) {
+      console.error('❌ Failed to send WhatsApp OTP (API Error):', response.data.msg);
+      throw new Error(response.data.msg || 'Failed to send message!');
+    }
+
     console.log(`✅ OTP sent to ${number}`);
   } catch (err) {
-    console.error('❌ Failed to send WhatsApp OTP:', err.response?.data || err.message);
-    throw new Error('Failed to send OTP. Please try again later.');
+    console.error('❌ Failed to send WhatsApp OTP (Request Error):', err.response?.data || err.message);
+    // Re-throw the original error or a more specific one to be caught by the calling function
+    throw new Error(err.response?.data?.msg || err.message || 'Failed to send OTP. Please try again later.');
   }
 }
 
@@ -40,8 +48,12 @@ export const sendOtp = asyncHandler(async (req, res) => {
     if (exists) return res.status(400).json({ error: 'Mobile already registered' });
   }
 
-  const otp = await createAndSendOtp(mobile, purpose, (m, code) => sendWhatsApp(m, code));
-  res.json({ ok: true, message: 'OTP sent successfully', expiresAt: otp.expiresAt });
+  try {
+    const otp = await createAndSendOtp(mobile, purpose, (m, code) => sendWhatsApp(m, code));
+    res.json({ ok: true, message: 'OTP sent successfully', expiresAt: otp.expiresAt });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to send OTP.' });
+  }
 });
 
 // Resend OTP
@@ -130,8 +142,12 @@ export const retailerLoginInit = asyncHandler(async (req, res) => {
   const ok = await user.comparePassword(password);
   if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
 
-  const otp = await createAndSendOtp(mobile, 'login', (m, code) => sendWhatsApp(m, code));
-  res.json({ ok: true, message: 'OTP sent for retailer login', expiresAt: otp.expiresAt });
+  try {
+    const otp = await createAndSendOtp(mobile, 'login', (m, code) => sendWhatsApp(m, code));
+    res.json({ ok: true, message: 'OTP sent for retailer login', expiresAt: otp.expiresAt });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to send OTP.' });
+  }
 });
 
 // Admin Login Step 1 – Verify Password & Send OTP
@@ -149,8 +165,12 @@ export const adminLoginInit = asyncHandler(async (req, res) => {
   const ok = await user.comparePassword(password);
   if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
 
-  const otp = await createAndSendOtp(mobile, 'login', (m, code) => sendWhatsApp(m, code));
-  res.json({ ok: true, message: 'OTP sent for admin login', expiresAt: otp.expiresAt });
+  try {
+    const otp = await createAndSendOtp(mobile, 'login', (m, code) => sendWhatsApp(m, code));
+    res.json({ ok: true, message: 'OTP sent for admin login', expiresAt: otp.expiresAt });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to send OTP.' });
+  }
 });
 
 // Retailer OTP Verification

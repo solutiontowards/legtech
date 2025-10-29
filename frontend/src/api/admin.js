@@ -3,6 +3,8 @@ import api from './axios';
 export const getPendingRetailers =()=>api.get('/admin/pending-retailers');
 export const verifyRetailer = (retailerId, verified) => api.post('/admin/verify-retailer', { retailerId, verified });
 export const getRetailers = () => api.get('/admin/retailers');
+export const getAdmins = () => api.get('/admin/admins');
+export const updateUser = (payload) => api.put('/admin/user', payload);
 export const getServiceById = (id) => api.get(`/admin/service/id/${id}`);
 export const createService = (payload) => api.post('/admin/service', payload);
 export const updateService = (id, payload) => api.put(`/admin/service/${id}`, payload);
@@ -17,3 +19,10 @@ export const createFormField = (payload) => api.post('/admin/form-field', payloa
 export const getServiceCount = () => api.get('/admin/service-count');
 export const getPendingRetailerCount = () => api.get('/admin/pending-retailer-count');
 export const getRetailerCount = () => api.get('/admin/retailer-count');
+
+export const createUser = (payload) => api.post('/admin/user', payload);
+
+// Submission Management
+export const adminListSubmissions = () => api.get('/admin/submissions');
+export const getSubmissionById = (id) => api.get(`/admin/submission/${id}`);
+export const updateSubmissionStatus = (id, payload) => api.put(`/admin/submission/${id}/status`, payload);
