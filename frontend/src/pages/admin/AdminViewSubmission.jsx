@@ -1,22 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getSubmissionById, updateSubmissionStatus } from "../../api/admin";
+import {
+  getSubmissionById,
+  updateSubmissionStatus,
+} from "../../api/admin";
 import toast from "react-hot-toast";
-import { ArrowLeft, Download, FileText, User, Tag, Calendar, MessageSquare, DollarSign, CheckCircle, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  FileText,
+  User,
+  Tag,
+  Calendar,
+  MessageSquare,
+  DollarSign,
+  CheckCircle,
+  XCircle,
+  Loader2,
+} from "lucide-react";
 
 const DetailItem = ({ icon: Icon, label, value }) => (
-  <div className="flex items-start">
-    <Icon className="w-5 h-5 text-gray-500 mr-3 mt-1 flex-shrink-0" />
+  <div className="flex items-start gap-3">
+    <div className="bg-green-50 p-2 rounded-md">
+      <Icon className="w-5 h-5 text-green-600" />
+    </div>
     <div>
-      <p className="text-sm font-medium text-gray-600">{label}</p>
-      <p className="text-base text-gray-800">{value}</p>
+      <p className="text-sm text-gray-500 font-medium">{label}</p>
+      <p className="text-base text-gray-800 font-semibold">{value}</p>
     </div>
   </div>
 );
 
-// Helper to check file type from URL
-const isImage = (url = '') => /\.(jpeg|jpg|gif|png|webp)$/i.test(url);
-const isPdf = (url = '') => /\.pdf$/i.test(url);
+const isImage = (url = "") => /\.(jpeg|jpg|gif|png|webp)$/i.test(url);
+const isPdf = (url = "") => /\.pdf$/i.test(url);
 
 const AdminViewSubmission = () => {
   const { id } = useParams();
@@ -26,7 +42,7 @@ const AdminViewSubmission = () => {
   const [adminRemarks, setAdminRemarks] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
-  async function loadSubmission() {
+  const loadSubmission = async () => {
     try {
       setLoading(true);
       const { data } = await getSubmissionById(id);
@@ -39,9 +55,7 @@ const AdminViewSubmission = () => {
     } finally {
       setLoading(false);
     }
-  }
-
-  console.log(submission)
+  };
 
   useEffect(() => {
     loadSubmission();
@@ -53,79 +67,161 @@ const AdminViewSubmission = () => {
     try {
       await updateSubmissionStatus(id, { status, adminRemarks });
       toast.success("Submission updated successfully!");
-      loadSubmission(); // Refresh data
-    } catch (err) {
+      loadSubmission();
+    } catch {
       toast.error("Failed to update submission.");
     } finally {
       setIsUpdating(false);
     }
   };
 
-  if (loading) {
-    return <div className="p-6 text-center">Loading submission details...</div>;
-  }
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-96 text-gray-600">
+        <Loader2 className="w-6 h-6 animate-spin mr-2" />
+        Loading submission details...
+      </div>
+    );
 
-  if (!submission) {
-    return <div className="p-6 text-center text-red-500">Submission not found.</div>;
-  }
+  if (!submission)
+    return (
+      <div className="p-6 text-center text-red-500">
+        Submission not found.
+      </div>
+    );
 
   return (
-    <div className="p-6">
-      <Link to="/admin/service-requests" className="flex items-center text-green-600 hover:underline mb-6">
+    <div className="p-6 space-y-6">
+      {/* Header Navigation */}
+      <Link
+        to="/admin/service-requests"
+        className="inline-flex items-center text-green-700 font-medium hover:underline"
+      >
         <ArrowLeft size={18} className="mr-2" />
         Back to Service Requests
       </Link>
 
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Details */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-3">Submission Details</h2>
-          <div className="space-y-4">
-            <DetailItem icon={User} label="Retailer" value={submission.retailerId.name} />
-            <DetailItem icon={Tag} label="Service" value={`${submission.serviceId.name}-${submission.optionId.subServiceId.name} - ${submission.optionId.name}`} />
-            <DetailItem icon={DollarSign} label="Amount Paid" value={`₹${submission.amount.toFixed(2)}`} />
-            <DetailItem icon={Calendar} label="Submitted On" value={new Date(submission.createdAt).toLocaleString()} />
-            <DetailItem icon={submission.paymentStatus === 'paid' ? CheckCircle : XCircle} label="Payment Status" value={submission.paymentStatus} />
-            {submission.adminRemarks && <DetailItem icon={MessageSquare} label="Admin Remarks" value={submission.adminRemarks} />}
+        {/* Left: Details */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-md border border-gray-100 p-6 space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
+              Submission Overview
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <DetailItem
+                icon={User}
+                label="Retailer"
+                value={submission.retailerId.name}
+              />
+              <DetailItem
+                icon={Tag}
+                label="Service"
+                value={`${submission.serviceId.name} - ${submission.optionId.subServiceId.name} - ${submission.optionId.name}`}
+              />
+              <DetailItem
+                icon={DollarSign}
+                label="Amount Paid"
+                value={`₹${submission.amount.toFixed(2)}`}
+              />
+              <DetailItem
+                icon={Calendar}
+                label="Submitted On"
+                value={new Date(submission.createdAt).toLocaleString()}
+              />
+              <DetailItem
+                icon={
+                  submission.paymentStatus === "paid"
+                    ? CheckCircle
+                    : XCircle
+                }
+                label="Payment Status"
+                value={
+                  submission.paymentStatus === "paid"
+                    ? "Paid"
+                    : "Pending"
+                }
+              />
+              {submission.adminRemarks && (
+                <DetailItem
+                  icon={MessageSquare}
+                  label="Admin Remarks"
+                  value={submission.adminRemarks}
+                />
+              )}
+            </div>
           </div>
 
-          {/* Submitted Data */}
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-3 border-b pb-2">Submitted Form Data</h3>
-            <div className="space-y-2 text-sm">
+          {/* Form Data */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-3">
+              Submitted Form Data
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               {Object.entries(submission.data).map(([key, value]) => (
-                <p key={key}><strong className="font-medium text-gray-600">{key}:</strong> {String(value)}</p>
+                <div
+                  key={key}
+                  className="bg-gray-50 p-3 rounded-lg border border-gray-100"
+                >
+                  <p className="text-gray-500 font-medium">{key}</p>
+                  <p className="text-gray-800">{String(value)}</p>
+                </div>
               ))}
             </div>
           </div>
 
           {/* Attached Files */}
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-3 border-b pb-2">Attached Files</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-3">
+              Attached Files
+            </h3>
             {submission.files.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {submission.files.map((file, index) => (
-                  <div key={index} className="border rounded-lg overflow-hidden shadow-sm flex flex-col">
-                    <div className="bg-gray-100 flex-grow flex items-center justify-center h-48">
+                  <div
+                    key={index}
+                    className="bg-white border rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden"
+                  >
+                    <div className="h-48 flex items-center justify-center bg-gray-50">
                       {isImage(file.fileUrl) ? (
-                        <img src={file.fileUrl} alt={file.fileName} className="w-full h-full object-contain" />
-                      ) : isPdf(file.fileUrl) ? (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-center p-2">
-                           <FileText className="w-12 h-12 text-red-500" />
-                           <p className="text-xs mt-2 text-gray-600">PDF Document</p>
-                        </div>
+                        <img
+                          src={file.fileUrl}
+                          alt={file.fileName}
+                          className="w-full h-full object-contain"
+                        />
                       ) : (
-                         <div className="w-full h-full flex flex-col items-center justify-center text-center p-2">
-                           <FileText className="w-12 h-12 text-gray-500" />
-                           <p className="text-xs mt-2 text-gray-600">Other File</p>
+                        <div className="flex flex-col items-center text-center text-gray-600">
+                          <FileText
+                            className={`w-12 h-12 ${
+                              isPdf(file.fileUrl)
+                                ? "text-red-500"
+                                : "text-gray-400"
+                            }`}
+                          />
+                          <p className="text-xs mt-2">
+                            {isPdf(file.fileUrl)
+                              ? "PDF Document"
+                              : "Other File"}
+                          </p>
                         </div>
                       )}
                     </div>
-                    <div className="p-3 bg-white">
-                      <p className="text-sm font-medium text-gray-800 truncate" title={file.fileName}>{file.fileName}</p>
-                      <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs text-green-600 hover:underline mt-1">
+                    <div className="p-4">
+                      <p
+                        className="text-sm font-medium text-gray-800 truncate"
+                        title={file.fileName}
+                      >
+                        {file.fileName}
+                      </p>
+                      <a
+                        href={file.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center text-xs text-green-700 font-medium mt-1 hover:underline"
+                      >
                         <Download size={14} className="mr-1" />
-                        View/Download
+                        View / Download
                       </a>
                     </div>
                   </div>
@@ -137,41 +233,59 @@ const AdminViewSubmission = () => {
           </div>
         </div>
 
-        {/* Right Column: Actions */}
-        <div className="bg-white p-6 rounded-lg shadow-md h-fit">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-3">Manage Status</h2>
-          <form onSubmit={handleUpdate}>
-            <div className="mb-4">
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+        {/* Right: Actions */}
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 h-fit sticky top-20">
+          <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
+            Manage Status
+          </h2>
+          <form onSubmit={handleUpdate} className="space-y-4">
+            <div>
+              <label
+                htmlFor="status"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Status
+              </label>
               <select
                 id="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
               >
                 <option value="submitted">Submitted</option>
-                <option value="in-progress">In Progress</option>
                 <option value="completed">Completed</option>
                 <option value="rejected">Rejected</option>
               </select>
             </div>
-            <div className="mb-4">
-              <label htmlFor="adminRemarks" className="block text-sm font-medium text-gray-700 mb-1">Admin Remarks</label>
+            <div>
+              <label
+                htmlFor="adminRemarks"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Admin Remarks
+              </label>
               <textarea
                 id="adminRemarks"
                 rows="4"
                 value={adminRemarks}
                 onChange={(e) => setAdminRemarks(e.target.value)}
                 placeholder="Add remarks for the retailer (optional)"
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
               ></textarea>
             </div>
             <button
               type="submit"
               disabled={isUpdating}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition disabled:bg-gray-400"
             >
-              {isUpdating ? "Updating..." : "Update Status"}
+              {isUpdating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Status"
+              )}
             </button>
           </form>
         </div>

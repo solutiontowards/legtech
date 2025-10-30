@@ -58,10 +58,10 @@ const AdminServicesOption = () => {
   return (
     <div className="w-full p-6 bg-gray-50 min-h-screen">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800 flex items-center gap-2 mb-3 sm:mb-0"><Layers className="text-purple-600" /> Manage Options</h1>
+        <h1 className="text-2xl font-semibold text-gray-800 flex items-center gap-2 mb-3 sm:mb-0"><Layers className="text-blue-600" /> Manage Options</h1>
         <div className="flex items-center gap-2">
           <input type="text" placeholder="Search options..." className="px-3 py-2 border rounded-lg w-full sm:w-64 text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <button onClick={() => navigate("/admin/add-subservice-option")} className="flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-purple-700 transition text-sm">
+          <button onClick={() => navigate("/admin/add-subservice-option")} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition text-sm">
             <PlusCircle size={18} /> Add Option
           </button>
         </div>
@@ -69,7 +69,7 @@ const AdminServicesOption = () => {
 
       <div className="overflow-x-auto bg-white shadow-md rounded-lg">
         <table className="w-full text-sm text-left">
-          <thead className="bg-purple-600 text-white">
+          <thead className="bg-blue-600 text-white">
             <tr>
               <th className="px-4 py-3">Option Name</th>
               <th className="px-4 py-3">Price</th>
@@ -95,11 +95,11 @@ const AdminServicesOption = () => {
                   <td className="px-4 py-3 text-center">
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" checked={opt.isActive} onChange={() => handleToggleStatus(opt._id, opt.isActive)} className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button onClick={() => navigate(`/admin/edit-subservice-option/${opt.parentServiceSlug}/${opt.parentSubServiceSlug}/${opt.slug}`)} className="p-2 text-purple-600 hover:bg-purple-100 rounded-full">
+                    <button onClick={() => navigate(`/admin/edit-subservice-option/${opt.parentServiceSlug}/${opt.parentSubServiceSlug}/${opt.slug}`)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-full">
                       <Edit size={16} />
                     </button>
                   </td>

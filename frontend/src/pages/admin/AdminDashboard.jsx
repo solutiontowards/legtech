@@ -1,13 +1,18 @@
-"use client"
+"use client";
 
 import React, { useState, useEffect } from "react";
-import { getServiceCount, getPendingRetailerCount, getRetailerCount } from "../../api/admin";
+import {
+  getServiceCount,
+  getPendingRetailerCount,
+  getRetailerCount,
+} from "../../api/admin";
 import { Server, UserCheck, Users, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
-const AnimatedCounter = ({ endValue }) => {
+// Smooth animated counter
+const AnimatedCounter = ({ endValue, className }) => {
   const [count, setCount] = useState(0);
-  const duration = 1500; // Animation duration in milliseconds
+  const duration = 1500;
 
   useEffect(() => {
     let start = 0;
@@ -15,35 +20,59 @@ const AnimatedCounter = ({ endValue }) => {
     if (start === end) return;
 
     let startTime = null;
-
     const animate = (currentTime) => {
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / duration, 1);
       const currentCount = Math.floor(progress * (end - start) + start);
       setCount(currentCount);
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
+      if (progress < 1) requestAnimationFrame(animate);
     };
-
     requestAnimationFrame(animate);
   }, [endValue]);
 
-  return <span className="text-4xl font-bold">{count.toLocaleString()}</span>;
+  return (
+    <span className={`${className} tracking-wide`}>
+      {count.toLocaleString()}
+    </span>
+  );
 };
 
+// Redesigned Stat Card
 const StatCard = ({ title, value, icon: Icon, color, loading }) => (
-  <div className="bg-white p-6 rounded-2xl shadow-md flex items-center justify-between transition-transform transform hover:-translate-y-1">
-    <div>
-      <p className="text-sm font-medium text-gray-500">{title}</p>
+  <div
+    className={`
+      group relative overflow-hidden bg-white p-8 rounded-3xl shadow-md
+      flex items-center justify-between transition-all duration-500
+      hover:shadow-2xl hover:-translate-y-2 cursor-pointer
+    `}
+  >
+    {/* Subtle gradient overlay */}
+    <div
+      className={`absolute inset-0 opacity-0 group-hover:opacity-100 ${color} transition-opacity duration-500`}
+    ></div>
+
+    <div className="relative z-10">
       {loading ? (
-        <Loader2 className="animate-spin h-8 w-8 mt-2 text-gray-400" />
+        <Loader2 className="animate-spin h-12 w-12 text-gray-400" />
       ) : (
-        <AnimatedCounter endValue={value} />
+        <AnimatedCounter
+          endValue={value}
+          className="text-5xl font-extrabold text-gray-900 group-hover:text-white transition-colors duration-500"
+        />
       )}
+      <p className="text-base font-medium text-gray-500 group-hover:text-gray-100 transition-colors duration-500 mt-2">
+        {title}
+      </p>
     </div>
-    <div className={`p-4 rounded-full ${color}`}>
-      <Icon className="h-7 w-7 text-white" />
+
+    <div
+      className={`
+        relative z-10 p-5 rounded-2xl bg-gray-100
+        group-hover:bg-white/20 transition-all duration-500
+        transform group-hover:scale-110 group-hover:rotate-6
+      `}
+    >
+      <Icon className="h-10 w-10 text-gray-800 group-hover:text-white transition-colors duration-500" />
     </div>
   </div>
 );
@@ -82,17 +111,33 @@ const AdminDashboard = () => {
   }, []);
 
   const statCardsData = [
-    { title: "Total Services", value: stats.services, icon: Server, color: "bg-blue-500" },
-    { title: "Pending Retailers", value: stats.pendingRetailers, icon: UserCheck, color: "bg-yellow-500" },
-    { title: "Total Retailers", value: stats.totalRetailers, icon: Users, color: "bg-green-500" },
+    {
+      title: "Total Services",
+      value: stats.services,
+      icon: Server,
+      color: "bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600",
+    },
+    {
+      title: "Pending Retailers",
+      value: stats.pendingRetailers,
+      icon: UserCheck,
+      color: "bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500",
+    },
+    {
+      title: "Total Retailers",
+      value: stats.totalRetailers,
+      icon: Users,
+      color: "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500",
+    },
   ];
 
   return (
-    <div className="p-4 sm:p-6">
-      <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">
+    <div className="p-6 sm:p-10 bg-gradient-to-br bg-gray-50 min-h-screen">
+      <h1 className="text-4xl font-extrabold text-gray-900 mb-10 tracking-tight">
         Admin Dashboard
       </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {statCardsData.map((card, index) => (
           <StatCard key={index} {...card} loading={loading} />
         ))}
@@ -101,4 +146,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard
+export default AdminDashboard;
