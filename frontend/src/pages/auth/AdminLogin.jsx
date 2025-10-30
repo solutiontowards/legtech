@@ -18,15 +18,10 @@ export default function AdminLogin() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [resendTimer, setResendTimer] = useState(30);
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, refresh: refreshAuth } = useAuth();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        // If auth state is loaded and the user is an admin, redirect to dashboard
-        if (!authLoading && user && user.role === 'admin') {
-            navigate('/admin/dashboard', { replace: true });
-        }
-    }, [user, authLoading, navigate]);
+
 
 
     useEffect(() => {
@@ -120,6 +115,9 @@ export default function AdminLogin() {
                 mobile: form.mobile,
                 code: otp,
             });
+            // This is the fix: wait for the auth context to update with the new user info.
+            await refreshAuth();
+
             Swal.fire({
                 icon: 'success',
                 title: 'Login Successful',
@@ -127,6 +125,7 @@ export default function AdminLogin() {
                 timer: 2000,
                 showConfirmButton: false,
             });
+            // Now that the auth state is updated, we can safely navigate.
             navigate('/admin/dashboard')
         } catch (err) {
             Swal.fire({
