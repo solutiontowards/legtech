@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { ShieldAlert, Home } from "lucide-react";
+import { ShieldAlert, Home, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -16,10 +16,8 @@ const AdminProtectRoute = ({ children }) => {
     if (loading)
         return (
             <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-blue-100">
-                <div
-                    data-aos="fade-in"
-                    className="text-blue-700 font-semibold text-lg animate-pulse"
-                >
+                <div className="flex flex-col items-center gap-4 text-blue-700 font-semibold text-lg">
+                    <Loader2 className="w-8 h-8 animate-spin" />
                     Loading...
                 </div>
             </div>

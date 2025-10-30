@@ -7,6 +7,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/autoplay';
 import Swal from 'sweetalert2';
+import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
 
 export default function AdminLogin() {
@@ -17,7 +18,16 @@ export default function AdminLogin() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [resendTimer, setResendTimer] = useState(30);
+    const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        // If auth state is loaded and the user is an admin, redirect to dashboard
+        if (!authLoading && user && user.role === 'admin') {
+            navigate('/admin/dashboard', { replace: true });
+        }
+    }, [user, authLoading, navigate]);
+
 
     useEffect(() => {
         let timer;
@@ -160,6 +170,13 @@ export default function AdminLogin() {
         } finally {
             setLoading(false);
         }
+    }
+
+    // Show a loading spinner while checking auth status to prevent form flash
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-gray-50"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>
+        );
     }
 
     return (
