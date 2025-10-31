@@ -27,6 +27,8 @@ import AdminViewSubmission from "./pages/admin/AdminViewSubmission"; // Ensure t
 import AddNewUser from "./pages/admin/AddNewUser";
 import ActiveUsers from "./pages/admin/AdminList";
 import AdminList from "./pages/admin/AdminList";
+import RetailerProtectRoute from "./components/common/RetailerProtectRoute";
+import Services from "./pages/retailer/Services";
 
 const App = () => {
   useEffect(() => {
@@ -74,7 +76,22 @@ const App = () => {
         <Route path="view-submission/:id" element={<AdminViewSubmission />} /> \
         <Route path="add-user" element={<AddNewUser />} />
         <Route path="admin-list" element={<AdminList />} />
-      
+
+
+
+      </Route>
+
+
+      <Route
+        path="/retailer"
+        element={
+          <RetailerProtectRoute>
+            <DashboardLayout />
+          </RetailerProtectRoute>
+        }
+      >
+
+        <Route path="services" element={<Services />} />
 
 
       </Route>

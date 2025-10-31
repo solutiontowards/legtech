@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -19,13 +19,37 @@ import {
   ServerCogIcon,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import Swal from "sweetalert2";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [expandedMenu, setExpandedMenu] = useState(null);
 
+  const handleLogout = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You will be logged out.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, log me out!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const { success, message } = await logout();
+        if (success) {
+          navigate("/");
+          Swal.fire("Logged Out!", "You have been logged out successfully.", "success");
+        } else {
+          Swal.fire("Error!", message, "error");
+        }
+      }
+    });
+  };
+
   const retailerLinks = [
-    { id: "overview", to: "/retailer", text: "Overview", icon: LayoutDashboard },
+    { id: "services", to: "/retailer/services", text: "Services", icon: LayoutDashboard },
     { id: "products", to: "/retailer/products", text: "Products", icon: Package },
     { id: "orders", to: "/retailer/orders", text: "Orders", icon: ShoppingCart },
     { id: "analytics", to: "/retailer/analytics", text: "Analytics", icon: PieChart },
@@ -200,7 +224,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         {/* Footer */}
         <div className="p-4 border-t border-white/10">
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="w-full flex items-center gap-3 px-5 py-3 rounded-l-[30px] hover:bg-red-500/20 text-red-300 transition-all"
           >
             <LogOut className="w-5 h-5" />

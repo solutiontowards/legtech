@@ -117,7 +117,7 @@ export default function Login() {
                 timer: 2000,
                 showConfirmButton: false,
             });
-            setTimeout(() => navigate('/dashboard'), 2000);
+            setTimeout(() => navigate('/retailer/dashboard'), 2000);
         } catch (err) {
             Swal.fire({
                 icon: 'error',

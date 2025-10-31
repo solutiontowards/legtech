@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   Menu,
@@ -11,12 +12,35 @@ import {
   User,
 } from "lucide-react";
 import { getWalletBalance } from "../../api/retailer";
+import Swal from "sweetalert2";
 
 const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const [walletBalance, setWalletBalance] = useState(null);
 
+  const handleLogout = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You will be logged out.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, log me out!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const { success, message } = await logout();
+        if (success) {
+          navigate("/");
+          Swal.fire("Logged Out!", "You have been logged out successfully.", "success");
+        } else {
+          Swal.fire("Error!", message, "error");
+        }
+      }
+    });
+  };
   const phoneNumber = "8250883776";
 
   useEffect(() => {
@@ -114,7 +138,10 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
                   <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                     <Settings className="h-4 w-4 text-gray-500" /> Settings
                   </button>
-                  <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
                     <LogOut className="h-4 w-4" /> Logout
                   </button>
                 </div>

@@ -18,6 +18,19 @@ export const AuthProvider = ({ children }) => {
         } finally { setLoading(false); }
     }
 
+    async function logout() {
+        try {
+            await api.post('/auth/logout');
+            setUser(null);
+            return { success: true, message: 'Logged out successfully.' };
+        } catch (error) {
+            console.error('Logout failed:', error);
+            // Even if server logout fails, clear user from client-side
+            setUser(null); 
+            return { success: false, message: 'Logout failed. Please try again.' };
+        }
+    }
+
 
     useEffect(() => {
         fetchMe();
@@ -25,7 +38,7 @@ export const AuthProvider = ({ children }) => {
 
 
     return (
-        <AuthContext.Provider value={{ user, setUser, loading, refresh: fetchMe }}>
+        <AuthContext.Provider value={{ user, setUser, loading, refresh: fetchMe, logout }}>
             {children}
         </AuthContext.Provider>
     )
