@@ -92,6 +92,8 @@ const App = () => {
       >
 
         <Route path="services" element={<Services />} />
+        <Route path="services/:serviceSlug" element={<Services />} />
+        <Route path="services/:serviceSlug/:subServiceSlug" element={<Services />} />
 
 
       </Route>
