@@ -18,3 +18,24 @@ export const getServiceDetail = asyncHandler(async (req,res)=>{
   }
   res.json({ ok:true, service, subService });
 });
+
+export const getOptionDetail = asyncHandler(async (req, res) => {
+  const { serviceSlug, subServiceSlug, optionSlug } = req.params;
+
+  // 1. Find the parent service by its slug
+  const service = await Service.findOne({ slug: serviceSlug });
+  if (!service) {
+    return res.status(404).json({ ok: false, message: "Service not found" });
+  }
+
+  // 2. Find the sub-service by its slug and parent service's ID
+  const subService = await SubService.findOne({ serviceId: service._id, slug: subServiceSlug });
+  if (!subService) {
+    return res.status(404).json({ ok: false, message: "Sub-service not found" });
+  }
+
+  // 3. Find the option by its slug and parent sub-service's ID
+  const option = await Option.findOne({ subServiceId: subService._id, slug: optionSlug });
+  if (!option) return res.status(404).json({ ok: false, message: "Option not found" });
+  res.json({ ok: true, option });
+});

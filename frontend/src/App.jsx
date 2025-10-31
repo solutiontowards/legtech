@@ -29,6 +29,8 @@ import ActiveUsers from "./pages/admin/AdminList";
 import AdminList from "./pages/admin/AdminList";
 import RetailerProtectRoute from "./components/common/RetailerProtectRoute";
 import Services from "./pages/retailer/Services";
+import ApplicationForm from "./pages/retailer/ApplicationForm";
+import Dashboard from "./pages/retailer/Dashboard";
 
 const App = () => {
   useEffect(() => {
@@ -91,6 +93,9 @@ const App = () => {
         }
       >
 
+
+
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="services" element={<Services />} />
         <Route path="services/:serviceSlug" element={<Services />} />
         <Route path="services/:serviceSlug/:subServiceSlug" element={<Services />} />

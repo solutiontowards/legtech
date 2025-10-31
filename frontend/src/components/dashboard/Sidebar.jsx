@@ -17,6 +17,12 @@ import {
   ShoppingCart,
   PieChart,
   ServerCogIcon,
+  Layers,
+  Wallet,
+  History,
+  User,
+  BarChart3,
+  LifeBuoy,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Swal from "sweetalert2";
@@ -49,10 +55,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   };
 
   const retailerLinks = [
-    { id: "services", to: "/retailer/services", text: "Services", icon: LayoutDashboard },
-    { id: "products", to: "/retailer/products", text: "Products", icon: Package },
-    { id: "orders", to: "/retailer/orders", text: "Orders", icon: ShoppingCart },
-    { id: "analytics", to: "/retailer/analytics", text: "Analytics", icon: PieChart },
+    { id: "dashboard", to: "/retailer/dashboard", text: "Dashboard", icon: LayoutDashboard },
+  { id: "services", to: "/retailer/services", text: "Services", icon: Layers },
+  { id: "wallet", to: "/", text: "Wallet", icon: Wallet },
+  { id: "history", to: "/", text: "History", icon: History },
+  { id: "profile", to: "/", text: "Profile", icon: User },
+  { id: "paymentChart", to: "/", text: "Payment Chart", icon: BarChart3 },
+  { id: "support", to: "/", text: "Support", icon: LifeBuoy },
   ]
 
   const adminLinks = [
@@ -200,7 +209,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                           : "hover:bg-white/10 text-white"
                         }`
                       }
-                    > 
+                    >
                       {({ isActive }) => (
                         <>
                           <Icon className="w-5 h-5" />
@@ -209,8 +218,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                               {link.text}
                             </span>
                           )}
-    
-                    
+
+
                         </>
                       )}
                     </NavLink>

@@ -5,5 +5,6 @@ const router = express.Router();
 router.get('/', services.listServices);
 router.get('/:serviceSlug', services.getServiceDetail);
 router.get('/:serviceSlug/:subServiceSlug', services.getServiceDetail);
+router.get('/:serviceSlug/:subServiceSlug/:optionSlug', services.getOptionDetail);
 
 export default router;

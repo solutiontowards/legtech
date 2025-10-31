@@ -11,14 +11,26 @@ import {
   Settings,
   User,
 } from "lucide-react";
-import { getWalletBalance } from "../../api/retailer";
+import { getWalletBalance } from "../../api/wallet";
 import Swal from "sweetalert2";
 
 const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const [walletBalance, setWalletBalance] = useState(null);
+
+  const fetchBalance = async () => {
+    if (user && user.role === "retailer") {
+      try {
+        const { data } = await getWalletBalance();
+        setWalletBalance(data.balance);
+      } catch (error) {
+        console.error("Failed to fetch wallet balance:", error);
+        setWalletBalance(null); // Set to null on error
+      }
+    }
+  };
 
   const handleLogout = () => {
     Swal.fire({
@@ -44,17 +56,8 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   const phoneNumber = "8250883776";
 
   useEffect(() => {
-    const fetchBalance = async () => {
-      if (user && user.role === "retailer") {
-        try {
-          const { data } = await getWalletBalance();
-          setWalletBalance(data.balance);
-        } catch (error) {
-          console.error("Failed to fetch wallet balance:", error);
-        }
-      }
-    };
     fetchBalance();
+    // We listen for changes on the user object from AuthContext
   }, [user]);
 
   return (
