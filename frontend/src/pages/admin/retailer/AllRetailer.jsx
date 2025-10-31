@@ -130,7 +130,7 @@ const AllRetailer = () => {
       {/* Table */}
       <div className="overflow-x-auto bg-white shadow-md rounded-lg">
         <table className="w-full text-sm text-left">
-          <thead className="bg-blue-500 text-white">
+          <thead className="bg-blue-600 text-white">
             <tr>
               <th className="px-4 py-3">#</th>
               <th className="px-4 py-3">Name</th>

@@ -7,6 +7,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/autoplay';
 import Swal from 'sweetalert2';
+import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
 
 export default function AdminLogin() {
@@ -17,7 +18,11 @@ export default function AdminLogin() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [resendTimer, setResendTimer] = useState(30);
+    const { user, loading: authLoading, refresh: refreshAuth } = useAuth();
     const navigate = useNavigate();
+
+
+
 
     useEffect(() => {
         let timer;
@@ -110,6 +115,9 @@ export default function AdminLogin() {
                 mobile: form.mobile,
                 code: otp,
             });
+            // This is the fix: wait for the auth context to update with the new user info.
+            await refreshAuth();
+
             Swal.fire({
                 icon: 'success',
                 title: 'Login Successful',
@@ -117,6 +125,7 @@ export default function AdminLogin() {
                 timer: 2000,
                 showConfirmButton: false,
             });
+            // Now that the auth state is updated, we can safely navigate.
             navigate('/admin/dashboard')
         } catch (err) {
             Swal.fire({
@@ -160,6 +169,13 @@ export default function AdminLogin() {
         } finally {
             setLoading(false);
         }
+    }
+
+    // Show a loading spinner while checking auth status to prevent form flash
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-gray-50"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>
+        );
     }
 
     return (

@@ -1,26 +1,28 @@
-"use client"
 
-import { useState } from "react"
-import { useAuth } from "../../context/AuthContext"
-import { NavLink } from "react-router-dom"
+import { useState } from "react";
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
+  Users,
+  Briefcase,
+  BriefcaseBusiness,
+  MessageSquare,
+  HelpCircle,
+  Settings,
+  Lock,
+  LogOut,
+  ChevronDown,
+  X,
   Package,
   ShoppingCart,
   PieChart,
-  Settings,
-  LogOut,
-  ChevronDown,
-  Briefcase,
-  ServerCog,
-  Layers,
-  BriefcaseBusiness,
   ServerCogIcon,
-} from "lucide-react"
+} from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
-  const { user, logout } = useAuth()
-  const [expandedMenu, setExpandedMenu] = useState(null)
+  const { user, logout } = useAuth();
+  const [expandedMenu, setExpandedMenu] = useState(null);
 
   const retailerLinks = [
     { id: "overview", to: "/retailer", text: "Overview", icon: LayoutDashboard },
@@ -58,10 +60,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
 
 
-            {
+    {
       id: "user",
       text: "User Managment",
-      icon: ServerCogIcon,
+      icon: Users,
       submenu: [
         { to: "/admin/add-user", text: "Add New User" },
         { to: "/admin/admin-list", text: "Admin List" },
@@ -70,153 +72,144 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   ]
 
   const links = user?.role === "admin" ? adminLinks : retailerLinks
-
-  const toggleMenu = (id) => {
-    setExpandedMenu(expandedMenu === id ? null : id)
-  }
-
-  const activeClass =
-    "bg-green-200 text-green-900 font-semibold shadow-sm"
+  const toggleMenu = (id) => setExpandedMenu(expandedMenu === id ? null : id);
 
   return (
     <>
-      {/* Overlay for mobile */}
-      {isOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onClick={toggleSidebar} />}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
 
-      {/* Sidebar */}
       <aside
-        className={`fixed md:relative top-0 left-0 h-screen z-40 transition-all duration-300 ${isOpen ? "w-64" : "w-0 md:w-20"
-          } bg-green-50 border-r border-green-200 overflow-hidden flex flex-col`}
+        className={`fixed md:relative top-0 left-0 z-[9999] h-screen bg-[#2A2185] text-white shadow-xl 
+          transition-all duration-500 overflow-hidden flex flex-col 
+          ${isOpen ? "w-[280px]" : "w-0 md:w-[80px]"}
+        `}
       >
-        {/* Logo */}
-        <div className="p-4 border-b border-green-200">
-          <div className="flex items-center justify-center">
-            {isOpen && <img src="/logo.png" alt="Logo" className="h-16 w-auto" />}
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
+          <div className="flex items-center space-x-3">
+            <div className="bg-white text-[#2A2185] rounded-full w-10 h-10 flex items-center justify-center font-bold">
+              {user?.name?.charAt(0)?.toUpperCase() || "A"}
+            </div>
+            {isOpen && (
+              <div>
+                <h1 className="font-semibold text-lg leading-tight">{user?.name}</h1>
+                <p className="text-xs text-gray-300 capitalize">
+                  {user?.role || "Admin"}
+                </p>
+              </div>
+            )}
           </div>
+          {isOpen && (
+            <button
+              onClick={toggleSidebar}
+              className="md:hidden text-white hover:bg-white/20 p-2 rounded-full"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
 
-        {/* User info */}
-        {isOpen && (
-          <div className="p-4 border-b border-green-200 bg-green-100">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white bg-green-600 flex-shrink-0">
-                {user?.name?.charAt(0) || "U"}
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm truncate text-gray-900">{user?.name || "User"}</p>
-                <p className="text-xs truncate text-green-700">{user?.email || "user@example.com"}</p>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Menu */}
+        <nav className="flex-1 overflow-y-auto py-6 scrollbar-hide">
+          <ul className="flex flex-col gap-1">
+            {links.map((link) => {
+              const Icon = link.icon;
+              const isExpanded = expandedMenu === link.id;
 
-        {/* Navigation */}
-        <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-          {links.map((link) => {
-            const Icon = link.icon
-            const isExpanded = expandedMenu === link.id
-
-            return (
-              <div key={link.id}>
-                {link.to ? (
-                  <NavLink
-                    to={link.to}
-                    className={({ isActive }) =>
-                      `w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-green-700 hover:bg-green-200 ${isActive ? activeClass : ""
-                      }`
-                    }
-                    title={!isOpen ? link.text : ""}
-                  >
-                    <Icon className="h-5 w-5 flex-shrink-0" />
-                    {isOpen && <span className="ml-3 truncate">{link.text}</span>}
-                  </NavLink>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => toggleMenu(link.id)}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-green-700 hover:bg-green-200"
-                      title={!isOpen ? link.text : ""}
-                    >
-                      <div className="flex items-center space-x-3 min-w-0">
-                        <Icon className="h-5 w-5 flex-shrink-0" />
-                        {isOpen && <span className="truncate">{link.text}</span>}
-                      </div>
-                      {isOpen && (
-                        <ChevronDown
-                          className={`h-4 w-4 flex-shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""
-                            }`}
-                        />
+              return (
+                <li key={link.id} className="relative group">
+                  {link.submenu ? (
+                    <>
+                      <button
+                        onClick={() => toggleMenu(link.id)}
+                        className={`w-full flex items-center justify-between px-5 py-3 rounded-l-[30px] transition-all duration-300 
+                          ${isExpanded ? "bg-white/10 " : "hover:bg-white/10"}
+                        `}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="w-5 h-5" />
+                          {isOpen && (
+                            <span className="text-[15px] font-medium tracking-wide">
+                              {link.text}
+                            </span>
+                          )}
+                        </div>
+                        {isOpen && (
+                          <ChevronDown
+                            size={16}
+                            className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : ""
+                              }`}
+                          />
+                        )}
+                      </button>
+                      {isExpanded && isOpen && (
+                        <div className="ml-10 mt-2 space-y-1 border-l border-white/20 pl-3">
+                          {link.submenu.map((sub, idx) => (
+                            <NavLink
+                              key={idx}
+                              to={sub.to}
+                              className={({ isActive }) =>
+                                `block text-sm px-3 py-2 rounded-lg transition-all ${isActive
+                                  ? "bg-white text-[#2A2185] font-semibold"
+                                  : "text-gray-200 hover:bg-white/10 hover:text-white"
+                                }`
+                              }
+                            >
+                              {sub.text}
+                            </NavLink>
+                          ))}
+                        </div>
                       )}
-                    </button>
-
-                    {isOpen && link.submenu && isExpanded && (
-                      <div className="ml-8 mt-1 space-y-1 border-l-2 border-green-300 pl-2">
-                        {link.submenu.map((subitem, idx) => (
-                          <NavLink
-                            key={idx}
-                            to={subitem.to}
-                            className={({ isActive }) =>
-                              `block w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-colors text-green-600 hover:bg-green-200 hover:text-green-900 ${isActive ? "bg-green-200 text-green-900 font-semibold" : ""
-                              }`
-                            }
-                          >
-                            {subitem.text}
-                          </NavLink>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )
-          })}
+                    </>
+                  ) : (
+                    <NavLink
+                      to={link.to}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 px-5 py-3 rounded-l-[30px] relative transition-all duration-300 
+                          ${isActive
+                          ? "bg-white text-[#2A2185] font-semibold"
+                          : "hover:bg-white/10 text-white"
+                        }`
+                      }
+                    > 
+                      {({ isActive }) => (
+                        <>
+                          <Icon className="w-5 h-5" />
+                          {isOpen && (
+                            <span className="text-[15px] font-medium tracking-wide">
+                              {link.text}
+                            </span>
+                          )}
+    
+                    
+                        </>
+                      )}
+                    </NavLink>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </nav>
 
-        {/* Footer buttons */}
-        {isOpen ? (
-          <div className="p-3 border-t border-green-200 bg-green-100 space-y-1">
-            <NavLink
-              to={user?.role === "admin" ? "/admin/settings" : "/retailer/settings"}
-              className={({ isActive }) =>
-                `w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors text-green-700 hover:bg-green-200 ${isActive ? activeClass : ""
-                }`
-              }
-            >
-              <Settings className="h-5 w-5 mr-3" />
-              <span>Settings</span>
-            </NavLink>
-            <button
-              onClick={logout}
-              className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors text-red-600 hover:bg-green-200"
-            >
-              <LogOut className="h-5 w-5 mr-3" />
-              <span>Logout</span>
-            </button>
-          </div>
-        ) : (
-          <div className="p-2 border-t border-green-200 space-y-2 mt-auto">
-            <NavLink
-              to={user?.role === "admin" ? "/admin/settings" : "/retailer/settings"}
-              className={({ isActive }) =>
-                `w-full p-2 rounded-lg transition-colors text-green-700 hover:bg-green-200 flex justify-center ${isActive ? "bg-green-200 text-green-900" : ""
-                }`
-              }
-              title="Settings"
-            >
-              <Settings className="h-5 w-5" />
-            </NavLink>
-            <button
-              onClick={logout}
-              className="w-full p-2 rounded-lg transition-colors text-red-600 hover:bg-green-200 flex justify-center"
-              title="Logout"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          </div>
-        )}
+        {/* Footer */}
+        <div className="p-4 border-t border-white/10">
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-3 px-5 py-3 rounded-l-[30px] hover:bg-red-500/20 text-red-300 transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            {isOpen && <span className="text-[15px] font-medium">Sign Out</span>}
+          </button>
+        </div>
       </aside>
     </>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

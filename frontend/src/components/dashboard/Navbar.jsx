@@ -1,7 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { Menu, X, LogOut, ChevronDown, Wallet, PhoneCall } from "lucide-react";
+import {
+  Menu,
+  X,
+  LogOut,
+  ChevronDown,
+  Wallet,
+  PhoneCall,
+  Settings,
+  User,
+} from "lucide-react";
 import { getWalletBalance } from "../../api/retailer";
 
 const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
@@ -26,72 +34,90 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   }, [user]);
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-green-50 border-r border-green-200 ">
-      <div className="px-4 sm:px-6 py-3 flex items-center justify-between">
-        {/* Left section - Menu toggle and logo */}
-        <div className="flex items-center space-x-4">
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3">
+        {/* Left section - Logo and menu */}
+        <div className="flex items-center gap-3">
           <button
             onClick={toggleSidebar}
-            className="p-2 rounded-md transition-colors text-gray-600 hover:bg-yellow-100"
+            className="p-2 rounded-lg transition-colors text-gray-600 hover:bg-gray-100 "
           >
-            {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <Menu className="h-5 w-5" />
           </button>
+
+          <div className="flex items-center">
+            <img
+              src="/logo.png"
+              alt="Logo"
+              className="h-14 w-auto object-contain"
+            />
+          </div>
         </div>
 
-        {/* Right section - Controls */}
-        <div className="flex items-center space-x-2 sm:space-x-4">
-          {/* Phone number - hidden on mobile */}
-          <div className="flex items-center space-x-2 px-3 py-2 rounded-full border-2 border-green-600">
-            <PhoneCall className="w-4 h-4 text-green-700" />
-            <span className="text-sm font-medium text-green-700">{phoneNumber}</span>
-          </div>
-
-          {/* Wallet balance */}
+        {/* Right section */}
+        <div className="flex items-center gap-3 sm:gap-5">
+          {/* Wallet (for retailer only) */}
           {user?.role === "retailer" && (
-            <div className="flex items-center space-x-2 px-3 py-2 rounded-full border-2 border-green-600">
-              <Wallet className="h-4 w-4 text-green-700" />
-              <span className="text-sm font-medium text-green-700">
-                {walletBalance !== null ? `₹${walletBalance.toFixed(2)}` : "Loading..."}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-800">
+              <Wallet className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                {walletBalance !== null
+                  ? `₹${walletBalance.toFixed(2)}`
+                  : "Loading..."}
               </span>
             </div>
           )}
 
-          {/* User profile dropdown */}
+          {/* Contact button */}
+          <a
+            href={`tel:${phoneNumber}`}
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-100 transition-colors"
+          >
+            <PhoneCall className="h-4 w-4 text-gray-600" />
+            <span className="text-gray-700">Support</span>
+          </a>
+
+          {/* Profile dropdown */}
           <div className="relative">
             <button
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center space-x-2 px-3 py-2 rounded-full transition-colors hover:bg-yellow-100"
+              className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-full hover:bg-gray-100 transition-colors"
             >
-              <div className="h-8 w-8 rounded-full flex items-center justify-center font-bold text-white bg-green-600">
-                {user?.name?.charAt(0) || "U"}
+              <div className="h-10 w-10 flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-800 to-indigo-600 text-white font-bold text-base">
+                {user?.name?.charAt(0)?.toUpperCase() || "U"}
               </div>
+
               <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium text-gray-900">{user?.name || "User"}</p>
-                <p className="text-xs text-gray-600">{user?.role || "User"}</p>
+                <p className="text-sm font-semibold text-gray-900 leading-tight">
+                  {user?.name || "User"}
+                </p>
+                <p className="text-xs text-gray-500">{user?.role || "Admin"}</p>
               </div>
-              <ChevronDown className="h-4 w-4 hidden sm:block text-gray-500" />
+
+              <ChevronDown
+                className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${profileOpen ? "rotate-180" : ""
+                  } hidden sm:block`}
+              />
             </button>
 
             {/* Dropdown menu */}
             {profileOpen && (
-              <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1 border bg-white border-gray-200">
-                <div className="px-4 py-3 border-b border-gray-200">
-                  <p className="text-sm font-medium text-gray-900">{user?.name || "User"}</p>
-                  <p className="text-xs text-gray-600">{user?.role || "User"}</p>
+              <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white border border-gray-100 animate-fadeIn">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                  <p className="text-xs text-gray-500">{user?.role}</p>
                 </div>
-                <a href="#" className="block px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-yellow-50">
-                  Profile
-                </a>
-                <a href="#" className="block px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-yellow-50">
-                  Settings
-                </a>
-                <button
-                  onClick={logout}
-                  className="w-full text-left px-4 py-2 text-sm flex items-center transition-colors text-red-600 hover:bg-yellow-50"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </button>
+                <div className="py-1">
+                  <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                    <User className="h-4 w-4 text-gray-500" /> Profile
+                  </button>
+                  <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                    <Settings className="h-4 w-4 text-gray-500" /> Settings
+                  </button>
+                  <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                    <LogOut className="h-4 w-4" /> Logout
+                  </button>
+                </div>
               </div>
             )}
           </div>
