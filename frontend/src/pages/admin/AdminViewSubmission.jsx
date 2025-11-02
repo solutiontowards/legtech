@@ -33,6 +33,9 @@ const DetailItem = ({ icon: Icon, label, value }) => (
 
 const isImage = (url = "") => /\.(jpeg|jpg|gif|png|webp)$/i.test(url);
 const isPdf = (url = "") => /\.pdf$/i.test(url);
+const isFileUrl = (value) => {
+  return typeof value === 'string' && value.startsWith('http');
+};
 
 const AdminViewSubmission = () => {
   const { id } = useParams();
@@ -90,6 +93,14 @@ const AdminViewSubmission = () => {
       </div>
     );
 
+  // Separate form data into regular fields and file attachments
+  const formDataItems = Object.entries(submission.data).filter(
+    ([key, value]) => !isFileUrl(value)
+  );
+  const attachedFiles = Object.entries(submission.data).filter(
+    ([key, value]) => isFileUrl(value)
+  );
+
   return (
     <div className="p-6 space-y-6">
       {/* Header Navigation */}
@@ -118,7 +129,7 @@ const AdminViewSubmission = () => {
               <DetailItem
                 icon={Tag}
                 label="Service"
-                value={`${submission.serviceId.name} - ${submission.optionId.subServiceId.name} - ${submission.optionId.name}`}
+                value={`${submission.serviceId?.name || 'N/A'} - ${submission.optionId?.subServiceId?.name || 'N/A'} - ${submission.optionId?.name || 'N/A'}`}
               />
               <DetailItem
                 icon={DollarSign}
@@ -159,15 +170,19 @@ const AdminViewSubmission = () => {
               Submitted Form Data
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              {Object.entries(submission.data).map(([key, value]) => (
+              {formDataItems.length > 0 ? (
+                formDataItems.map(([key, value]) => (
                 <div
                   key={key}
                   className="bg-gray-50 p-3 rounded-lg border border-gray-100"
                 >
                   <p className="text-gray-500 font-medium">{key}</p>
-                  <p className="text-gray-800">{String(value)}</p>
+                  <p className="text-gray-800 break-words">{String(value)}</p>
                 </div>
-              ))}
+              ))
+              ) : (
+                <p className="text-sm text-gray-500 col-span-2">No text data was submitted.</p>
+              )}
             </div>
           </div>
 
@@ -176,31 +191,31 @@ const AdminViewSubmission = () => {
             <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-3">
               Attached Files
             </h3>
-            {submission.files.length > 0 ? (
+            {attachedFiles.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {submission.files.map((file, index) => (
+                {attachedFiles.map(([fileName, fileUrl], index) => (
                   <div
                     key={index}
                     className="bg-white border rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden"
                   >
                     <div className="h-48 flex items-center justify-center bg-gray-50">
-                      {isImage(file.fileUrl) ? (
+                      {isImage(fileUrl) ? (
                         <img
-                          src={file.fileUrl}
-                          alt={file.fileName}
+                          src={fileUrl}
+                          alt={fileName}
                           className="w-full h-full object-contain"
                         />
                       ) : (
                         <div className="flex flex-col items-center text-center text-gray-600">
                           <FileText
                             className={`w-12 h-12 ${
-                              isPdf(file.fileUrl)
+                              isPdf(fileUrl)
                                 ? "text-red-500"
                                 : "text-gray-400"
                             }`}
                           />
                           <p className="text-xs mt-2">
-                            {isPdf(file.fileUrl)
+                            {isPdf(fileUrl)
                               ? "PDF Document"
                               : "Other File"}
                           </p>
@@ -210,18 +225,18 @@ const AdminViewSubmission = () => {
                     <div className="p-4">
                       <p
                         className="text-sm font-medium text-gray-800 truncate"
-                        title={file.fileName}
+                        title={fileName}
                       >
-                        {file.fileName}
+                        {fileName}
                       </p>
                       <a
-                        href={file.fileUrl}
+                        href={fileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center text-xs text-green-700 font-medium mt-1 hover:underline"
                       >
                         <Download size={14} className="mr-1" />
-                        View / Download
+                        View / Download File
                       </a>
                     </div>
                   </div>

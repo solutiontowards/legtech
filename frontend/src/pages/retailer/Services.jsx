@@ -5,21 +5,22 @@ import {
   Loader2,
   ChevronRight,
   Package,
-  ArrowRightCircle,
+  ArrowRight,
   IndianRupee,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { listServices, getServiceDetail } from "../../api/retailer";
+import { useAuth } from "../../context/AuthContext";
 import ApplicationFormModal from "./ApplicationFormModal";
 import NoticeBoard from "./NoticeBoard";
 
 /* ----------------------------------------------------
  🧩 Professional Dashboard Service Card
 ---------------------------------------------------- */
-const ServiceCard = ({ image, name, description, onClick }) => (
+const ServiceCard = ({ image, name, onClick }) => (
   <motion.div
     onClick={onClick}
-    className="group relative rounded-2xl overflow-hidden bg-gradient-to-br from-white to-gray-50 border border-gray-100 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer"
+    className="group relative rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
     whileHover={{ scale: 1.02 }}
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
@@ -30,26 +31,19 @@ const ServiceCard = ({ image, name, description, onClick }) => (
       <motion.img
         src={image}
         alt={name}
-        className="h-full w-full object-cover transform transition-transform duration-700 group-hover:scale-110"
+        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-      <div className="absolute bottom-3 left-4">
-        <h3 className="text-lg font-semibold text-white drop-shadow-lg">
-          {name}
-        </h3>
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
     </div>
 
     {/* Content */}
-    <div className="p-5 bg-white/90 backdrop-blur-sm">
-      <p className="text-gray-600 text-sm line-clamp-2 min-h-[38px]">
-        {description || "Explore this service and its sub-services."}
-      </p>
-
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-sm font-medium text-blue-600">View Details</span>
-        <ArrowRightCircle
-          size={20}
+    <div className="p-4 bg-white">
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-semibold text-gray-800 truncate pr-2">
+          {name}
+        </h3>
+        <ArrowRight
+          size={18}
           className="text-blue-600 group-hover:translate-x-1 transition-transform"
         />
       </div>
@@ -60,9 +54,9 @@ const ServiceCard = ({ image, name, description, onClick }) => (
 /* ----------------------------------------------------
  💼 Professional Dashboard Option Card
 ---------------------------------------------------- */
-const OptionCard = ({ image, name, price, description, onClick }) => (
+const OptionCard = ({ image, name, price, onClick }) => (
   <motion.div
-    className="group relative rounded-2xl overflow-hidden bg-gradient-to-br from-white to-gray-50 border border-gray-100 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer"
+    className="group relative rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300"
     whileHover={{ scale: 1.02 }}
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
@@ -73,36 +67,29 @@ const OptionCard = ({ image, name, price, description, onClick }) => (
       <motion.img
         src={image}
         alt={name}
-        className="h-full w-full object-cover transform transition-transform duration-700 group-hover:scale-110"
+        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-      <div className="absolute bottom-3 left-4">
-        <h3 className="text-lg font-semibold text-white drop-shadow-lg">
-          {name}
-        </h3>
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
     </div>
 
     {/* Content */}
-    <div className="p-5 bg-white/90 backdrop-blur-sm">
-      <p className="text-gray-600 text-sm line-clamp-2 min-h-[38px]">
-        {description || "Premium option available under this sub-service."}
-      </p>
-
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-1 text-blue-600 font-semibold text-xl">
+    <div className="p-4 bg-white">
+      <h3 className="text-base font-semibold text-gray-800 truncate mb-3">
+        {name}
+      </h3>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 text-blue-600 font-bold text-lg">
           <IndianRupee size={18} />
           {price?.toFixed(2)}
         </div>
 
         <motion.button
           onClick={(e) => {
-            e.stopPropagation();
-            onClick();
+            onClick(e); // Pass event
           }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+          className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all"
         >
           Apply Now
         </motion.button>
@@ -117,6 +104,7 @@ const OptionCard = ({ image, name, price, description, onClick }) => (
 const Services = () => {
   const { serviceSlug, subServiceSlug } = useParams();
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -170,6 +158,7 @@ const Services = () => {
   const handleModalClose = () => {
     setModalOpen(false);
     setSelectedOption(null);
+    refreshUser(); // Refresh user context to get updated wallet balance
   };
 
   /* ----------------------------------------------------
@@ -217,7 +206,7 @@ const Services = () => {
     return (
       <AnimatePresence>
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, staggerChildren: 0.1 }}
@@ -227,8 +216,9 @@ const Services = () => {
               key={item._id}
               {...item}
               price={item.price}
-              onClick={() => {
-                if (subServiceSlug) {
+              onClick={(e) => {
+                if (CardComponent === OptionCard) {
+                  e.stopPropagation();
                   handleApplyClick(item);
                 } else if (serviceSlug) {
                   navigate(`/retailer/services/${serviceSlug}/${item.slug}`);
@@ -247,9 +237,9 @@ const Services = () => {
    🧭 Main Layout
   ---------------------------------------------------- */
   return (
-    <div className="p-6 bg-gray-50 min-h-screen flex flex-col lg:flex-row gap-6">
+    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen flex flex-col lg:flex-row gap-6">
       {/* Main Content */}
-      <div className="w-full lg:w-3/4">
+      <div className="w-full lg:flex-1">
         <motion.div
           className="mb-6"
           initial={{ opacity: 0, y: -20 }}
@@ -276,10 +266,6 @@ const Services = () => {
         {renderContent()}
       </div>
 
-      {/* Sidebar */}
-      <div className="hidden lg:block lg:w-1/3">
-        <NoticeBoard />
-      </div>
 
       {/* Modal */}
       {modalOpen && selectedOption && (

@@ -31,6 +31,7 @@ import RetailerProtectRoute from "./components/common/RetailerProtectRoute";
 import Services from "./pages/retailer/Services";
 import ApplicationForm from "./pages/retailer/ApplicationForm";
 import Dashboard from "./pages/retailer/Dashboard";
+import TransctionHistory from "./pages/retailer/TransctionHistory";
 
 const App = () => {
   useEffect(() => {
@@ -99,6 +100,7 @@ const App = () => {
         <Route path="services" element={<Services />} />
         <Route path="services/:serviceSlug" element={<Services />} />
         <Route path="services/:serviceSlug/:subServiceSlug" element={<Services />} />
+        <Route path="transction" element={<TransctionHistory />} />
 
 
       </Route>

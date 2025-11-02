@@ -36,8 +36,8 @@ export default function DashboardLayout({ children }) {
         <Navbar toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
         {/* Content Area - Scrollable */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 lg:p-8"><Outlet /></div>
+        <main className="flex-1 overflow-y-auto ">
+          <div className="p-4 sm:p-6 lg:p-8 "><Outlet /></div>
         </main>
       </div>
     </div>

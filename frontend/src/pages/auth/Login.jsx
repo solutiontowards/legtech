@@ -8,6 +8,7 @@ import 'swiper/css/pagination';
 import 'swiper/css/autoplay';
 import Swal from 'sweetalert2';
 import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Login() {
     const [form, setForm] = useState({ mobile: '', password: '' });
@@ -17,6 +18,7 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [resendTimer, setResendTimer] = useState(30);
+    const { refreshUser, setUser } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -110,14 +112,18 @@ export default function Login() {
                 mobile: form.mobile,
                 code: otp,
             });
+            // This is the fix: wait for the auth context to update with the new user info,
+            // then manually set the user to ensure the context is updated before navigation.
+            const loggedInUser = await refreshUser();
+            if (loggedInUser) setUser(loggedInUser);
+
             Swal.fire({
                 icon: 'success',
                 title: 'Login Successful',
                 text: response.data.message || 'You are now logged in.',
                 timer: 2000,
                 showConfirmButton: false,
-            });
-            setTimeout(() => navigate('/retailer/dashboard'), 2000);
+            }).then(() => navigate('/retailer/dashboard'));
         } catch (err) {
             Swal.fire({
                 icon: 'error',

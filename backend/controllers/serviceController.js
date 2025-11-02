@@ -37,5 +37,10 @@ export const getOptionDetail = asyncHandler(async (req, res) => {
   // 3. Find the option by its slug and parent sub-service's ID
   const option = await Option.findOne({ subServiceId: subService._id, slug: optionSlug });
   if (!option) return res.status(404).json({ ok: false, message: "Option not found" });
-  res.json({ ok: true, option });
+
+  // Convert to a plain object to add properties
+  const optionObject = option.toObject();
+  optionObject.serviceId = service._id; // Add serviceId to the response
+
+  res.json({ ok: true, option: optionObject });
 });

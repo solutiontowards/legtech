@@ -17,8 +17,8 @@ export default function AdminLogin() {
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [resendTimer, setResendTimer] = useState(30);
-    const { user, loading: authLoading, refresh: refreshAuth } = useAuth();
+    const [resendTimer, setResendTimer] = useState(30); // Changed from refreshAuth to refreshUser to match context
+    const { user, loading: authLoading, refreshUser, setUser } = useAuth();
     const navigate = useNavigate();
 
 
@@ -115,8 +115,10 @@ export default function AdminLogin() {
                 mobile: form.mobile,
                 code: otp,
             });
-            // This is the fix: wait for the auth context to update with the new user info.
-            await refreshAuth();
+            // This is the fix: wait for the auth context to update with the new user info,
+            // then manually set the user to ensure the context is updated before navigation.
+            const loggedInUser = await refreshUser();
+            if (loggedInUser) setUser(loggedInUser);
 
             Swal.fire({
                 icon: 'success',
