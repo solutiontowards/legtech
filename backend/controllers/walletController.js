@@ -36,3 +36,13 @@ export const getWalletBalance = asyncHandler(async (req, res) => {
   }
   res.json({ ok: true, balance: wallet.balance });
 });
+
+// Get all transactions for the logged-in user's wallet
+export const getTransactions = asyncHandler(async (req, res) => {
+  const wallet = await Wallet.findOne({ retailerId: req.user._id });
+  if (!wallet) {
+    return res.status(404).json({ ok: false, message: "Wallet not found" });
+  }
+  const transactions = await Transaction.find({ walletId: wallet._id }).sort({ createdAt: -1 });
+  res.json({ ok: true, transactions });
+});

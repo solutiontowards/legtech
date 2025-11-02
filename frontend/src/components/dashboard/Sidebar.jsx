@@ -57,7 +57,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const retailerLinks = [
     { id: "dashboard", to: "/retailer/dashboard", text: "Dashboard", icon: LayoutDashboard },
   { id: "services", to: "/retailer/services", text: "Services", icon: Layers },
-  { id: "wallet", to: "/", text: "Wallet", icon: Wallet },
+  { id: "transction", to: "/retailer/transction", text: "Transactions", icon: PieChart },
   { id: "history", to: "/", text: "History", icon: History },
   { id: "profile", to: "/", text: "Profile", icon: User },
   { id: "paymentChart", to: "/", text: "Payment Chart", icon: BarChart3 },
