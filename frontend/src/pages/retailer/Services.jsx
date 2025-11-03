@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Package,
   ArrowRight,
+  Lock,
   IndianRupee,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -17,11 +18,13 @@ import NoticeBoard from "./NoticeBoard";
 /* ----------------------------------------------------
  🧩 Professional Dashboard Service Card
 ---------------------------------------------------- */
-const ServiceCard = ({ image, name, onClick }) => (
+const ServiceCard = ({ image, name, onClick, isVerified }) => (
   <motion.div
-    onClick={onClick}
-    className="group relative rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
-    whileHover={{ scale: 1.02 }}
+    onClick={isVerified ? onClick : () => {}}
+    className={`group relative rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm transition-all duration-300 ${
+      isVerified ? "hover:shadow-xl hover:-translate-y-1.5 cursor-pointer" : "cursor-not-allowed"
+    }`}
+    whileHover={isVerified ? { scale: 1.02 } : {}}
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4 }}
@@ -31,9 +34,17 @@ const ServiceCard = ({ image, name, onClick }) => (
       <motion.img
         src={image}
         alt={name}
-        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+        className={`h-full w-full object-cover transition-transform duration-700 ${isVerified ? "group-hover:scale-110" : ""}`}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+      {!isVerified && (
+        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white p-4">
+          <Lock size={40} />
+          <p className="mt-2 text-center font-semibold">Retailer Not Verified</p>
+        </div>
+      )}
+      {isVerified && (
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+      )}
     </div>
 
     {/* Content */}
@@ -44,7 +55,7 @@ const ServiceCard = ({ image, name, onClick }) => (
         </h3>
         <ArrowRight
           size={18}
-          className="text-blue-600 group-hover:translate-x-1 transition-transform"
+          className={`transition-transform ${isVerified ? "text-blue-600 group-hover:translate-x-1" : "text-gray-400"}`}
         />
       </div>
     </div>
@@ -54,10 +65,12 @@ const ServiceCard = ({ image, name, onClick }) => (
 /* ----------------------------------------------------
  💼 Professional Dashboard Option Card
 ---------------------------------------------------- */
-const OptionCard = ({ image, name, price, onClick }) => (
+const OptionCard = ({ image, name, price, onClick, isVerified }) => (
   <motion.div
-    className="group relative rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300"
-    whileHover={{ scale: 1.02 }}
+    className={`group relative rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm transition-all duration-300 ${
+      isVerified ? "hover:shadow-xl hover:-translate-y-1.5" : "cursor-not-allowed"
+    }`}
+    whileHover={isVerified ? { scale: 1.02 } : {}}
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4 }}
@@ -67,9 +80,17 @@ const OptionCard = ({ image, name, price, onClick }) => (
       <motion.img
         src={image}
         alt={name}
-        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+        className={`h-full w-full object-cover transition-transform duration-700 ${isVerified ? "group-hover:scale-110" : ""}`}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+      {!isVerified && (
+        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white p-4">
+          <Lock size={40} />
+          <p className="mt-2 text-center font-semibold">Retailer Not Verified</p>
+        </div>
+      )}
+      {isVerified && (
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+      )}
     </div>
 
     {/* Content */}
@@ -78,18 +99,19 @@ const OptionCard = ({ image, name, price, onClick }) => (
         {name}
       </h3>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-blue-600 font-bold text-lg">
+        <div className={`flex items-center gap-1 font-bold text-lg ${isVerified ? "text-blue-600" : "text-gray-500"}`}>
           <IndianRupee size={18} />
           {price?.toFixed(2)}
         </div>
 
         <motion.button
           onClick={(e) => {
-            onClick(e); // Pass event
+            if (isVerified) onClick(e); // Pass event
           }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all"
+          whileHover={isVerified ? { scale: 1.05 } : {}}
+          whileTap={isVerified ? { scale: 0.95 } : {}}
+          disabled={!isVerified}
+          className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           Apply Now
         </motion.button>
@@ -104,7 +126,7 @@ const OptionCard = ({ image, name, price, onClick }) => (
 const Services = () => {
   const { serviceSlug, subServiceSlug } = useParams();
   const navigate = useNavigate();
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -151,7 +173,7 @@ const Services = () => {
   }, [serviceSlug, subServiceSlug]);
 
   const handleApplyClick = (option) => {
-    setSelectedOption(option);
+    if (user?.isVerified) setSelectedOption(option);
     setModalOpen(true);
   };
 
@@ -216,14 +238,17 @@ const Services = () => {
               key={item._id}
               {...item}
               price={item.price}
+              isVerified={user?.isVerified}
               onClick={(e) => {
-                if (CardComponent === OptionCard) {
-                  e.stopPropagation();
-                  handleApplyClick(item);
-                } else if (serviceSlug) {
-                  navigate(`/retailer/services/${serviceSlug}/${item.slug}`);
-                } else {
-                  navigate(`/retailer/services/${item.slug}`);
+                if (user?.isVerified) {
+                  if (CardComponent === OptionCard) {
+                    e.stopPropagation();
+                    handleApplyClick(item);
+                  } else if (serviceSlug) {
+                    navigate(`/retailer/services/${serviceSlug}/${item.slug}`);
+                  } else {
+                    navigate(`/retailer/services/${item.slug}`);
+                  }
                 }
               }}
             />

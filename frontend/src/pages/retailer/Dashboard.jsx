@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Loader2, ChevronRight, Package, IndianRupee, Wallet, BarChart2, CheckCircle } from "lucide-react";
+import { Loader2, ChevronRight, Package, IndianRupee, Wallet, BarChart2, CheckCircle, Info, ShieldAlert } from "lucide-react";
 import toast from "react-hot-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { listServices, getServiceDetail, getWalletBalance } from "../../api/retailer";
@@ -72,6 +72,33 @@ const ItemCard = ({ item, type, onClick }) => (
           <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </div>
       )}
+    </div>
+  </div>
+);
+
+const VerificationNotice = () => (
+  <div data-aos="fade-in" className="mb-6 bg-orange-50 border-l-4 border-orange-500 rounded-r-lg p-5 shadow-md">
+    <div className="flex items-start gap-4">
+      <div className="flex-shrink-0">
+        <ShieldAlert className="h-6 w-6 text-orange-500" />
+      </div>
+      <div className="flex-1">
+        <h3 className="text-lg font-bold text-orange-800">Account Pending Verification</h3>
+        <p className="mt-1 text-sm text-orange-700">
+          Your retailer account is not active yet. Please wait for an administrator to approve your account.
+        </p>
+        <p className="mt-2 text-sm text-orange-700">
+          To potentially speed up the verification process, you can add a minimum balance to your wallet. This shows your commitment and helps us prioritize your application.
+        </p>
+        <div className="mt-4 flex flex-col sm:flex-row gap-3">
+          <Link to="/retailer/wallet" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+            Top-up Wallet
+          </Link>
+          <Link to="/retailer/services" className="inline-flex items-center justify-center px-4 py-2 border border-orange-500 text-sm font-medium rounded-md text-orange-700 bg-transparent hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+            Explore Our Services
+          </Link>
+        </div>
+      </div>
     </div>
   </div>
 );
@@ -233,6 +260,8 @@ const Dashboard = () => {
             ))}
           </nav>
         </div>
+
+        {!user?.isVerified && <VerificationNotice />}
 
         {!serviceSlug && <StatsAndChart walletBalance={walletBalance} servicesCount={servicesCount} />}
         
