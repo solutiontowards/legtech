@@ -195,6 +195,46 @@ export const updateSubmissionStatus = asyncHandler(async (req,res)=>{
   res.json({ ok:true, submission });
 });
 
+export const getRetailerDashboardStats = asyncHandler(async (req, res) => {
+  const retailerId = req.user._id;
+
+  // 1. Get stats for the current month
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  // 2. Get count of paid applications this month
+  const monthlyApplicationsCount = await Submission.countDocuments({
+    retailerId,
+    paymentStatus: 'paid',
+    createdAt: { $gte: startDate, $lt: endDate },
+  });
+
+  // 3. Get service usage data for the chart (top 5 services this month)
+  const serviceUsage = await Submission.aggregate([
+    // Match submissions for the current retailer in the current month
+    { $match: { retailerId, createdAt: { $gte: startDate, $lt: endDate } } },
+    // Join with the services collection to get the service name
+    { $lookup: { from: 'services', localField: 'serviceId', foreignField: '_id', as: 'service' } },
+    // Deconstruct the service array
+    { $unwind: '$service' },
+    // Group by service name and count applications
+    { $group: { _id: '$service.name', applications: { $sum: 1 } } },
+    // Sort by count in descending order
+    { $sort: { applications: -1 } },
+    // Limit to the top 5
+    { $limit: 5 },
+    // Reshape the output
+    { $project: { _id: 0, name: '$_id', applications: '$applications' } },
+  ]);
+
+  res.json({
+    ok: true,
+    monthlyApplicationsCount,
+    serviceUsage,
+  });
+});
+
 export const reUploadDocuments = asyncHandler(async (req, res) => {
   const { submissionId } = req.params;
   const { files } = req.body;

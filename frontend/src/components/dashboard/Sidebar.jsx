@@ -60,7 +60,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   { id: "services", to: "/retailer/services", text: "Services", icon: Layers },
   { id: "transction", to: "/retailer/transction", text: "Transactions", icon: PieChart },
   { id: "history", to: "/retailer/submission-history", text: "History", icon: History },
-  { id: "profile", to: "/retailer/profile", text: "Profile", icon: User },
   { id: "paymentChart", to: "/retailer/payment-chart", text: "Payment Chart", icon: BarChart3 },
   { id: "support", to: "/retailer/support", text: "Support", icon: LifeBuoy },
   ]

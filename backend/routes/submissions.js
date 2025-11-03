@@ -12,5 +12,7 @@ router.get('/:submissionId', auth, submission.getRetailerSubmissionById);
 router.put('/:submissionId/re-upload', auth, submission.reUploadDocuments);
 router.get('/admin', auth, authorize('admin'), submission.adminListSubmissions);
 router.put('/:submissionId/status', auth, authorize('admin'), submission.updateSubmissionStatus);
+// export const getDashboardStats = () => api.get("/submissions/stats/dashboard");
+router.get('/stats/dashboard', auth, submission.getRetailerDashboardStats);
 
 export default router;

@@ -1,5 +1,7 @@
 import api from "./axios";
 
+export const getDashboardStats = () => api.get("/submissions/stats/dashboard");
+
 export const getWalletBalance = () => api.get("/wallet/wallet-balance");
 
 // List all parent services
@@ -29,3 +31,7 @@ export const reUploadDocuments = (id, payload) => api.put(`/submissions/${id}/re
 export const retrySubmissionPayment = (id, payload) => api.put(`/submissions/${id}/retry-payment`, payload);
 // verifyRazorpayPayment
 export const verifyRazorpayPayment = (id, payload) => api.put(`/submissions/${id}/verify-payment`, payload);
+
+// Get total service count
+export const getServiceCount = () => api.get('/services/count');
+

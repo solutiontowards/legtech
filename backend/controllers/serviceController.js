@@ -44,3 +44,9 @@ export const getOptionDetail = asyncHandler(async (req, res) => {
 
   res.json({ ok: true, option: optionObject });
 });
+
+// Get Couting for service count in number lenth for count
+export const getServiceCount = asyncHandler(async (req, res) => {
+  const count = await Service.countDocuments();
+  res.json({ ok: true, count });
+});
