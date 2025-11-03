@@ -12,6 +12,7 @@ import serviceRoutes from './routes/services.js';
 import submissionRoutes from './routes/submissions.js';
 import walletRoutes from './routes/wallet.js';
 import uploadRoutes from './routes/upload.js';
+import noticesRoutes from './routes/notices.js';
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/notices', noticesRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true, time: new Date() }));
 app.get("/", (req, res) => res.send("Server is running"));

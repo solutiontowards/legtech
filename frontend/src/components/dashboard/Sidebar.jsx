@@ -23,6 +23,7 @@ import {
   User,
   BarChart3,
   LifeBuoy,
+  Megaphone,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Swal from "sweetalert2";
@@ -89,6 +90,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     },
 
     { id: "Service-Requests", to: "/admin/service-requests", text: "Service Requests", icon: LayoutDashboard },
+    { id: "notices", to: "/admin/manage-notices", text: "Manage Notices", icon: Megaphone },
 
 
 

@@ -1,197 +1,125 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Megaphone, AlertCircle, TrendingUp, Lock } from "lucide-react"
-
-const notices = [
-  {
-    id: 1,
-    text: "System maintenance scheduled for Sunday at 2 AM. Expect brief downtime.",
-    icon: AlertCircle,
-    type: "maintenance",
-  },
-  {
-    id: 2,
-    text: "New PAN card services are now live! Check them out in the services section.",
-    icon: TrendingUp,
-    type: "feature",
-  },
-  {
-    id: 3,
-    text: "Please update your KYC details by month-end to avoid service interruption.",
-    icon: Lock,
-    type: "alert",
-  },
-  {
-    id: 4,
-    text: "Special offer: Get 20% bonus on wallet top-ups above ₹5000 this week.",
-    icon: TrendingUp,
-    type: "promotion",
-  },
-  {
-    id: 5,
-    text: "Terms of service updated. Please review them at your earliest convenience.",
-    icon: AlertCircle,
-    type: "update",
-  },
-  {
-    id: 6,
-    text: "Customer support unavailable on national holidays.",
-    icon: AlertCircle,
-    type: "info",
-  },
-]
+import React, { useState, useEffect, useRef } from "react";
+import { Megaphone, AlertCircle } from "lucide-react";
+import toast from "react-hot-toast";
+import { getActiveNotices } from "../../api/notice";
 
 const NoticeBoard = () => {
-  const [displayNotices, setDisplayNotices] = useState([])
+  const [notices, setNotices] = useState([]);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const scrollContainerRef = useRef(null);
+  const scrollTrackRef = useRef(null);
 
+  // Fetch notices from API
   useEffect(() => {
-    // Double the notices for seamless looping
-    setDisplayNotices([...notices, ...notices])
-  }, [])
+    const fetchNotices = async () => {
+      try {
+        const { data } = await getActiveNotices();
+        if (data?.ok && Array.isArray(data.notices) && data.notices.length > 0) {
+          setNotices(data.notices);
+        } else {
+          setNotices([]);
+        }
+      } catch (err) {
+        console.error("Error fetching notices:", err);
+        toast.error("Failed to load announcements");
+      }
+    };
 
-  const getIconColor = (type) => {
-    const colors = {
-      maintenance: "text-orange-500",
-      feature: "text-green-500",
-      alert: "text-red-500",
-      promotion: "text-blue-500",
-      update: "text-purple-500",
-      info: "text-slate-500",
-    }
-    return colors[type] || "text-slate-500"
-  }
+    fetchNotices();
+  }, []);
 
-  const getBackgroundColor = (type) => {
-    const colors = {
-      maintenance: "bg-orange-50",
-      feature: "bg-green-50",
-      alert: "bg-red-50",
-      promotion: "bg-blue-50",
-      update: "bg-purple-50",
-      info: "bg-slate-50",
+  // Detect overflow for scroll animation
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    const track = scrollTrackRef.current;
+    if (container && track) {
+      setIsOverflowing(track.scrollHeight > container.clientHeight);
     }
-    return colors[type] || "bg-slate-50"
-  }
+  }, [notices]);
+
+  // Only duplicate if more than one notice and scrolling is active
+  const shouldDuplicate = isOverflowing && notices.length > 1;
 
   return (
     <div className="w-full max-w-4xl mx-auto">
+      {/* Animation styles */}
       <style>{`
-        @keyframes scroll-top-to-bottom {
-          0% {
-            transform: translateY(0);
-          }
-          100% {
-            transform: translateY(-50%);
-          }
+        @keyframes scroll-loop {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-50%); }
         }
-
-        .notice-scroll-container {
-          overflow: hidden;
-          border-radius: 16px;
-          background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+        .animate-scroll {
+          animation: scroll-loop 24s linear infinite;
         }
-
-        .notice-scroll-track {
-          animation: scroll-top-to-bottom 24s linear infinite;
-          padding-top: 12px;
-        }
-
-        .notice-scroll-container:hover .notice-scroll-track {
+        .pause:hover .animate-scroll {
           animation-play-state: paused;
-        }
-
-        .notice-item {
-          padding: 20px 28px;
-          border-bottom: 1px solid #f1f5f9;
-          display: flex;
-          gap: 18px;
-          align-items: flex-start;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .notice-item:hover {
-          background-color: rgba(59, 130, 246, 0.08);
-          transform: translateX(6px);
-          padding-left: 34px;
-        }
-
-        .notice-item:last-of-type {
-          border-bottom: none;
-        }
-
-        .notice-icon-wrapper {
-          flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
-          background-color: rgba(59, 130, 246, 0.12);
-          transition: all 0.3s ease;
-        }
-
-        .notice-item:hover .notice-icon-wrapper {
-          background-color: rgba(59, 130, 246, 0.18);
-          transform: scale(1.08);
-        }
-
-        .notice-content {
-          flex: 1;
-          padding-top: 2px;
-        }
-
-        .notice-text {
-          font-size: 15px;
-          line-height: 1.7;
-          color: #2d3748;
-          font-weight: 500;
-          letter-spacing: 0.3px;
-        }
-
-        .notice-item:hover .notice-text {
-          color: #1a202c;
         }
       `}</style>
 
-      {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex items-center gap-4 mb-2">
-          <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-lg">
-            <Megaphone className="w-7 h-7 text-white" strokeWidth={1.8} />
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Announcements</h2>
-            <p className="text-sm text-slate-600 mt-1 font-medium">Stay updated with the latest news and updates</p>
-          </div>
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-14 h-14 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg">
+          <Megaphone className="w-7 h-7 text-white" strokeWidth={1.8} />
+        </div>
+        <div>
+          <h2 className="text-3xl font-bold text-slate-900">Announcements</h2>
+          <p className="text-sm text-slate-600 font-medium">
+            Stay updated with the latest news and updates
+          </p>
         </div>
       </div>
 
-      {/* Scrolling Container - CHANGE: Increased height from 280px to 520px for more prominent display */}
-      <div className="notice-scroll-container" style={{ height: "520px" }}>
-        <div className="notice-scroll-track">
-          {displayNotices.map((notice, index) => {
-            const IconComponent = notice.icon
-            return (
-              <div key={`${notice.id}-${index}`} className="notice-item">
-                <div className="notice-icon-wrapper">
-                  <IconComponent className={`w-6 h-6 ${getIconColor(notice.type)}`} strokeWidth={1.5} />
+      {/* Notice Container */}
+      <div
+        ref={scrollContainerRef}
+        className="relative h-[520px] overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 shadow-xl pause"
+      >
+        <div
+          ref={scrollTrackRef}
+          className={`pt-3 transition-all ${isOverflowing ? "animate-scroll" : ""}`}
+        >
+          {notices.length > 0 ? (
+            <>
+              {notices.map((notice, i) => (
+                <div
+                  key={notice._id || i}
+                  className="flex items-start gap-4 px-7 py-5 border-b border-slate-100 hover:bg-blue-50/60 transition-all duration-300 hover:translate-x-1"
+                >
+                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <p className="text-[15px] leading-relaxed text-slate-700 font-medium tracking-wide">
+                    {notice.text}
+                  </p>
                 </div>
-                <div className="notice-content">
-                  <p className="notice-text">{notice.text}</p>
-                </div>
-              </div>
-            )
-          })}
+              ))}
+              {shouldDuplicate &&
+                notices.map((notice, i) => (
+                  <div
+                    key={`dup-${notice._id || i}`}
+                    className="flex items-start gap-4 px-7 py-5 border-b border-slate-100 hover:bg-blue-50/60 transition-all duration-300"
+                    aria-hidden="true"
+                  >
+                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                      <AlertCircle className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <p className="text-[15px] leading-relaxed text-slate-700 font-medium tracking-wide">
+                      {notice.text}
+                    </p>
+                  </div>
+                ))}
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-[520px] text-slate-500 font-medium">
+              No announcements available right now.
+            </div>
+          )}
         </div>
       </div>
-
-
     </div>
-  )
-}
+  );
+};
 
-export default NoticeBoard
+export default NoticeBoard;

@@ -23,6 +23,7 @@ import AddSubServices from "./pages/admin/subservices/AddSubServices";
 import AdminServicesOption from "./pages/admin/service-option/AdminSubServicesOption";
 import AddSubServicesOption from "./pages/admin/service-option/AddSubServicesOption";
 import AdminServiceRequest from "./pages/admin/AdminServiceRequest";
+import AdminNotices from "./pages/admin/AdminNotices"; // Import the new page
 import AdminViewSubmission from "./pages/admin/AdminViewSubmission"; // Ensure this is imported
 import AddNewUser from "./pages/admin/AddNewUser";
 import ActiveUsers from "./pages/admin/AdminList";
@@ -80,6 +81,7 @@ const App = () => {
         <Route path="add-subservice-option" element={<AddSubServicesOption />} />
         <Route path="edit-subservice-option/:serviceSlug/:subServiceSlug/:optionSlug" element={<AddSubServicesOption />} />
         <Route path="service-requests" element={<AdminServiceRequest />} />
+        <Route path="manage-notices" element={<AdminNotices />} />
         <Route path="view-submission/:id" element={<AdminViewSubmission />} /> \
         <Route path="add-user" element={<AddNewUser />} />
         <Route path="admin-list" element={<AdminList />} />
