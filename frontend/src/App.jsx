@@ -29,13 +29,13 @@ import ActiveUsers from "./pages/admin/AdminList";
 import AdminList from "./pages/admin/AdminList";
 import RetailerProtectRoute from "./components/common/RetailerProtectRoute";
 import Services from "./pages/retailer/Services";
-import ApplicationForm from "./pages/retailer/ApplicationForm";
 import Dashboard from "./pages/retailer/Dashboard";
 import TransctionHistory from "./pages/retailer/TransctionHistory";
 import SubmissionHistory from "./pages/retailer/SubmissionHistory";
 import PaymentChart from "./pages/retailer/PaymentChart";
 import ViewSubmission from "./pages/retailer/ViewSubmission";
 import Support from "./pages/retailer/Support";
+import ApplicationForm from "./pages/retailer/ApplicationForm";
 
 const App = () => {
   useEffect(() => {
@@ -104,6 +104,7 @@ const App = () => {
         <Route path="services" element={<Services />} />
         <Route path="services/:serviceSlug" element={<Services />} />
         <Route path="services/:serviceSlug/:subServiceSlug" element={<Services />} />
+        <Route path="apply/:serviceSlug/:subServiceSlug/:optionSlug" element={<ApplicationForm />} />
         <Route path="submission-history" element={<SubmissionHistory />} />
         <Route path="view-submission/:id" element={<ViewSubmission />} />
         <Route path="payment-chart" element={<PaymentChart />} />

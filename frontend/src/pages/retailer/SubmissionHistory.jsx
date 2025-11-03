@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { listRetailerSubmissions } from "../../api/retailer";
 import { listServices } from "../../api/services";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { Link } from "react-router-dom";
-import { Eye, FileDown, FilterX, Search, Filter } from "lucide-react";
+import { Eye, FileDown, FilterX, Search, Filter, RefreshCw } from "lucide-react";
 import * as XLSX from "xlsx";
+import RetryPaymentModal from "./RetryPaymentModal";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -13,6 +14,8 @@ const SubmissionHistory = () => {
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState([]);
   const [search, setSearch] = useState("");
+  const [retryModalOpen, setRetryModalOpen] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
 
   // Filters
   const [stagedFilters, setStagedFilters] = useState({
@@ -33,25 +36,26 @@ const SubmissionHistory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Initial Load
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [subsRes, servicesRes] = await Promise.all([
+        listRetailerSubmissions(),
+        listServices(),
+      ]);
+      setAllSubmissions(subsRes.data?.subs || []);
+      setServices(servicesRes.data?.services || []);
+    } catch (err) {
+      toast.error("Failed to load submission history");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [subsRes, servicesRes] = await Promise.all([
-          listRetailerSubmissions(),
-          listServices(),
-        ]);
-        setAllSubmissions(subsRes.data?.subs || []);
-        setServices(servicesRes.data?.services || []);
-      } catch (err) {
-        toast.error("Failed to load submission history");
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, []);
+
 
   // Filter Logic
   const handleFilterChange = (e) => {
@@ -151,8 +155,20 @@ const SubmissionHistory = () => {
     currentPage * itemsPerPage
   );
 
+  const handleRetryClick = (submission) => {
+    setSelectedSubmission(submission);
+    setRetryModalOpen(true);
+  };
+
+  const handleModalClose = (refresh) => {
+    setRetryModalOpen(false);
+    setSelectedSubmission(null);
+    if (refresh) loadData(); // Reload data if payment was successful
+  };
+
   return (
     <div className="p-4 md:p-6 bg-gray-50 min-h-screen flex flex-col">
+      <Toaster position="top-center" />
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
@@ -300,19 +316,31 @@ const SubmissionHistory = () => {
                   <td className="p-4 text-gray-700 font-semibold">
                     ₹{sub.amount?.toFixed(2)}
                   </td>
-                  <td className="p-4 text-gray-600">{sub.paymentMethod}</td>
+                  <td className="p-4 text-gray-600 capitalize">{sub.paymentMethod}</td>
                   <td className="p-4">
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        sub.paymentStatus === "paid"
-                          ? "bg-green-100 text-green-700"
-                          : sub.paymentStatus === "failed"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {sub.paymentStatus || "N/A"}
-                    </span>
+                    <div className="flex flex-col items-center gap-1">
+                      <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${
+                          sub.paymentStatus === "paid"
+                            ? "bg-green-100 text-green-700"
+                            : sub.paymentStatus === "failed"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {sub.paymentStatus || "N/A"}
+                      </span>
+                      {sub.paymentStatus === "failed" && (
+                        <button
+                          onClick={() => handleRetryClick(sub)}
+                          className="flex items-center justify-center gap-1.5 mt-2 px-2.5 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-xs font-semibold"
+                          title="Retry Payment"
+                        >
+                          <RefreshCw size={12} />
+                          Retry Payment
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td className="p-4">
                     <span
@@ -339,10 +367,8 @@ const SubmissionHistory = () => {
                     {new Date(sub.createdAt).toLocaleDateString()}
                   </td>
                   <td className="p-4 text-center">
-                    <Link
-                      to={`/retailer/view-submission/${sub._id}`}
-                      className="text-green-600 hover:text-green-800 p-2 rounded-full hover:bg-green-50 inline-block"
-                    >
+                    <Link to={`/retailer/view-submission/${sub._id}`}
+                      className="text-green-600 hover:text-green-800 p-2 rounded-full hover:bg-green-100 inline-block" title="View Details">
                       <Eye size={18} />
                     </Link>
                   </td>
@@ -383,6 +409,14 @@ const SubmissionHistory = () => {
             Next
           </button>
         </div>
+      )}
+
+      {retryModalOpen && selectedSubmission && (
+        <RetryPaymentModal
+          submission={selectedSubmission}
+          onClose={() => handleModalClose(false)}
+          onSuccess={() => handleModalClose(true)}
+        />
       )}
     </div>
   );

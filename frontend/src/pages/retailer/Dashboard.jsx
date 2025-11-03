@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { listServices, getServiceDetail, getWalletBalance } from "../../api/retailer";
 import { useAuth } from "../../context/AuthContext"; // refreshUser is now used
-import ApplicationFormModal from "./ApplicationFormModal";
 import NoticeBoard from "./NoticeBoard";
 
 const chartData = [

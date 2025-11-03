@@ -12,8 +12,6 @@ import {
 import toast from "react-hot-toast";
 import { listServices, getServiceDetail } from "../../api/retailer";
 import { useAuth } from "../../context/AuthContext";
-import ApplicationFormModal from "./ApplicationFormModal";
-import NoticeBoard from "./NoticeBoard";
 
 /* ----------------------------------------------------
  🧩 Professional Dashboard Service Card
@@ -132,8 +130,6 @@ const Services = () => {
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("All Services");
   const [breadcrumbs, setBreadcrumbs] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -173,14 +169,9 @@ const Services = () => {
   }, [serviceSlug, subServiceSlug]);
 
   const handleApplyClick = (option) => {
-    if (user?.isVerified) setSelectedOption(option);
-    setModalOpen(true);
-  };
-
-  const handleModalClose = () => {
-    setModalOpen(false);
-    setSelectedOption(null);
-    refreshUser(); // Refresh user context to get updated wallet balance
+    if (user?.isVerified) {
+      navigate(`/retailer/apply/${serviceSlug}/${subServiceSlug}/${option.slug}`);
+    }
   };
 
   /* ----------------------------------------------------
@@ -290,18 +281,6 @@ const Services = () => {
 
         {renderContent()}
       </div>
-
-
-      {/* Modal */}
-      {modalOpen && selectedOption && (
-        <ApplicationFormModal
-          serviceSlug={serviceSlug}
-          subServiceSlug={subServiceSlug}
-          optionSlug={selectedOption.slug}
-          onClose={handleModalClose}
-          onSubmitted={handleModalClose}
-        />
-      )}
     </div>
   );
 };

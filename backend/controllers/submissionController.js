@@ -15,21 +15,35 @@ export const createSubmission = asyncHandler(async (req,res)=>{
 
   if (paymentMethod === 'wallet') {
     const wallet = await Wallet.findOne({ retailerId: req.user._id });
-    if (!wallet || wallet.balance < amount) return res.status(400).json({ error: 'Insufficient wallet balance' });
-    wallet.balance -= amount; await wallet.save();
-    const tx = await Transaction.create({ walletId: wallet._id, type: 'debit', amount, meta: { reason: 'service purchase', optionId } });
-    wallet.transactions.push(tx._id); await wallet.save();
-    const submission = await Submission.create({ 
-      retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'paid', status: 'Submitted',
-      statusHistory: [{
-        status: 'Submitted',
-        remarks: 'Application submitted by retailer.',
-        updatedBy: req.user._id
-      }]
-    });
-    return res.json({ ok:true, submission });
-  }
+    const hasSufficientFunds = wallet && wallet.balance >= amount;
 
+    if (hasSufficientFunds) {
+      wallet.balance -= amount; await wallet.save();
+      const tx = await Transaction.create({ walletId: wallet._id, type: 'debit', amount, meta: { reason: 'service purchase', optionId } });
+      wallet.transactions.push(tx._id); await wallet.save();
+      const submission = await Submission.create({ 
+        retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'paid', status: 'Submitted',
+        statusHistory: [{
+          status: 'Submitted',
+          remarks: 'Application submitted by retailer.',
+          updatedBy: req.user._id
+        }]
+      });
+      return res.json({ ok:true, submission });
+    } else {
+      // Insufficient funds, create submission with failed payment status
+      const submission = await Submission.create({ 
+        retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'failed', status: 'Submitted',
+        statusHistory: [{
+          status: 'Submitted',
+          remarks: 'Application submitted with failed wallet payment due to insufficient funds.',
+          updatedBy: req.user._id
+        }]
+      });
+      return res.status(201).json({ ok: true, submission, paymentFailed: true, message: 'Insufficient wallet balance. Submission created with failed payment status.' });
+    }
+  }
+  
   // online payment
   const order = await razorpay.orders.create({ amount: Math.round(amount * 100), currency: 'INR', receipt: `sub_${req.user._id}_${Date.now()}` });
   const submission = await Submission.create({ 
@@ -49,6 +63,43 @@ export const verifyRazorpayPayment = asyncHandler(async (req,res)=>{
   const submission = await Submission.findById(submissionId);
   if (!submission) return res.status(404).json({ error: 'Submission not found' });
   submission.paymentStatus = 'paid';
+  await submission.save();
+  res.json({ ok:true, submission });
+});
+
+export const retrySubmissionPayment = asyncHandler(async (req, res) => {
+  const { submissionId } = req.params;
+  const { paymentMethod } = req.body;
+
+  const submission = await Submission.findById(submissionId);
+  if (!submission || submission.retailerId.toString() !== req.user._id.toString()) {
+    return res.status(404).json({ error: 'Submission not found or access denied' });
+  }
+
+  if (submission.paymentStatus === 'paid') {
+    return res.status(400).json({ error: 'Payment has already been made for this submission.' });
+  }
+
+  const amount = submission.amount || 0;
+
+  if (paymentMethod === 'wallet') {
+    const wallet = await Wallet.findOne({ retailerId: req.user._id });
+    if (!wallet || wallet.balance < amount) {
+      return res.status(400).json({ error: 'Insufficient wallet balance' });
+    }
+    wallet.balance -= amount;
+    const tx = await Transaction.create({ walletId: wallet._id, type: 'debit', amount, meta: { reason: 'service purchase retry', submissionId: submission._id } });
+    wallet.transactions.push(tx._id);
+    await wallet.save();
+    submission.paymentStatus = 'paid';
+    submission.paymentMethod = 'wallet';
+    await submission.save();
+    return res.json({ ok: true, submission });
+  }
+
+  // For online payment, create a new order and send it back
+  const order = await razorpay.orders.create({ amount: Math.round(amount * 100), currency: 'INR', receipt: `retry_${submission._id}_${Date.now()}` });
+  submission.paymentMethod = 'online';
   await submission.save();
   res.json({ ok:true, submission });
 });
