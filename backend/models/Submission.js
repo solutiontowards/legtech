@@ -1,6 +1,13 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
+const StatusHistorySchema = new Schema({
+  status: { type: String, required: true },
+  remarks: String,
+  updatedBy: { type: Schema.Types.ObjectId, ref: "User" },
+  updatedAt: { type: Date, default: Date.now }
+});
+
 const SubmissionSchema = new Schema(
   {
     retailerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
@@ -8,7 +15,8 @@ const SubmissionSchema = new Schema(
     subServiceId: { type: Schema.Types.ObjectId, ref: "SubService" },
     optionId: { type: Schema.Types.ObjectId, ref: "Option" },
     data: Schema.Types.Mixed, // fieldName -> value (text or uploaded file URL)
-    files: [Schema.Types.Mixed], // array of { url, originalname, mimetype }
+    files: [Schema.Types.Mixed], // Initial files
+    reUploadedFiles: [Schema.Types.Mixed], // Files re-uploaded by retailer
     amount: Number,
     paymentMethod: {
       type: String,
@@ -22,10 +30,19 @@ const SubmissionSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["submitted", "reviewing", "processing", "rejected", "completed"],
-      default: "submitted",
+      enum: [
+        "Submitted",
+        "Pending",
+        "Reviewing",
+        "Document Required",
+        "Document Re-uploaded",
+        "Rejected",
+        "Completed",
+      ],
+      default: "Submitted",
     },
     adminRemarks: String,
+    statusHistory: [StatusHistorySchema],
   },
   { timestamps: true }
 );

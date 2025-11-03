@@ -17,6 +17,7 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
+  History,
 } from "lucide-react";
 
 const DetailItem = ({ icon: Icon, label, value }) => (
@@ -30,6 +31,24 @@ const DetailItem = ({ icon: Icon, label, value }) => (
     </div>
   </div>
 );
+
+const ActivityItem = ({ item }) => (
+  <div className="flex gap-4">
+    <div className="flex flex-col items-center">
+      <div className="p-2 bg-gray-200 rounded-full"><History size={16} className="text-gray-600" /></div>
+      <div className="flex-1 w-px bg-gray-300 my-1"></div>
+    </div>
+    <div>
+      <p className="font-semibold text-gray-800">{item.status}</p>
+      <p className="text-sm text-gray-600">{item.remarks}</p>
+      <p className="text-xs text-gray-400 mt-1">        {new Date(item.updatedAt).toLocaleString()} by         {item.updatedBy?.role && <span className="capitalize font-medium"> {item.updatedBy.role}</span>}
+</p>
+    </div>
+  </div>
+);
+
+
+
 
 const isImage = (url = "") => /\.(jpeg|jpg|gif|png|webp)$/i.test(url);
 const isPdf = (url = "") => /\.pdf$/i.test(url);
@@ -100,6 +119,9 @@ const AdminViewSubmission = () => {
   const attachedFiles = Object.entries(submission.data).filter(
     ([key, value]) => isFileUrl(value)
   );
+  const reUploadedFiles = submission.reUploadedFiles || [];
+
+  const sortedHistory = (submission.statusHistory || []).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
   return (
     <div className="p-6 space-y-6">
@@ -172,14 +194,14 @@ const AdminViewSubmission = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               {formDataItems.length > 0 ? (
                 formDataItems.map(([key, value]) => (
-                <div
-                  key={key}
-                  className="bg-gray-50 p-3 rounded-lg border border-gray-100"
-                >
-                  <p className="text-gray-500 font-medium">{key}</p>
-                  <p className="text-gray-800 break-words">{String(value)}</p>
-                </div>
-              ))
+                  <div
+                    key={key}
+                    className="bg-gray-50 p-3 rounded-lg border border-gray-100"
+                  >
+                    <p className="text-gray-500 font-medium">{key}</p>
+                    <p className="text-gray-800 break-words">{String(value)}</p>
+                  </div>
+                ))
               ) : (
                 <p className="text-sm text-gray-500 col-span-2">No text data was submitted.</p>
               )}
@@ -208,11 +230,10 @@ const AdminViewSubmission = () => {
                       ) : (
                         <div className="flex flex-col items-center text-center text-gray-600">
                           <FileText
-                            className={`w-12 h-12 ${
-                              isPdf(fileUrl)
+                            className={`w-12 h-12 ${isPdf(fileUrl)
                                 ? "text-red-500"
                                 : "text-gray-400"
-                            }`}
+                              }`}
                           />
                           <p className="text-xs mt-2">
                             {isPdf(fileUrl)
@@ -246,6 +267,57 @@ const AdminViewSubmission = () => {
               <p className="text-sm text-gray-500">No files were attached.</p>
             )}
           </div>
+
+          {/* Re-uploaded Files */}
+          {reUploadedFiles.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-orange-600 border-b border-orange-200 pb-2 mb-3">
+                Re-uploaded Documents
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {reUploadedFiles.map((file, index) => (
+                  <div key={index} className="bg-white border rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden">
+                    <div className="h-48 flex items-center justify-center bg-gray-50">
+                      {isImage(file.url) ? (
+                        <img src={file.url} alt={file.originalname} className="w-full h-full object-contain" />
+                      ) : (
+                        <div className="flex flex-col items-center text-center text-gray-600">
+                          <FileText className={`w-12 h-12 ${isPdf(file.url) ? "text-red-500" : "text-gray-400"}`} />
+                          <p className="text-xs mt-2">{isPdf(file.url) ? "PDF Document" : "Other File"}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <p className="text-sm font-medium text-gray-800 truncate" title={file.originalname}>{file.originalname}</p>
+                      <a href={file.url} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs text-green-700 font-medium mt-1 hover:underline">
+                        <Download size={14} className="mr-1" />
+                        View / Download File
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Activity History */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">
+              Activity & Remarks
+            </h3>
+            <div className="space-y-4">
+              {sortedHistory.length > 0 ? (
+                sortedHistory.map((item, index) => (
+                  <ActivityItem key={index} item={item} />
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">
+                  No activity history found.
+                </p>
+              )}
+            </div>
+          </div>
+
         </div>
 
         {/* Right: Actions */}
@@ -267,9 +339,13 @@ const AdminViewSubmission = () => {
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
               >
-                <option value="submitted">Submitted</option>
-                <option value="completed">Completed</option>
-                <option value="rejected">Rejected</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Pending">Pending</option>
+                <option value="Reviewing">Reviewing</option>
+                <option value="Document Required">Document Required</option>
+                <option value="Document Re-uploaded" disabled>Document Re-uploaded</option>
+                <option value="Completed">Completed</option>
+                <option value="Rejected">Rejected</option>
               </select>
             </div>
             <div>

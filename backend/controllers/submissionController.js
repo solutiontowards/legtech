@@ -19,13 +19,27 @@ export const createSubmission = asyncHandler(async (req,res)=>{
     wallet.balance -= amount; await wallet.save();
     const tx = await Transaction.create({ walletId: wallet._id, type: 'debit', amount, meta: { reason: 'service purchase', optionId } });
     wallet.transactions.push(tx._id); await wallet.save();
-    const submission = await Submission.create({ retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'paid', status: 'submitted' });
+    const submission = await Submission.create({ 
+      retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'paid', status: 'Submitted',
+      statusHistory: [{
+        status: 'Submitted',
+        remarks: 'Application submitted by retailer.',
+        updatedBy: req.user._id
+      }]
+    });
     return res.json({ ok:true, submission });
   }
 
   // online payment
   const order = await razorpay.orders.create({ amount: Math.round(amount * 100), currency: 'INR', receipt: `sub_${req.user._id}_${Date.now()}` });
-  const submission = await Submission.create({ retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'pending', status: 'submitted' });
+  const submission = await Submission.create({ 
+    retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'pending', status: 'Submitted',
+    statusHistory: [{
+      status: 'Submitted',
+      remarks: 'Application submitted by retailer.',
+      updatedBy: req.user._id
+    }]
+  });
   res.json({ ok:true, order, submission });
 });
 
@@ -82,6 +96,9 @@ export const getRetailerSubmissionById = asyncHandler(async (req, res) => {
         path: 'subServiceId',
         select: 'name',
       }
+    })
+    .populate({
+      path: 'statusHistory.updatedBy', select: 'name role' 
     });
 
   if (!submission) return res.status(404).json({ error: 'Submission not found or access denied' });
@@ -100,6 +117,9 @@ export const getSubmissionById = asyncHandler(async (req,res)=>{
         path: 'subServiceId',
         select: 'name',
       }
+    })
+    .populate({
+      path: 'statusHistory.updatedBy', select: 'name role' 
     });
   if (!submission) return res.status(404).json({ error: 'Submission not found' });
   res.json({ ok:true, submission });
@@ -111,7 +131,41 @@ export const updateSubmissionStatus = asyncHandler(async (req,res)=>{
   const submission = await Submission.findById(submissionId);
   if (!submission) return res.status(404).json({ error: 'Not found' });
   submission.status = status || submission.status;
-  if (adminRemarks) submission.adminRemarks = adminRemarks;
+  submission.adminRemarks = adminRemarks || submission.adminRemarks; // Update main remarks
+
+  // Add to history
+  submission.statusHistory.push({
+    status: status,
+    remarks: adminRemarks,
+    updatedBy: req.user._id
+  });
+
   await submission.save();
   res.json({ ok:true, submission });
+});
+
+export const reUploadDocuments = asyncHandler(async (req, res) => {
+  const { submissionId } = req.params;
+  const { files } = req.body;
+
+  if (!files || !Array.isArray(files) || files.length === 0) {
+    return res.status(400).json({ error: "No files were provided for re-upload." });
+  }
+
+  const submission = await Submission.findOne({ _id: submissionId, retailerId: req.user._id });
+
+  if (!submission) {
+    return res.status(404).json({ error: "Submission not found or you do not have permission." });
+  }
+
+  submission.reUploadedFiles.push(...files);
+  submission.status = 'Document Re-uploaded';
+  submission.statusHistory.push({
+    status: 'Document Re-uploaded',
+    remarks: 'Retailer re-uploaded the required documents.',
+    updatedBy: req.user._id,
+  });
+
+  await submission.save();
+  res.json({ ok: true, submission });
 });

@@ -20,4 +20,7 @@ export const createSubmission = (payload) => api.post('/submissions', payload);
 export const listRetailerSubmissions = () => api.get('/submissions/me');
 
 // Get a single submission by ID for the logged-in retailer
-export const getRetailerSubmissionById = (id) => api.get(`/submissions/${id}`);
+export const getRetailerSubmissionById = (id) => api.get(`/submissions/${id}`); // This path is correct based on the new routes
+
+// Re-upload documents for a submission
+export const reUploadDocuments = (id, payload) => api.put(`/submissions/${id}/re-upload`, payload);
