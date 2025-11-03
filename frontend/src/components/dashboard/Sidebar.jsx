@@ -58,9 +58,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { id: "dashboard", to: "/retailer/dashboard", text: "Dashboard", icon: LayoutDashboard },
   { id: "services", to: "/retailer/services", text: "Services", icon: Layers },
   { id: "transction", to: "/retailer/transction", text: "Transactions", icon: PieChart },
-  { id: "history", to: "/", text: "History", icon: History },
+  { id: "history", to: "/retailer/submission-history", text: "History", icon: History },
   { id: "profile", to: "/", text: "Profile", icon: User },
-  { id: "paymentChart", to: "/", text: "Payment Chart", icon: BarChart3 },
+  { id: "paymentChart", to: "/retailer/payment-chart", text: "Payment Chart", icon: BarChart3 },
   { id: "support", to: "/", text: "Support", icon: LifeBuoy },
   ]
 

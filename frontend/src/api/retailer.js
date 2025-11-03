@@ -15,3 +15,9 @@ export const getServiceOptionDetail = (serviceSlug, subServiceSlug, optionSlug) 
 
 // Create a new service submission
 export const createSubmission = (payload) => api.post('/submissions', payload);
+
+// Get all submissions for the logged-in retailer
+export const listRetailerSubmissions = () => api.get('/submissions/me');
+
+// Get a single submission by ID for the logged-in retailer
+export const getRetailerSubmissionById = (id) => api.get(`/submissions/${id}`);

@@ -41,8 +41,15 @@ export const verifyRazorpayPayment = asyncHandler(async (req,res)=>{
 
 export const listRetailerSubmissions = asyncHandler(async (req,res)=>{
   const subs = await Submission.find({ retailerId: req.user._id })
-    .populate('optionId', 'name')
     .populate('serviceId', 'name')
+    .populate({
+      path: 'optionId',
+      select: 'name subServiceId',
+      populate: {
+        path: 'subServiceId',
+        select: 'name'
+      }
+    })
     .sort({ createdAt: -1 });
   res.json({ ok:true, subs });
 });
@@ -61,6 +68,24 @@ export const adminListSubmissions = asyncHandler(async (req,res)=>{
     })
     .sort({ createdAt: -1 });
   res.json({ ok:true, subs });
+});
+
+export const getRetailerSubmissionById = asyncHandler(async (req, res) => {
+  const { submissionId } = req.params;
+  const submission = await Submission.findOne({ _id: submissionId, retailerId: req.user._id })
+    .populate('retailerId', 'name email')
+    .populate('serviceId', 'name')
+    .populate({
+      path: 'optionId',
+      select: 'name subServiceId',
+      populate: {
+        path: 'subServiceId',
+        select: 'name',
+      }
+    });
+
+  if (!submission) return res.status(404).json({ error: 'Submission not found or access denied' });
+  res.json({ ok: true, submission });
 });
 
 export const getSubmissionById = asyncHandler(async (req,res)=>{
