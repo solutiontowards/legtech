@@ -35,6 +35,7 @@ import TransctionHistory from "./pages/retailer/TransctionHistory";
 import SubmissionHistory from "./pages/retailer/SubmissionHistory";
 import PaymentChart from "./pages/retailer/PaymentChart";
 import ViewSubmission from "./pages/retailer/ViewSubmission";
+import Support from "./pages/retailer/Support";
 
 const App = () => {
   useEffect(() => {
@@ -107,6 +108,7 @@ const App = () => {
         <Route path="view-submission/:id" element={<ViewSubmission />} />
         <Route path="payment-chart" element={<PaymentChart />} />
         <Route path="transction" element={<TransctionHistory />} />
+        <Route path="support" element={<Support />} />
 
 
       </Route>
