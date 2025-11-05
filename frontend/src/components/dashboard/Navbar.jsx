@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   Menu,
@@ -85,14 +85,17 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
         <div className="flex items-center gap-3 sm:gap-5">
           {/* Wallet (for retailer only) */}
           {user?.role === "retailer" && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-800">
-              <Wallet className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                {walletBalance !== null
-                  ? `₹${walletBalance.toFixed(2)}`
-                  : "Loading..."}
-              </span>
-            </div>
+            <Link to="/retailer/wallet" >
+
+              <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-800">
+                <Wallet className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  {walletBalance !== null
+                    ? `₹${walletBalance.toFixed(2)}`
+                    : "Loading..."}
+                </span>
+              </div>
+            </Link>
           )}
 
           {/* Contact button */}

@@ -148,7 +148,7 @@ const Dashboard = () => {
       </div>
 
       {/* Sidebar */}
-      <div className="w-full lg:w-1/3 xl:w-1/4">
+      <div className="w-full lg:w-1/3 xl:w-[30%]">
         <NoticeBoard />
       </div>
     </div>

@@ -37,6 +37,7 @@ import PaymentChart from "./pages/retailer/PaymentChart";
 import ViewSubmission from "./pages/retailer/ViewSubmission";
 import Support from "./pages/retailer/Support";
 import ApplicationForm from "./pages/retailer/ApplicationForm";
+import Wallet from "./pages/retailer/Wallet";
 
 const App = () => {
   useEffect(() => {
@@ -112,6 +113,7 @@ const App = () => {
         <Route path="payment-chart" element={<PaymentChart />} />
         <Route path="transction" element={<TransctionHistory />} />
         <Route path="support" element={<Support />} />
+        <Route path="wallet" element={<Wallet />} />
 
 
       </Route>
