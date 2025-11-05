@@ -310,28 +310,26 @@ const AdminServiceRequest = () => {
                   <td className="p-4 text-gray-600">{sub.paymentMethod}</td>
                   <td className="p-4">
                     <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        sub.paymentStatus === "paid"
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${sub.paymentStatus === "paid"
                           ? "bg-green-100 text-green-700"
                           : sub.paymentStatus === "failed"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
+                            ? "bg-red-100 text-red-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
                     >
                       {sub.paymentStatus || "N/A"}
                     </span>
                   </td>
                   <td className="p-4">
                     <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        sub.status === "submitted"
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${sub.status === "submitted"
                           ? "bg-blue-100 text-blue-700"
                           : sub.status === "completed"
-                          ? "bg-green-100 text-green-700"
-                          : sub.status === "rejected"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-gray-100 text-gray-700"
-                      }`}
+                            ? "bg-green-100 text-green-700"
+                            : sub.status === "rejected"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-gray-100 text-gray-700"
+                        }`}
                     >
                       {sub.status}
                     </span>
@@ -347,7 +345,7 @@ const AdminServiceRequest = () => {
                   </td>
                   <td className="p-4 text-center">
                     <Link
-                      to={`/admin/view-submission/${sub._id}`}
+                      to={`/st-admin/view-submission/${sub._id}`}
                       className="text-green-600 hover:text-green-800 p-2 rounded-full hover:bg-green-50 inline-block"
                     >
                       <Eye size={18} />

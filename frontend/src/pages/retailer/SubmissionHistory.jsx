@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { listRetailerSubmissions } from "../../api/retailer";
 import { listServices } from "../../api/services";
-import toast, { Toaster } from "react-hot-toast";
-import { Link } from "react-router-dom";
-import { Eye, FileDown, FilterX, Search, Filter, RefreshCw } from "lucide-react";
-import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
 import RetryPaymentModal from "./RetryPaymentModal";
+import { Link } from "react-router-dom";
+import { Eye, FileDown, FilterX, Search, Filter, RefreshCw, Loader2, Inbox } from "lucide-react";
+import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -167,11 +167,10 @@ const SubmissionHistory = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 bg-gray-50 min-h-screen flex flex-col">
-      <Toaster position="top-center" />
+    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
           My Submission History
         </h2>
         <div className="flex flex-wrap gap-3">
@@ -191,13 +190,13 @@ const SubmissionHistory = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm p-4 md:p-5 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+      <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <select
             name="serviceId"
             value={stagedFilters.serviceId}
             onChange={handleFilterChange}
-            className="p-2 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-green-500"
+            className="w-full p-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">All Services</option>
             {services.map((s) => (
@@ -211,7 +210,7 @@ const SubmissionHistory = () => {
             value={stagedFilters.subServiceId}
             onChange={handleFilterChange}
             disabled={!stagedFilters.serviceId}
-            className="p-2 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+            className="w-full p-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
           >
             <option value="">All Sub-Services</option>
             {subServiceOptions.map((ss) => (
@@ -225,7 +224,7 @@ const SubmissionHistory = () => {
             value={stagedFilters.optionId}
             onChange={handleFilterChange}
             disabled={!stagedFilters.subServiceId}
-            className="p-2 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+            className="w-full p-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
           >
             <option value="">All Options</option>
             {optionOptions.map((o) => (
@@ -236,89 +235,84 @@ const SubmissionHistory = () => {
           </select>
           <button
             onClick={applyFilters}
-            className="flex items-center justify-center gap-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm px-3 py-2"
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-sm px-4 py-2"
           >
             <Filter size={16} /> Apply
           </button>
           <button
             onClick={resetFilters}
-            className="flex items-center justify-center gap-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium text-sm px-3 py-2"
+            className="flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition font-semibold text-sm px-4 py-2"
           >
             <FilterX size={16} /> Reset
           </button>
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white rounded-xl shadow-sm mb-4 p-3 flex justify-between items-center flex-wrap gap-3 border border-gray-100">
-        <h3 className="font-semibold text-gray-700 text-sm md:text-base">
-          Total Submissions:{" "}
-          <span className="text-green-700 font-bold">
-            {filteredSubmissions.length}
-          </span>
-        </h3>
-        <div className="relative w-full md:w-72">
-          <Search
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
-            type="text"
-            placeholder="Search by service, option..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-      </div>
-
       {/* Table */}
-      <div className="overflow-x-auto bg-white rounded-xl shadow-sm">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden overflow-x-auto">
+        <div className="p-4 flex justify-between items-center flex-wrap gap-3 border-b border-gray-200">
+          <h3 className="font-semibold text-gray-800 text-base">
+            Your Submissions ({filteredSubmissions.length})
+          </h3>
+          <div className="relative w-full sm:w-64">
+            <Search
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type="text"
+              placeholder="Search submissions..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+
         <table className="w-full text-sm text-left">
-          <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
+          <thead className="bg-gray-50 text-gray-600">
             <tr>
               {[
                 "Service",
                 "Sub-Service",
                 "Option",
                 "Amount",
-                "Payment Method",
                 "Payment Status",
-                "Status",
-                "Admin Remarks",
+                "Application Status",
                 "Date",
                 "Action",
               ].map((col) => (
-                <th key={col} className="p-4 font-semibold whitespace-nowrap">
+                <th key={col} className="p-4 font-semibold whitespace-nowrap tracking-wider">
                   {col}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan="10" className="text-center p-6 text-gray-500">
-                  Loading...
+                <td colSpan="8" className="text-center p-10">
+                  <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
+                  <p className="mt-2 text-gray-500">Loading submissions...</p>
                 </td>
               </tr>
             ) : currentData.length > 0 ? (
               currentData.map((sub) => (
-                <tr
-                  key={sub._id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="p-4 text-gray-600">{sub.serviceId?.name}</td>
-                  <td className="p-4 text-gray-600">
-                    {sub.optionId?.subServiceId?.name}
+                <tr key={sub._id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="p-4 text-gray-800 whitespace-nowrap">
+                    {sub.serviceId?.name || "N/A"}
                   </td>
-                  <td className="p-4 text-gray-600">{sub.optionId?.name}</td>
-                  <td className="p-4 text-gray-700 font-semibold">
-                    ₹{sub.amount?.toFixed(2)}
+                  <td className="p-4 text-gray-600 whitespace-nowrap">
+                    {sub.optionId?.subServiceId?.name || "N/A"}
                   </td>
-                  <td className="p-4 text-gray-600 capitalize">{sub.paymentMethod}</td>
+                  <td className="p-4 text-gray-600 font-bold whitespace-nowrap">
+                    {sub.optionId?.name || "N/A"}
+                  </td>
+                  <td className="p-4 text-gray-800 font-bold whitespace-nowrap">
+                    ₹{sub.amount?.toFixed(2) || "0.00"}
+                  </td>
                   <td className="p-4">
-                    <div className="flex flex-col items-center gap-1">
+                    <div className="flex flex-col items-start gap-1">
                       <span
                         className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${
                           sub.paymentStatus === "paid"
@@ -333,8 +327,8 @@ const SubmissionHistory = () => {
                       {sub.paymentStatus === "failed" && (
                         <button
                           onClick={() => handleRetryClick(sub)}
-                          className="flex items-center justify-center gap-1.5 mt-2 px-2.5 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-xs font-semibold"
-                          title="Retry Payment"
+                          className="flex items-center gap-1 mt-1.5 text-red-600 hover:text-red-800 transition text-xs font-semibold cursor-pointer"
+                          title="Retry Payment now"
                         >
                           <RefreshCw size={12} />
                           Retry Payment
@@ -344,31 +338,25 @@ const SubmissionHistory = () => {
                   </td>
                   <td className="p-4">
                     <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        sub.status === "submitted"
+                      className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                        sub.status === "Submitted"
                           ? "bg-blue-100 text-blue-700"
-                          : sub.status === "completed"
+                          : sub.status === "Completed"
                           ? "bg-green-100 text-green-700"
-                          : sub.status === "rejected"
+                          : sub.status === "Rejected"
                           ? "bg-red-100 text-red-700"
-                          : "bg-gray-100 text-gray-700"
+                          : "bg-yellow-100 text-yellow-700"
                       }`}
                     >
                       {sub.status}
                     </span>
-                  </td>
-                  <td
-                    className="p-4 text-gray-600 truncate max-w-xs"
-                    title={sub.adminRemarks}
-                  >
-                    {sub.adminRemarks || "-"}
                   </td>
                   <td className="p-4 text-gray-500 whitespace-nowrap">
                     {new Date(sub.createdAt).toLocaleDateString()}
                   </td>
                   <td className="p-4 text-center">
                     <Link to={`/retailer/view-submission/${sub._id}`}
-                      className="text-green-600 hover:text-green-800 p-2 rounded-full hover:bg-green-100 inline-block" title="View Details">
+                      className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 inline-block transition-colors" title="View Details">
                       <Eye size={18} />
                     </Link>
                   </td>
@@ -376,11 +364,12 @@ const SubmissionHistory = () => {
               ))
             ) : (
               <tr>
-                <td
-                  colSpan="10"
-                  className="text-center p-6 text-gray-500 font-medium"
-                >
-                  No submissions found.
+                <td colSpan="8" className="text-center p-10">
+                  <Inbox className="w-12 h-12 text-gray-400 mx-auto" />
+                  <p className="mt-3 font-semibold text-gray-700">No Submissions Found</p>
+                  <p className="text-sm text-gray-500">
+                    Try adjusting your filters or search term.
+                  </p>
                 </td>
               </tr>
             )}
@@ -389,22 +378,22 @@ const SubmissionHistory = () => {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-4">
+      {!loading && totalPages > 1 && (
+        <div className="flex justify-center items-center gap-3 mt-6">
           <button
             onClick={() => setCurrentPage((p) => p - 1)}
             disabled={currentPage === 1}
-            className="px-3 py-1 bg-white border rounded-md disabled:opacity-50 hover:bg-gray-50 text-sm"
+            className="px-3 py-1.5 bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-100 text-sm font-semibold"
           >
             Prev
           </button>
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-gray-600 font-medium">
             Page {currentPage} of {totalPages}
           </span>
           <button
             onClick={() => setCurrentPage((p) => p + 1)}
             disabled={currentPage === totalPages}
-            className="px-3 py-1 bg-white border rounded-md disabled:opacity-50 hover:bg-gray-50 text-sm"
+            className="px-3 py-1.5 bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-100 text-sm font-semibold"
           >
             Next
           </button>

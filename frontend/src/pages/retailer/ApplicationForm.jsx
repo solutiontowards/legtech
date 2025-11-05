@@ -6,7 +6,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getServiceOptionDetail, createSubmission, getWalletBalance } from "../../api/retailer";
 import { uploadSingle } from "../../api/upload";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { Loader2, Upload, File, Wallet, X, AlertCircle, CreditCard, Trash2, CheckCircle2, ArrowLeft } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -19,7 +19,7 @@ const FieldRenderer = ({ field, register, errors, watch, setValue }) => {
 
     if (field.type === "file") {
         return (
-            <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+            <div className="col-span-1 sm:col-span-2">
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
                     {field.label}
                     {field.required && <span className="text-red-500 ml-1">*</span>}
@@ -117,7 +117,7 @@ const ApplicationForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [walletBalance, setWalletBalance] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState("wallet");
-    const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm({ mode: "onBlur" });
+    const { register, handleSubmit, formState: { errors }, setValue, watch, reset, control } = useForm({ mode: "onBlur" });
 
     useEffect(() => {
         const fetchOption = async () => {
@@ -239,7 +239,6 @@ const ApplicationForm = () => {
     if (loading) {
         return (
             <div className="flex h-screen items-center justify-center bg-gray-50">
-                <Toaster position="top-center" />
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
                     <p className="text-gray-600 font-medium">Loading service details...</p>
@@ -251,7 +250,6 @@ const ApplicationForm = () => {
     if (!option) {
         return (
             <div className="flex h-screen items-center justify-center bg-gray-50 p-4">
-                <Toaster position="top-center" />
                 <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
                     <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Service Not Found</h2>
@@ -265,59 +263,77 @@ const ApplicationForm = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Toaster position="top-center" />
-            <div className="bg-white shadow-md">
-                {/* Header */}
+        <div className="min-h-screen bg-gray-100">
+            {/* Header */}
+            <header className="bg-white shadow-sm sticky top-0 z-20">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="py-6 flex justify-between items-center">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900">{option.name}</h1>
-                            <p className="text-gray-600 mt-1">Complete the form below to submit your application</p>
+                    <div className="py-4 flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => navigate(-1)} className="p-2 rounded-full text-gray-600 hover:bg-gray-100 transition-all">
+                                <ArrowLeft className="w-5 h-5" />
+                            </button>
+                            <div>
+                                <h1 className="text-xl font-bold text-gray-900">{option.name}</h1>
+                                <p className="text-sm text-gray-500">Complete the form to submit your application</p>
+                            </div>
                         </div>
-                        <button onClick={() => navigate(-1)} className="flex items-center gap-2 px-4 py-2 font-semibold text-gray-700 bg-gray-100 border-2 border-gray-200 rounded-lg hover:bg-gray-200 transition-all">
-                            <ArrowLeft className="w-5 h-5" />
-                            Back
-                        </button>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                    {/* Form Content */}
-                    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col lg:flex-row">
-                        {/* Left Sidebar - Payment Info */}
-                        <div className="w-full lg:w-80 xl:w-96 bg-gradient-to-b from-gray-50 to-gray-100 border-r border-gray-200 p-8">
-                            <div className="space-y-8 sticky top-8">
-                                {/* Price Section */}
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
-                                    <div className="bg-white rounded-xl p-4 space-y-3 border-2 border-gray-200">
-                                        <div className="flex justify-between items-center text-gray-700">
-                                            <span className="font-medium">Service Cost</span>
-                                            <span className="font-bold text-gray-900">₹{option.price.toFixed(2)}</span>
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                    <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+                        {/* Right Section - Form Fields (Main content on mobile) */}
+                        <div className="lg:col-span-7 xl:col-span-8">
+                            <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Details</h2>
+                                <p className="text-gray-600 mb-8">Please provide the following information accurately.</p>
+
+                                {option.formFields?.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        {option.formFields.map((field) => (
+                                            <FieldRenderer key={field._id} field={field} register={register} errors={errors} watch={watch} setValue={setValue} />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-16 bg-gray-50 rounded-xl">
+                                        <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                                        <p className="text-gray-700 font-medium">No additional information required.</p>
+                                        <p className="text-sm text-gray-500">You can proceed to payment.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Left Sidebar - Payment Info (Sticky on desktop) */}
+                        <div className="lg:col-span-5 xl:col-span-4 mt-8 lg:mt-0">
+                            <div className="lg:sticky lg:top-28 space-y-8">
+                                {/* Order Summary Card */}
+                                <div className="bg-white rounded-2xl shadow-lg p-6">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-4">Application Summary</h3>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center text-gray-600">
+                                            <span>Service Cost</span>
+                                            <span className="font-medium text-gray-900">₹{option.price.toFixed(2)}</span>
                                         </div>
-                                        <div className="flex justify-between items-center text-gray-700">
-                                            <span className="font-medium">Platform Fee</span>
-                                            <span className="font-bold text-gray-900">₹0.00</span>
-                                        </div>
-                                        <div className="border-t-2 border-gray-200 pt-3">
-                                            <div className="flex justify-between items-center">
-                                                <span className="font-bold text-gray-900">Total Amount</span>
-                                                <span className="text-2xl font-bold text-blue-600">₹{option.price.toFixed(2)}</span>
-                                            </div>
+                                   
+                                        <div className="border-t-2 border-dashed border-gray-200 my-3"></div>
+                                        <div className="flex justify-between items-center text-lg">
+                                            <span className="font-bold text-gray-900">Total Amount</span>
+                                            <span className="font-extrabold text-blue-600">₹{option.price.toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Payment Methods */}
-                                <div>
+                                {/* Payment Method Card */}
+                                <div className="bg-white rounded-2xl shadow-lg p-6">
                                     <h3 className="text-lg font-bold text-gray-900 mb-4">Payment Method</h3>
                                     <div className="space-y-3">
                                         {/* Wallet Option */}
-                                        <button type="button" onClick={() => setPaymentMethod("wallet")} className={`w-full p-4 rounded-xl border-2 transition-all text-left ${paymentMethod === "wallet" ? "border-blue-600 bg-blue-50" : "border-gray-300 bg-white hover:border-blue-400"}`}>
-                                            <div className="flex items-center gap-3">
+                                        <div onClick={() => setPaymentMethod("wallet")} className={`w-full p-4 rounded-xl border-2 transition-all text-left cursor-pointer ${paymentMethod === "wallet" ? "border-blue-600 bg-blue-50 ring-2 ring-blue-200" : "border-gray-200 bg-white hover:border-blue-400"}`}>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
                                                 <Wallet className={`w-6 h-6 ${paymentMethod === "wallet" ? "text-blue-600" : "text-gray-600"}`} />
                                                 <div>
                                                     <p className="font-bold text-gray-900">Wallet</p>
@@ -325,64 +341,56 @@ const ApplicationForm = () => {
                                                         Balance: ₹{walletBalance !== null ? walletBalance.toFixed(2) : "..."}
                                                     </p>
                                                 </div>
+                                                </div>
+                                                {paymentMethod === 'wallet' && <CheckCircle2 className="w-5 h-5 text-blue-600" />}
                                             </div>
                                             {paymentMethod === "wallet" && !hasSufficientFunds && walletBalance !== null && (
-                                                <div className="mt-3 flex items-start gap-2 text-xs text-red-600 bg-red-50 p-2 rounded-lg">
+                                                <div className="mt-3 flex items-start gap-2 text-xs text-red-700 bg-red-50 p-2 rounded-md border border-red-200">
                                                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                                                     <span>Insufficient balance. Form will be submitted and payment will be marked as failed.</span>
                                                 </div>
                                             )}
-                                        </button>
+                                        </div>
 
                                         {/* Online Payment Option */}
-                                        <button type="button" onClick={() => setPaymentMethod("online")} className={`w-full p-4 rounded-xl border-2 transition-all text-left ${paymentMethod === "online" ? "border-blue-600 bg-blue-50" : "border-gray-300 bg-white hover:border-blue-400"}`}>
-                                            <div className="flex items-center gap-3">
-                                                <CreditCard className={`w-6 h-6 ${paymentMethod === "online" ? "text-blue-600" : "text-gray-600"}`} />
-                                                <div>
-                                                    <p className="font-bold text-gray-900">Online Payment</p>
-                                                    <p className="text-sm text-gray-600">UPI, Cards, Netbanking</p>
+                                        <div className={`relative w-full p-4 rounded-xl border-2 transition-all text-left cursor-not-allowed bg-gray-50 opacity-60 border-gray-200`}>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <CreditCard className={`w-6 h-6 text-gray-400`} />
+                                                    <div>
+                                                        <p className="font-bold text-gray-500">Online Payment</p>
+                                                        <p className="text-sm text-gray-400">UPI, Cards, Netbanking</p>
+                                                    </div>
+                                                </div>
+                                                <div className="absolute top-2 right-2">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+                                                        Coming Soon
+                                                    </span>
                                                 </div>
                                             </div>
-                                        </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Right Section - Form Fields */}
-                        <div className="flex-1 p-8">
-                            <div className="max-w-3xl">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Details</h2>
-                                <p className="text-gray-600 mb-8">Please provide the following information</p>
-
-                                {option.formFields?.length > 0 ? (
-                                    <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-1 gap-6">
-                                        {option.formFields.map((field) => (
-                                            <FieldRenderer key={field._id} field={field} register={register} errors={errors} watch={watch} setValue={setValue} />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-16">
-                                        <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                                        <p className="text-gray-600 font-medium">No additional information required for this service</p>
-                                    </div>
-                                )}
+                    {/* Sticky Footer for Actions */}
+                    <footer className="sticky bottom-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 mt-8 -mx-4 -mb-8 sm:-mx-6 sm:-mb-8 lg:-mx-8">
+                        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="py-4 flex justify-end items-center gap-4">
+                                <button type="button" onClick={() => navigate(-1)} className="px-6 py-2.5 font-semibold text-gray-800 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition-all">
+                                    Cancel
+                                </button>
+                                <button type="submit" onClick={handleSubmit(onSubmit)} disabled={isSubmitting || paymentMethod === 'online'} className="px-8 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30">
+                                    {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
+                                    {isSubmitting ? 'Processing...' : (paymentMethod === "wallet" ? "Pay & Submit" : "Proceed to Pay")}
+                                </button>
                             </div>
                         </div>
-                    </form>
-
-                    {/* Footer */}
-                    <div className="border-t border-gray-200 bg-gray-50 px-8 py-4 flex justify-end gap-3">
-                        <button type="button" onClick={() => navigate(-1)} className="px-6 py-3 font-semibold text-gray-900 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition-all">
-                            Cancel
-                        </button>
-                        <button type="submit" onClick={handleSubmit(onSubmit)} disabled={isSubmitting} className="px-8 py-3 font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2">
-                            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                            {paymentMethod === "wallet" ? "Pay & Submit" : "Proceed to Pay"}
-                        </button>
-                    </div>
-                </div>
-            </div>
+                    </footer>
+                </form>
+            </main>
         </div>
     );
 };

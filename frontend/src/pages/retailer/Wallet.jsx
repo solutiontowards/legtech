@@ -11,6 +11,7 @@ import {
   IndianRupee,
   Loader2,
   AlertCircle,
+  Info,
   Receipt,
 } from "lucide-react";
 import Swal from "sweetalert2";
@@ -106,30 +107,29 @@ const Wallet = () => {
    * 🔹 Handle Add Money action
    */
   const handleAddMoney = async () => {
-    const numericAmount = parseFloat(amount);
-    if (isNaN(numericAmount) || numericAmount <= 0)
-      return Swal.fire("Invalid Amount", "Please enter a valid amount.", "error");
-
-    setIsProcessing(true);
-    try {
-      const { data } = await createRechargeOrder({ amount: numericAmount });
-      if (data.ok && data.payment_url) {
-        window.location.href = data.payment_url; // Redirect to payment gateway
-      } else {
-        Swal.fire("Error", data.message || "Failed to create payment order.", "error");
-      }
-    } catch (error) {
-      console.error("Payment Error:", error);
-      Swal.fire("Error", "Something went wrong while starting payment.", "error");
-    } finally {
-      setIsProcessing(false);
-    }
+    // Temporarily disable online payments and show an info alert
+    Swal.fire({
+      title: "Online Payments Temporarily Unavailable",
+      html: "We are currently facing issues with our online payment gateway. To add balance to your wallet, please contact the administrator.",
+      icon: "info",
+      confirmButtonText: "I Understand",
+      confirmButtonColor: "#3B82F6",
+    });
   };
 
   /**
    * 🔹 Initial Load
    */
   useEffect(() => {
+    // Show an initial alert about the payment issue
+    Swal.fire({
+      title: "Online Payments Temporarily Unavailable",
+      html: "We are currently facing issues with our online payment gateway. To add balance to your wallet, please contact the administrator.",
+      icon: "info",
+      confirmButtonText: "I Understand",
+      confirmButtonColor: "#3B82F6",
+    });
+
     if (user) {
       fetchWalletBalance();
       fetchWalletTransactions();
@@ -168,56 +168,61 @@ const Wallet = () => {
           </div>
 
           {/* Right Side: Add Money */}
-          <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-lg">
-            <h2 className="text-xl font-bold text-gray-800 mb-2">Add Money to Wallet</h2>
-            <p className="text-gray-500 mb-6">
-              Select or enter an amount to recharge your wallet.
-            </p>
-
-            <div className="flex flex-wrap gap-3 mb-6">
-              {[100, 200, 500, 1000].map((val) => (
-                <button
-                  key={val}
-                  onClick={() => setAmount(val.toString())}
-                  className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all ${
-                    amount === val.toString()
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  ₹{val}
-                </button>
-              ))}
+          <div className="relative lg:col-span-2 bg-white p-8 rounded-2xl shadow-lg">
+            {/* Disabled Overlay */}
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-2xl p-4">
+              <Info className="w-12 h-12 text-blue-500 mb-3" />
+              <h3 className="text-lg font-bold text-gray-800 text-center">
+                Online Top-up is Currently Down
+              </h3>
+              <p className="text-sm text-gray-600 text-center mt-1">
+                Please contact the administrator to add balance manually.
+              </p>
             </div>
 
-            <div className="relative mb-6">
-              <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Or enter a custom amount"
-                className="w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-              />
-            </div>
+            {/* Original Form (Visually Disabled) */}
+            <div className="opacity-50 cursor-not-allowed">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Add Money to Wallet</h2>
+              <p className="text-gray-500 mb-6">
+                Select or enter an amount to recharge your wallet.
+              </p>
 
-            <button
-              onClick={handleAddMoney}
-              disabled={isProcessing}
-              className={`w-full py-4 rounded-lg font-bold text-white transition-transform ${
-                isProcessing
-                  ? "bg-blue-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 hover:scale-[1.02]"
-              }`}
-            >
-              {isProcessing ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="animate-spin w-5 h-5" /> Processing...
-                </span>
-              ) : (
-                "Proceed to Add Money"
-              )}
-            </button>
+              <div className="flex flex-wrap gap-3 mb-6">
+                {[100, 200, 500, 1000].map((val) => (
+                  <button
+                    key={val}
+                    disabled
+                    className="flex-1 px-4 py-3 rounded-lg font-semibold bg-gray-100 text-gray-700"
+                  >
+                    ₹{val}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative mb-6">
+                <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="number"
+                  placeholder="Or enter a custom amount"
+                  disabled
+                  className="w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-lg bg-gray-50"
+                />
+              </div>
+
+              <button
+                onClick={handleAddMoney}
+                disabled
+                className="w-full py-4 rounded-lg font-bold text-white bg-blue-400 cursor-not-allowed"
+              >
+                {isProcessing ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="animate-spin w-5 h-5" /> Processing...
+                  </span>
+                ) : (
+                  "Proceed to Add Money"
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
