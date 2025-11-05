@@ -37,6 +37,30 @@ async function sendWhatsApp(mobile, code) {
   }
 }
 
+// Helper function for sending a generic WhatsApp message
+export async function sendGenericWhatsAppMessage(mobile, message) {
+  const number = mobile.startsWith('+') ? mobile.replace('+', '') : `91${mobile}`;
+
+  try {
+    const response = await axios.post(WA_API_URL, {
+      api_key: WA_API_KEY,
+      sender: WA_SENDER,
+      number,
+      message,
+    });
+
+    if (response.data.status === false) {
+      // Log the error but don't throw, so the main operation doesn't fail
+      console.error('❌ Failed to send generic WhatsApp message (API Error):', response.data.msg);
+    } else {
+      console.log(`✅ Generic message sent to ${number}`);
+    }
+  } catch (err) {
+    // Log the error but don't throw
+    console.error('❌ Failed to send generic WhatsApp message (Request Error):', err.response?.data || err.message);
+  }
+}
+
 // Send OTP for Register or Login
 export const sendOtp = asyncHandler(async (req, res) => {
   const { mobile, purpose } = req.body;
@@ -120,6 +144,31 @@ export const verifyRegisterOtp = asyncHandler(async (req, res) => {
   const wallet = await Wallet.create({ retailerId: user._id, balance: 0 });
   user.walletId = wallet._id;
   await user.save();
+
+  // Send a welcome message to the newly registered retailer
+const welcomeMessage = `Hello ${name},
+
+Welcome to Legtech! 🎉  
+Your retailer account has been successfully created.
+
+You can log in anytime at https://legtech.in/login to access your dashboard and manage your profile.
+
+Please note that your account is currently pending verification by our admin team.  
+Once verified, you’ll gain full access to all Legtech services and features.
+
+💡 To expedite the approval process, we recommend adding a minimum balance to your wallet.
+
+Thank you for choosing Legtech — empowering retailers with smart technology.
+
+Best regards,  
+The Legtech Team`;
+
+  try {
+    sendGenericWhatsAppMessage(mobile, welcomeMessage);
+  } catch (error) {
+    // Log the error if sending the welcome message fails
+    console.error("❌ Failed to send welcome message:", error);
+  }
 
   res.json({
     ok: true,

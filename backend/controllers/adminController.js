@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import User from '../models/User.js';
 import Wallet from '../models/Wallet.js';
+import { sendGenericWhatsAppMessage } from './authController.js';
 import Service from '../models/Service.js';
 import SubService from '../models/SubService.js';
 import Option from '../models/Option.js';
@@ -65,6 +66,21 @@ export const verifyRetailer = asyncHandler(async (req,res)=>{
   const user = await User.findById(retailerId);
   if (!user) return res.status(404).json({ error: 'Retailer not found' });
   user.isVerified = verified === true;
+
+  // Send welcome message if verified
+  if (verified === true) {
+const welcomeMessage = `Hello ${user.name},
+
+🎉 Congratulations! Your retailer account has been successfully verified by the Legtech Admin Team.
+
+You now have full access to all platform features and services. To get started, please add funds to your wallet and begin exploring the available tools and services designed to support your business.
+
+If you have any questions or need assistance, feel free to reach out to our support team.
+
+Best regards,  
+Team Legtech `;
+    sendGenericWhatsAppMessage(user.mobile, welcomeMessage);
+  }
   await user.save();
   res.json({ ok:true, user });
 });
