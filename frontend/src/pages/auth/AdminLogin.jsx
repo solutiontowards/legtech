@@ -166,7 +166,7 @@ export default function AdminLogin() {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: err.response?.data?.error || 'Failed to resend OTP. Please check your credentials.',
+                text: err.response?.data?.message || 'Failed to resend OTP. Please check your credentials.',
             });
         } finally {
             setLoading(false);

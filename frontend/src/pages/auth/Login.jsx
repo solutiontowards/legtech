@@ -85,7 +85,7 @@ export default function Login() {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: err.response?.data?.error || 'Failed to send OTP. Please check your credentials.',
+                text: err.response?.data?.message || 'Failed to send OTP. Please check your credentials.',
             });
         } finally {
             setLoading(false);

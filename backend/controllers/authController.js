@@ -131,9 +131,17 @@ export const verifyRegisterOtp = asyncHandler(async (req, res) => {
 export const retailerLoginInit = asyncHandler(async (req, res) => {
   const { mobile, password } = req.body;
   if (!mobile || !password) return res.status(400).json({ error: 'Mobile and password required' });
+  
 
   const user = await User.findOne({ mobile });
   if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
+if (!user.isActive) {
+  return res.status(403).json({
+    success: false,
+    message: "User is not active. Please contact Admin for more information.",
+  });
+}
 
   if (user.role !== 'retailer') {
     return res.status(403).json({ error: 'Access denied: Retailer login required' });
@@ -157,6 +165,13 @@ export const adminLoginInit = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ mobile });
   if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
+if (!user.isActive) {
+  return res.status(403).json({
+    success: false,
+    message: "User is not active. Please contact support.",
+  });
+}
 
   if (user.role !== 'admin') {
     return res.status(403).json({ error: 'Access denied: Admin login required' });
