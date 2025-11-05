@@ -20,6 +20,7 @@ router.post('/sub-service', admin.createSubService);
 router.post('/option', admin.createOption);
 router.post('/form-field', admin.createFormField);
 
+router.get('/services', admin.getAllServices);
 router.put('/service/:id', admin.updateService);
 router.put('/sub-service/:id', admin.updateSubService);
 router.put('/option/:id', admin.updateOption);

@@ -57,12 +57,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   const retailerLinks = [
     { id: "dashboard", to: "/retailer/dashboard", text: "Dashboard", icon: LayoutDashboard },
-  { id: "services", to: "/retailer/services", text: "Services", icon: Layers },
-  { id: "transction", to: "/retailer/transction", text: "Transactions", icon: PieChart },
-  { id: "history", to: "/retailer/submission-history", text: "History", icon: History },
-  { id: "paymentChart", to: "/retailer/payment-chart", text: "Payment Chart", icon: BarChart3 },
-  { id: "wallet", to: "/retailer/wallet", text: "Wallet", icon: Wallet },
-  { id: "support", to: "/retailer/support", text: "Support", icon: LifeBuoy },
+    { id: "services", to: "/retailer/services", text: "Services", icon: Layers },
+    { id: "transction", to: "/retailer/transction", text: "Transactions", icon: PieChart },
+    { id: "history", to: "/retailer/submission-history", text: "History", icon: History },
+    { id: "paymentChart", to: "/retailer/payment-chart", text: "Payment Chart", icon: BarChart3 },
+    { id: "wallet", to: "/retailer/wallet", text: "Wallet", icon: Wallet },
+    { id: "support", to: "/retailer/support", text: "Support", icon: LifeBuoy },
   ]
 
   const adminLinks = [
@@ -90,7 +90,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     },
 
     { id: "Service-Requests", to: "/st-admin/service-requests", text: "Service Requests", icon: LayoutDashboard },
+    { id: 'credit-wallet', to: '/st-admin/credit-wallet', text: 'Credit Wallet', icon: Wallet },
+    
     { id: "notices", to: "/st-admin/manage-notices", text: "Manage Notices", icon: Megaphone },
+
 
 
 

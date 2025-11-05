@@ -38,6 +38,7 @@ import ViewSubmission from "./pages/retailer/ViewSubmission";
 import Support from "./pages/retailer/Support";
 import ApplicationForm from "./pages/retailer/ApplicationForm";
 import Wallet from "./pages/retailer/Wallet";
+import AdminCreditWallet from "./pages/admin/AdminCreditWallet";
 
 const App = () => {
   useEffect(() => {
@@ -86,6 +87,9 @@ const App = () => {
         <Route path="view-submission/:id" element={<AdminViewSubmission />} /> \
         <Route path="add-user" element={<AddNewUser />} />
         <Route path="admin-list" element={<AdminList />} />
+        <Route path="credit-wallet" element={<AdminCreditWallet />} />
+
+
 
 
 

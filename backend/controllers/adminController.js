@@ -159,6 +159,14 @@ export const createService = asyncHandler(async (req, res) => {
 });
 
 
+// listServices Get
+export const getAllServices = asyncHandler(async (req,res)=>{
+  const services = await Service.find().populate({ path:'subServices', populate: { path: 'options' } });
+  res.json({ ok:true, services });
+});
+
+
+
 // ===================== UPDATE SERVICE =====================
 export const updateService = asyncHandler(async (req, res) => {
   const { id } = req.params;

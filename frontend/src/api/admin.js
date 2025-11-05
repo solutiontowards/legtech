@@ -6,6 +6,7 @@ export const getRetailers = () => api.get('/admin/retailers');
 export const getAdmins = () => api.get('/admin/admins');
 export const updateUser = (payload) => api.put('/admin/user', payload);
 export const getServiceById = (id) => api.get(`/admin/service/id/${id}`);
+export const getAllServices = () => api.get('/admin/services');
 export const createService = (payload) => api.post('/admin/service', payload);
 export const updateService = (id, payload) => api.put(`/admin/service/${id}`, payload);
 export const getServiceBySlug = (slug) => api.get(`/admin/service/slug/${slug}`);
@@ -26,3 +27,7 @@ export const createUser = (payload) => api.post('/admin/user', payload);
 export const adminListSubmissions = () => api.get('/admin/submissions');
 export const getSubmissionById = (id) => api.get(`/admin/submission/${id}`);
 export const updateSubmissionStatus = (id, payload) => api.put(`/admin/submission/${id}/status`, payload);
+
+// credit wallet
+export const creditWallet = (payload) => api.post('/wallet/credit-wallet', payload);
+

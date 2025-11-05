@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { listServices } from "../../../api/services";
-import { updateService } from "../../../api/admin";
+import { getAllServices, updateService } from "../../../api/admin";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
@@ -24,7 +24,7 @@ const AdminServices = () => {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const { data } = await listServices();
+      const { data } = await getAllServices();
       setServices(data?.services || []); // backend sends { ok, services }
     } catch (error) {
       console.error(error);

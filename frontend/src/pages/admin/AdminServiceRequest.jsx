@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { adminListSubmissions } from "../../api/admin";
+import { adminListSubmissions, getAllServices } from "../../api/admin";
 import { listServices } from "../../api/services";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -40,7 +40,7 @@ const AdminServiceRequest = () => {
         setLoading(true);
         const [subsRes, servicesRes] = await Promise.all([
           adminListSubmissions(),
-          listServices(),
+          getAllServices(),
         ]);
         setAllSubmissions(subsRes.data?.subs || []);
         setServices(servicesRes.data?.services || []);

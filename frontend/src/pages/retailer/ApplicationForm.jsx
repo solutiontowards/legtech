@@ -1,4 +1,4 @@
-"use client";
+
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -129,9 +129,19 @@ const ApplicationForm = () => {
                     reset();
                 }
             } catch (error) {
-                toast.error("Failed to load service details");
-                console.error(error);
-                navigate("/retailer/services");
+                const errorMessage = error.response?.data?.message || "Failed to load service details.";
+                console.error("Error fetching option:", error.response || error);
+
+                // Show alert and navigate back
+                Swal.fire({
+                    title: "Not Available",
+                    text: errorMessage,
+                    icon: "warning",
+                    confirmButtonText: "Go Back to Services",
+                    allowOutsideClick: false,
+                }).then(() => {
+                    navigate("/retailer/services");
+                });
             } finally {
                 setLoading(false);
             }

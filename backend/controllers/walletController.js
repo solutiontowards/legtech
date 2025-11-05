@@ -190,7 +190,7 @@ export const creditWallet = asyncHandler(async (req, res) => {
     walletId: wallet._id,
     type: "credit",
     amount,
-    meta,
+    meta: { reason: meta }, // Store the reason in a structured object
   });
 
   wallet.balance += amount;

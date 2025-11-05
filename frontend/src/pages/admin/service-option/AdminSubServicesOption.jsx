@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { listServices } from "../../../api/services";
-import { updateOption } from "../../../api/admin";
+import { getAllServices, updateOption } from "../../../api/admin";
 import toast from "react-hot-toast";
 import { PlusCircle, Edit, Layers } from "lucide-react";
 
@@ -15,7 +15,7 @@ const AdminServicesOption = () => {
     async function fetchOptions() {
       setLoading(true);
       try {
-        const { data } = await listServices();
+        const { data } = await getAllServices();
         const allOptions = data?.services.flatMap(service =>
           service.subServices.flatMap(sub =>
             sub.options.map(opt => ({

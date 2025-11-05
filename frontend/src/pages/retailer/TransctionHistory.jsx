@@ -33,9 +33,10 @@ const TransctionHistory = () => {
     }, []);
 
     const getTransactionDescription = (meta) => {
-        if (typeof meta !== "object" || meta === null) return "General Transaction";
         if (meta.reason === "service purchase") return `Payment for ${meta.optionId?.name || 'a service'}`;
         if (meta.type === "wallet_credit") return `Wallet credit via ${meta.source}`;
+        // Check for manual admin credit reason
+        if (meta.reason) return `Manual Credit: ${meta.reason}`;
         return "General Transaction";
     };
 

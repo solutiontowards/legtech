@@ -5,126 +5,112 @@ import {
   Loader2,
   ChevronRight,
   Package,
-  ArrowRight,
   Lock,
   IndianRupee,
+  ArrowRight,
 } from "lucide-react";
-import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { listServices, getServiceDetail } from "../../api/retailer";
 import { useAuth } from "../../context/AuthContext";
 
-/* ----------------------------------------------------
- 🧩 Professional Dashboard Service Card
----------------------------------------------------- */
-const ServiceCard = ({ image, name, onClick, isVerified }) => (
+/* -------------------------------------------------------------------
+ 🧩 Reusable Card Component (for both Service & Option cards)
+------------------------------------------------------------------- */
+const DashboardCard = ({
+  image,
+  name,
+  price,
+  onClick,
+  isVerified,
+  showPrice = false,
+  buttonText = "View Details",
+  isOption = false,
+}) => (
   <motion.div
     onClick={isVerified ? onClick : () => {}}
-    className={`group relative rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm transition-all duration-300 ${
-      isVerified ? "hover:shadow-xl hover:-translate-y-1.5 cursor-pointer" : "cursor-not-allowed"
+    className={`group relative bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm transition-all duration-300 ${
+      isVerified
+        ? "hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
+        : "cursor-not-allowed"
     }`}
     whileHover={isVerified ? { scale: 1.02 } : {}}
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4 }}
   >
-    {/* Image */}
+    {/* Image Section */}
     <div className="relative h-48 overflow-hidden">
       <motion.img
         src={image}
         alt={name}
-        className={`h-full w-full object-cover transition-transform duration-700 ${isVerified ? "group-hover:scale-110" : ""}`}
+        className={`h-full w-full object-cover transition-transform duration-700 ${
+          isVerified ? "group-hover:scale-110" : ""
+        }`}
       />
+
       {!isVerified && (
-        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white p-4">
-          <Lock size={40} />
-          <p className="mt-2 text-center font-semibold">Retailer Not Verified</p>
+        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-center px-3">
+          <Lock size={38} />
+          <p className="mt-2 font-semibold text-sm">Retailer Not Verified</p>
         </div>
       )}
+
       {isVerified && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
       )}
     </div>
 
-    {/* Content */}
-    <div className="p-4 bg-white">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-gray-800 truncate pr-2">
+    {/* Text & Action Section */}
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base font-semibold text-gray-900 truncate">
           {name}
         </h3>
         <ArrowRight
           size={18}
-          className={`transition-transform ${isVerified ? "text-blue-600 group-hover:translate-x-1" : "text-gray-400"}`}
+          className={`transition-transform ${
+            isVerified
+              ? "text-blue-600 group-hover:translate-x-1"
+              : "text-gray-400"
+          }`}
         />
       </div>
+
+      {showPrice && (
+        <div className="flex items-center justify-between">
+          <div
+            className={`flex items-center gap-1 font-bold text-lg ${
+              isVerified ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <IndianRupee size={16} />
+            {price?.toFixed(2)}
+          </div>
+          <motion.button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isVerified) onClick(e);
+            }}
+            whileHover={isVerified ? { scale: 1.05 } : {}}
+            whileTap={isVerified ? { scale: 0.95 } : {}}
+            disabled={!isVerified}
+            className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            Apply Now
+          </motion.button>
+        </div>
+      )}
     </div>
   </motion.div>
 );
 
-/* ----------------------------------------------------
- 💼 Professional Dashboard Option Card
----------------------------------------------------- */
-const OptionCard = ({ image, name, price, onClick, isVerified }) => (
-  <motion.div
-    className={`group relative rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm transition-all duration-300 ${
-      isVerified ? "hover:shadow-xl hover:-translate-y-1.5" : "cursor-not-allowed"
-    }`}
-    whileHover={isVerified ? { scale: 1.02 } : {}}
-    initial={{ opacity: 0, y: 30 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.4 }}
-  >
-    {/* Image */}
-    <div className="relative h-48 overflow-hidden">
-      <motion.img
-        src={image}
-        alt={name}
-        className={`h-full w-full object-cover transition-transform duration-700 ${isVerified ? "group-hover:scale-110" : ""}`}
-      />
-      {!isVerified && (
-        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white p-4">
-          <Lock size={40} />
-          <p className="mt-2 text-center font-semibold">Retailer Not Verified</p>
-        </div>
-      )}
-      {isVerified && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-      )}
-    </div>
-
-    {/* Content */}
-    <div className="p-4 bg-white">
-      <h3 className="text-base font-semibold text-gray-800 truncate mb-3">
-        {name}
-      </h3>
-      <div className="flex items-center justify-between">
-        <div className={`flex items-center gap-1 font-bold text-lg ${isVerified ? "text-blue-600" : "text-gray-500"}`}>
-          <IndianRupee size={18} />
-          {price?.toFixed(2)}
-        </div>
-
-        <motion.button
-          onClick={(e) => {
-            if (isVerified) onClick(e); // Pass event
-          }}
-          whileHover={isVerified ? { scale: 1.05 } : {}}
-          whileTap={isVerified ? { scale: 0.95 } : {}}
-          disabled={!isVerified}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
-        >
-          Apply Now
-        </motion.button>
-      </div>
-    </div>
-  </motion.div>
-);
-
-/* ----------------------------------------------------
- 🚀 Main Services Component
----------------------------------------------------- */
+/* -------------------------------------------------------------------
+ 🚀 Main Services Page Component
+------------------------------------------------------------------- */
 const Services = () => {
   const { serviceSlug, subServiceSlug } = useParams();
   const navigate = useNavigate();
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -141,30 +127,39 @@ const Services = () => {
           setTitle(response.data.subService.name);
           setBreadcrumbs([
             { name: "Services", path: "/retailer/services" },
-            { name: response.data.service.name, path: `/retailer/services/${serviceSlug}` },
-            { name: response.data.subService.name, path: "" },
+            {
+              name: response.data.service.name,
+              path: `/retailer/services/${serviceSlug}`,
+            },
+            { name: response.data.subService.name },
           ]);
         } else if (serviceSlug) {
           response = await getServiceDetail(serviceSlug);
           setTitle(response.data.service.name);
           setBreadcrumbs([
             { name: "Services", path: "/retailer/services" },
-            { name: response.data.service.name, path: "" },
+            { name: response.data.service.name },
           ]);
         } else {
           response = await listServices();
           setTitle("All Services");
-          setBreadcrumbs([{ name: "Services", path: "" }]);
+          setBreadcrumbs([{ name: "Services" }]);
         }
         setData(response.data);
       } catch (error) {
-        toast.error("Failed to fetch services. Please try again.");
-        console.error("Error fetching services:", error);
+        const msg =
+          error.response?.data?.message ||
+          "Failed to fetch services. Please try again.";
+        Swal.fire({
+          title: "Not Available",
+          text: msg,
+          icon: "warning",
+          confirmButtonText: "Go Back",
+        }).then(() => navigate("/retailer/services"));
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [serviceSlug, subServiceSlug]);
 
@@ -174,73 +169,64 @@ const Services = () => {
     }
   };
 
-  /* ----------------------------------------------------
-   📦 Render Cards Section
-  ---------------------------------------------------- */
+  /* -------------------------------------------------------------------
+   🎨 Render Dynamic Cards
+  ------------------------------------------------------------------- */
   const renderContent = () => {
-    if (loading) {
+    if (loading)
       return (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
         </div>
       );
-    }
 
-    if (!data) {
-      return <div className="text-center text-gray-500">No services found.</div>;
-    }
+    if (!data)
+      return <div className="text-center text-gray-500">No data found.</div>;
 
     let items = [];
-    let CardComponent = ServiceCard;
+    let showPrice = false;
 
     if (subServiceSlug) {
       items = data.subService?.options || [];
-      CardComponent = OptionCard;
+      showPrice = true;
     } else if (serviceSlug) {
       items = data.service?.subServices || [];
     } else {
       items = data.services || [];
     }
 
-    if (items.length === 0) {
-      const message = subServiceSlug
-        ? "No options found for this sub-service."
-        : serviceSlug
-        ? "No sub-services found for this service."
-        : "No services found.";
+    if (items.length === 0)
       return (
         <div className="text-center py-16">
           <Package className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">{message}</h3>
+          <h3 className="mt-3 text-sm font-medium text-gray-600">
+            No items found.
+          </h3>
         </div>
       );
-    }
 
     return (
       <AnimatePresence>
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, staggerChildren: 0.1 }}
+          transition={{ duration: 0.5 }}
         >
           {items.map((item) => (
-            <CardComponent
+            <DashboardCard
               key={item._id}
-              {...item}
+              image={item.image}
+              name={item.name}
               price={item.price}
+              showPrice={showPrice}
               isVerified={user?.isVerified}
               onClick={(e) => {
-                if (user?.isVerified) {
-                  if (CardComponent === OptionCard) {
-                    e.stopPropagation();
-                    handleApplyClick(item);
-                  } else if (serviceSlug) {
-                    navigate(`/retailer/services/${serviceSlug}/${item.slug}`);
-                  } else {
-                    navigate(`/retailer/services/${item.slug}`);
-                  }
-                }
+                if (!user?.isVerified) return;
+                if (subServiceSlug) handleApplyClick(item);
+                else if (serviceSlug)
+                  navigate(`/retailer/services/${serviceSlug}/${item.slug}`);
+                else navigate(`/retailer/services/${item.slug}`);
               }}
             />
           ))}
@@ -249,38 +235,37 @@ const Services = () => {
     );
   };
 
-  /* ----------------------------------------------------
-   🧭 Main Layout
-  ---------------------------------------------------- */
+  /* -------------------------------------------------------------------
+   🧭 Page Layout
+  ------------------------------------------------------------------- */
   return (
-    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen flex flex-col lg:flex-row gap-6">
-      {/* Main Content */}
-      <div className="w-full lg:flex-1">
-        <motion.div
-          className="mb-6"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">{title}</h1>
-          <nav className="flex items-center text-sm font-medium text-gray-500">
-            {breadcrumbs.map((crumb, index) => (
-              <React.Fragment key={index}>
-                {index > 0 && <ChevronRight size={16} className="mx-1" />}
-                {crumb.path ? (
-                  <Link to={crumb.path} className="hover:text-blue-600">
-                    {crumb.name}
-                  </Link>
-                ) : (
-                  <span>{crumb.name}</span>
-                )}
-              </React.Fragment>
-            ))}
-          </nav>
-        </motion.div>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Page Header */}
+      <motion.div
+        className="mb-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
+        <nav className="flex items-center text-sm font-medium text-gray-500">
+          {breadcrumbs.map((crumb, idx) => (
+            <React.Fragment key={idx}>
+              {idx > 0 && <ChevronRight size={16} className="mx-1" />}
+              {crumb.path ? (
+                <Link to={crumb.path} className="hover:text-blue-600">
+                  {crumb.name}
+                </Link>
+              ) : (
+                <span>{crumb.name}</span>
+              )}
+            </React.Fragment>
+          ))}
+        </nav>
+      </motion.div>
 
-        {renderContent()}
-      </div>
+      {/* Grid Content */}
+      {renderContent()}
     </div>
   );
 };

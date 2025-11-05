@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { listServices } from "../../../api/services"; // To get all services and their sub-services
-import { updateSubService } from "../../../api/admin";
+import { getAllServices, updateSubService } from "../../../api/admin";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
@@ -24,7 +24,7 @@ const AdminSubServices = () => {
   const fetchSubServices = async () => {
     try {
       setLoading(true);
-      const { data } = await listServices(); // This fetches services with populated sub-services
+      const { data } = await getAllServices(); // This fetches services with populated sub-services
       const allSubServices = data?.services.flatMap(service =>
         service.subServices.map(sub => ({ ...sub, parentServiceName: service.name, parentServiceSlug: service.slug }))
       ) || [];
