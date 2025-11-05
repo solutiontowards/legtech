@@ -11,7 +11,7 @@ const useAuthRedirect = () => {
     // Only perform redirection once the authentication status is confirmed
     if (!loading && user) {
       if (user.role === 'admin') {
-        navigate('/admin/dashboard', { replace: true });
+        navigate('/st-admin/dashboard', { replace: true });
       } else if (user.role === 'retailer') {
         navigate('/retailer/dashboard', { replace: true }); // Assuming retailer dashboard route
       }

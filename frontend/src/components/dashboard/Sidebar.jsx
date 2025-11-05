@@ -65,14 +65,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   ]
 
   const adminLinks = [
-    { id: "Dashboard", to: "/admin/dashboard", text: "Dashboard", icon: LayoutDashboard },
+    { id: "Dashboard", to: "/st-admin/dashboard", text: "Dashboard", icon: LayoutDashboard },
     {
       id: "retailers",
       text: "Retailers",
       icon: Briefcase,
       submenu: [
-        { to: "/admin/verify-retailers", text: "Verify Retailers" },
-        { to: "/admin/retailers", text: "All Retailers" },
+        { to: "/st-admin/verify-retailers", text: "Verify Retailers" },
+        { to: "/st-admin/retailers", text: "All Retailers" },
       ],
     },
 
@@ -81,15 +81,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       text: "Services Managment",
       icon: BriefcaseBusiness,
       submenu: [
-        { to: "/admin/services", text: "Services" },
-        { to: "/admin/subservices", text: "Sub Services" },
-        { to: "/admin/subservice-option", text: "Services Options" },
+        { to: "/st-admin/services", text: "Services" },
+        { to: "/st-admin/subservices", text: "Sub Services" },
+        { to: "/st-admin/subservice-option", text: "Services Options" },
 
       ],
     },
 
-    { id: "Service-Requests", to: "/admin/service-requests", text: "Service Requests", icon: LayoutDashboard },
-    { id: "notices", to: "/admin/manage-notices", text: "Manage Notices", icon: Megaphone },
+    { id: "Service-Requests", to: "/st-admin/service-requests", text: "Service Requests", icon: LayoutDashboard },
+    { id: "notices", to: "/st-admin/manage-notices", text: "Manage Notices", icon: Megaphone },
 
 
 
@@ -99,8 +99,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       text: "User Managment",
       icon: Users,
       submenu: [
-        { to: "/admin/add-user", text: "Add New User" },
-        { to: "/admin/admin-list", text: "Admin List" },
+        { to: "/st-admin/add-user", text: "Add New User" },
+        { to: "/st-admin/st-admin-list", text: "Admin List" },
       ],
     },
   ]
