@@ -128,7 +128,7 @@ export default function AdminLogin() {
                 showConfirmButton: false,
             });
             // Now that the auth state is updated, we can safely navigate.
-            navigate('/admin/dashboard')
+            navigate('/st-admin/dashboard')
         } catch (err) {
             Swal.fire({
                 icon: 'error',
