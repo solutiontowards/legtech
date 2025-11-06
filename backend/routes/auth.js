@@ -32,7 +32,7 @@ router.post('/verify-adminlogin-otp', authLimiter, adminVerifyLoginOtp);
 
 // Authenticated routes
 router.post('/logout', auth, logout);
-router.get('/me', me);
+router.get('/me', auth, me);
 
 
 
