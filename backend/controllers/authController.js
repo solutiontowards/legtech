@@ -254,12 +254,22 @@ export const retailerVerifyLoginOtp = asyncHandler(async (req, res) => {
   }
 
   const token = signToken({ id: user._id, role: user.role });
+  // res.cookie('token', token, {
+  //   httpOnly: true,
+  //   secure: process.env.NODE_ENV === 'production',
+  //   sameSite: 'strict',
+  //   maxAge: 7 * 24 * 60 * 60 * 1000,
+  // });
+
   res.cookie('token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  httpOnly: true,
+  secure: true, // required for HTTPS
+  sameSite: 'none', // allow cookie to be sent cross-site
+  domain: '.legtech.in', // works for both legtech.in and api.legtech.in
+  path: '/',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+});
+
 
   res.json({
     ok: true,
@@ -285,12 +295,22 @@ export const adminVerifyLoginOtp = asyncHandler(async (req, res) => {
   }
 
   const token = signToken({ id: user._id, role: user.role });
+  // res.cookie('token', token, {
+  //   httpOnly: true,
+  //   secure: process.env.NODE_ENV === 'production',
+  //   sameSite: 'strict',
+  //   maxAge: 7 * 24 * 60 * 60 * 1000,
+  // });
+
   res.cookie('token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  httpOnly: true,
+  secure: true, // required for HTTPS
+  sameSite: 'none', // allow cookie to be sent cross-site
+  domain: '.legtech.in', // works for both legtech.in and api.legtech.in
+  path: '/',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+});
+
 
   res.json({
     ok: true,
