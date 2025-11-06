@@ -18,10 +18,14 @@ const app = express();
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: [
+      process.env.CLIENT_URL,       // from .env file (optional)
+      "https://legtech.in"          // production live site
+    ].filter(Boolean),               // removes undefined entries
     credentials: true,
   })
 );
+
 
 app.use(helmet());
 app.use(express.json({ limit: "10mb" }));
