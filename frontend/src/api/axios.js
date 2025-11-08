@@ -1,6 +1,6 @@
 import axios from 'axios';
 const api = axios.create({
-  baseURL: 'https://legtech-thjb.onrender.com/api',
+  baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true
 });
 export default api;
