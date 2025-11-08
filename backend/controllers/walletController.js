@@ -32,7 +32,7 @@ export const createPaymentOrderForWallet = asyncHandler(async (req, res) => {
 
   const ALLAPI_TOKEN = process.env.ALLAPI_TOKEN;
   const ALLAPI_URL = process.env.ALLAPI_URL;
-const ALLAPI_REDIRECT_URL = "http://localhost:4173/retailer/wallet";
+  const ALLAPI_REDIRECT_URL = process.env.CLIENT_URL ? `${process.env.CLIENT_URL}/retailer/wallet` : "http://localhost:5173/retailer/wallet";
 
   const order_id = `WALLET_${req.user._id}_${Date.now()}`;
   const payload = {

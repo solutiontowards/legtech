@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import {
   getWalletBalance,
   getTransactions,
-  createRechargeOrder,
+  createPaymentOrderForWallet,
   checkOrderStatus,
 } from "../../api/wallet";
 import {
@@ -11,8 +11,9 @@ import {
   IndianRupee,
   Loader2,
   AlertCircle,
-  Info,
   Receipt,
+  ArrowUpCircle,
+  ArrowDownCircle,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -25,7 +26,7 @@ const Wallet = () => {
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState([]);
-  const [amount, setAmount] = useState("");
+  const [rechargeAmount, setRechargeAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
@@ -36,10 +37,8 @@ const Wallet = () => {
     try {
       const { data } = await getWalletBalance();
       if (data.ok) setBalance(data.balance);
-      else Swal.fire("Error", "Failed to load wallet balance.", "error");
     } catch (err) {
       console.error("Balance Error:", err);
-      Swal.fire("Error", "Unable to fetch wallet balance.", "error");
     } finally {
       setLoading(false);
     }
@@ -51,7 +50,7 @@ const Wallet = () => {
   const fetchWalletTransactions = async () => {
     try {
       const { data } = await getTransactions();
-      if (data.ok) setTransactions(data.transactions);
+      if (data.ok) setTransactions(data.transactions || []);
     } catch (err) {
       console.error("Transaction Fetch Error:", err);
     }
@@ -59,16 +58,16 @@ const Wallet = () => {
 
   /**
    * 🔹 Verify payment redirect from AllAPI
+   * This runs once when the component loads if there's an order_id in the URL.
    */
-  const verifyPaymentRedirect = async () => {
+  const verifyPaymentRedirect = async (orderId) => {
     const params = new URLSearchParams(location.search);
-    const orderId = params.get("order_id");
-    if (!orderId) return;
+    // Avoid re-verifying if already in process
+    if (verifying || !orderId) return;
 
-    // Avoid verifying multiple times
-    if (verifying) return;
     setVerifying(true);
 
+    // Show a loading Swal
     const progress = Swal.fire({
       title: "Verifying Payment...",
       html: "Please wait while we confirm your payment.",
@@ -77,21 +76,27 @@ const Wallet = () => {
     });
 
     try {
+      // Call backend to check the order status
       const { data } = await checkOrderStatus({ order_id: orderId });
       Swal.close();
 
       if (data.ok && data.order.status === "Success") {
+        // Success!
         Swal.fire({
           title: "Payment Successful 🎉",
           text: `₹${data.order.txn_amount} has been added to your wallet.`,
           icon: "success",
           confirmButtonColor: "#2563EB",
         });
+        // Refresh wallet data and clear the URL params
         await Promise.all([fetchWalletBalance(), fetchWalletTransactions()]);
         navigate("/retailer/wallet", { replace: true });
       } else if (data.ok && data.order.status === "Failed") {
+        // Failed
         Swal.fire("Payment Failed", "Your payment could not be completed.", "error");
+        navigate("/retailer/wallet", { replace: true });
       } else {
+        // Pending or other status
         Swal.fire("Payment Pending", "Your transaction is still processing.", "info");
       }
     } catch (error) {
@@ -106,36 +111,56 @@ const Wallet = () => {
   /**
    * 🔹 Handle Add Money action
    */
-  const handleAddMoney = async () => {
-    // Temporarily disable online payments and show an info alert
-    Swal.fire({
-      title: "Online Payments Temporarily Unavailable",
-      html: "We are currently facing issues with our online payment gateway. To add balance to your wallet, please contact the administrator.",
-      icon: "info",
-      confirmButtonText: "I Understand",
-      confirmButtonColor: "#3B82F6",
-    });
+  const handleAddMoney = async (e) => {
+    e.preventDefault();
+    const amount = parseFloat(rechargeAmount);
+
+    if (isNaN(amount) || amount <= 0) {
+      Swal.fire("Invalid Amount", "Please enter a valid amount to add.", "warning");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const { data } = await createPaymentOrderForWallet({ amount });
+      if (data.ok && data.payment_url) {
+        // Redirect user to the payment gateway
+        window.location.href = data.payment_url;
+      } else {
+        throw new Error(data.message || "Failed to create payment order.");
+      }
+    } catch (error) {
+      console.error("Create Order Error:", error);
+      Swal.fire("Error", error.message || "Could not initiate payment. Please try again.", "error");
+      setIsProcessing(false);
+    }
   };
 
   /**
    * 🔹 Initial Load
    */
   useEffect(() => {
-    // Show an initial alert about the payment issue
-    Swal.fire({
-      title: "Online Payments Temporarily Unavailable",
-      html: "We are currently facing issues with our online payment gateway. To add balance to your wallet, please contact the administrator.",
-      icon: "info",
-      confirmButtonText: "I Understand",
-      confirmButtonColor: "#3B82F6",
-    });
-
     if (user) {
-      fetchWalletBalance();
-      fetchWalletTransactions();
-      verifyPaymentRedirect();
+      const params = new URLSearchParams(location.search);
+      const orderId = params.get("order_id");
+
+      // If there's an order_id, verify it. Otherwise, just load data.
+      if (orderId) {
+        verifyPaymentRedirect(orderId);
+      } else {
+        fetchWalletBalance();
+        fetchWalletTransactions();
+      }
     }
-  }, [user]);
+  }, [user, location.search]); // Depend on location.search to re-trigger on redirect
+
+  const getTransactionDescription = (meta) => {
+    if (typeof meta === 'string' && meta.startsWith('WALLET_')) return `Wallet Recharge`;
+    if (meta?.reason === "service purchase") return `Payment for ${meta.optionId?.name || 'a service'}`;
+    if (meta?.reason === "service purchase retry") return `Retry payment for submission`;
+    if (meta?.reason) return `Manual Credit: ${meta.reason}`;
+    return "General Transaction";
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-6">
@@ -143,7 +168,7 @@ const Wallet = () => {
         {/* 💰 Wallet Balance Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Side: Balance Display */}
-          <div className="lg:col-span-1 bg-gradient-to-br from-indigo-600 via-blue-600 to-purple-600 text-white p-8 rounded-2xl shadow-2xl">
+          <div className="lg:col-span-1 bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-8 rounded-2xl shadow-2xl flex flex-col justify-between">
             <div className="flex justify-between items-center">
               <span className="text-sm opacity-80">Available Balance</span>
               <WalletIcon className="w-8 h-8 opacity-60" />
@@ -168,20 +193,8 @@ const Wallet = () => {
           </div>
 
           {/* Right Side: Add Money */}
-          <div className="relative lg:col-span-2 bg-white p-8 rounded-2xl shadow-lg">
-            {/* Disabled Overlay */}
-            <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-2xl p-4">
-              <Info className="w-12 h-12 text-blue-500 mb-3" />
-              <h3 className="text-lg font-bold text-gray-800 text-center">
-                Online Top-up is Currently Down
-              </h3>
-              <p className="text-sm text-gray-600 text-center mt-1">
-                Please contact the administrator to add balance manually.
-              </p>
-            </div>
-
-            {/* Original Form (Visually Disabled) */}
-            <div className="opacity-50 cursor-not-allowed">
+          <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-lg">
+            <form onSubmit={handleAddMoney}>
               <h2 className="text-xl font-bold text-gray-800 mb-2">Add Money to Wallet</h2>
               <p className="text-gray-500 mb-6">
                 Select or enter an amount to recharge your wallet.
@@ -190,39 +203,44 @@ const Wallet = () => {
               <div className="flex flex-wrap gap-3 mb-6">
                 {[100, 200, 500, 1000].map((val) => (
                   <button
+                    type="button"
                     key={val}
-                    disabled
-                    className="flex-1 px-4 py-3 rounded-lg font-semibold bg-gray-100 text-gray-700"
+                    onClick={() => setRechargeAmount(val.toString())}
+                    className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all ${rechargeAmount === val.toString()
+                        ? "bg-blue-600 text-white ring-2 ring-blue-300"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
                   >
                     ₹{val}
                   </button>
                 ))}
               </div>
 
-              <div className="relative mb-6">
+              <div className="relative mb-4">
                 <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="number"
                   placeholder="Or enter a custom amount"
-                  disabled
-                  className="w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-lg bg-gray-50"
+                  value={rechargeAmount}
+                  onChange={(e) => setRechargeAmount(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />
               </div>
 
               <button
-                onClick={handleAddMoney}
-                disabled
-                className="w-full py-4 rounded-lg font-bold text-white bg-blue-400 cursor-not-allowed"
+                type="submit"
+                disabled={isProcessing || verifying}
+                className="w-full py-4 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20"
               >
                 {isProcessing ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="animate-spin w-5 h-5" /> Processing...
                   </span>
                 ) : (
-                  "Proceed to Add Money"
+                  `Proceed to Add ₹${parseFloat(rechargeAmount) || 0}`
                 )}
               </button>
-            </div>
+            </form>
           </div>
         </div>
 
@@ -233,43 +251,50 @@ const Wallet = () => {
             <h2 className="text-xl font-bold text-gray-800">Recent Transactions</h2>
           </div>
 
-          {transactions.length > 0 ? (
+          {loading ? (
+            <div className="text-gray-500 text-sm py-6 text-center">Loading transactions...</div>
+          ) : transactions.length > 0 ? (
             <table className="min-w-full text-left border-collapse">
               <thead>
                 <tr>
-                  <th className="px-5 py-3 border-b text-xs font-semibold text-gray-600 uppercase">
-                    Type
-                  </th>
-                  <th className="px-5 py-3 border-b text-xs font-semibold text-gray-600 uppercase">
-                    Amount
-                  </th>
-                  <th className="px-5 py-3 border-b text-xs font-semibold text-gray-600 uppercase">
-                    Date
-                  </th>
+                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-50 text-xs font-semibold text-gray-600 uppercase tracking-wider">Transaction Details</th>
+                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-50 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.map((tx) => (
                   <tr key={tx._id} className="hover:bg-gray-50 transition">
-                    <td className="px-5 py-4 border-b text-sm capitalize">
-                      {tx.type}
+                    <td className="px-5 py-4 border-b border-gray-200 text-sm">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          {tx.type === "credit" ? (
+                            <ArrowDownCircle className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <ArrowUpCircle className="w-5 h-5 text-red-500" />
+                          )}
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-gray-900 font-medium whitespace-no-wrap">
+                            {getTransactionDescription(tx.meta)}
+                          </p>
+                          <p className="text-gray-600 text-xs whitespace-no-wrap">
+                            {new Date(tx.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
                     </td>
                     <td
-                      className={`px-5 py-4 border-b text-sm font-semibold ${
-                        tx.type === "credit" ? "text-green-600" : "text-red-600"
-                      }`}
+                      className={`px-5 py-4 border-b border-gray-200 text-sm font-semibold text-right ${tx.type === "credit" ? "text-green-600" : "text-red-600"
+                        } `}
                     >
-                      ₹{tx.amount.toFixed(2)}
-                    </td>
-                    <td className="px-5 py-4 border-b text-sm text-gray-600">
-                      {new Date(tx.createdAt).toLocaleString()}
+                      {tx.type === "credit" ? "+" : "-"}₹{tx.amount.toFixed(2)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           ) : (
-            <div className="text-gray-500 text-sm py-6 text-center">
+            <div className="text-gray-500 text-sm py-10 text-center">
               No transactions found.
             </div>
           )}
