@@ -20,7 +20,8 @@ app.use(
   cors({
     origin: [
       process.env.CLIENT_URL,       // from .env file (optional)
-      "https://legtech.in"          // production live site
+      "https://legtech.in",          // production live site
+      "https://legtech.netlify.app"
     ].filter(Boolean),               // removes undefined entries
     credentials: true,
   })
