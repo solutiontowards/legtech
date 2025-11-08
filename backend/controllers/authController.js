@@ -253,28 +253,16 @@ export const retailerVerifyLoginOtp = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: err.message });
   }
 
-  const token = signToken({ id: user._id, role: user.role });
-  // res.cookie('token', token, {
-  //   httpOnly: true,
-  //   secure: process.env.NODE_ENV === 'production',
-  //   sameSite: 'strict',
-  //   maxAge: 7 * 24 * 60 * 60 * 1000,
-  // });
-
-  res.cookie('token', token, {
-  httpOnly: true,
-  secure: true, // required for HTTPS
-  sameSite: 'none', // allow cookie to be sent cross-site
-  domain: '.legtech.in', // works for both legtech.in and api.legtech.in
-  path: '/',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-});
-
+  // Create a token that expires in 12 hours
+  const token = signToken({ id: user._id, role: user.role }, '12h');
+  user.accessToken = token;
+  await user.save();
 
   res.json({
     ok: true,
     message: 'Retailer login successful',
-    user: { id: user._id, role: user.role, isVerified: user.isVerified },
+    token,
+    user: { id: user._id, name: user.name, role: user.role, isVerified: user.isVerified },
   });
 });
 
@@ -294,36 +282,28 @@ export const adminVerifyLoginOtp = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: err.message });
   }
 
-  const token = signToken({ id: user._id, role: user.role });
-  // res.cookie('token', token, {
-  //   httpOnly: true,
-  //   secure: process.env.NODE_ENV === 'production',
-  //   sameSite: 'strict',
-  //   maxAge: 7 * 24 * 60 * 60 * 1000,
-  // });
-
-  res.cookie('token', token, {
-  httpOnly: true,
-  secure: true, // required for HTTPS
-  sameSite: 'none', // allow cookie to be sent cross-site
-  domain: '.legtech.in', // works for both legtech.in and api.legtech.in
-  path: '/',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-});
-
+  // Create a token that expires in 12 hours
+  const token = signToken({ id: user._id, role: user.role }, '12h');
+  user.accessToken = token;
+  await user.save();
 
   res.json({
     ok: true,
     message: 'Admin login successful',
-    user: { id: user._id, role: user.role, isVerified: user.isVerified },
+    token,
+    user: { id: user._id, name: user.name, role: user.role, isVerified: user.isVerified },
   });
 });
 
 
 // Logout
 export const logout = asyncHandler(async (req, res) => {
-  res.clearCookie('token');
-  res.json({ ok: true, message: 'Logged out successfully' });
+  const user = await User.findById(req.user.id);
+  if (user) {
+    user.accessToken = null; // Invalidate the token on the server side
+    await user.save();
+  }
+  res.status(200).json({ ok: true, message: 'Logged out successfully' });
 });
 
 // Get Authenticated User
