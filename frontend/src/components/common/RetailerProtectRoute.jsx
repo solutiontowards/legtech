@@ -53,11 +53,11 @@ const RetailerProtectRoute = ({ children }) => {
                     <button
                         data-aos="fade-up"
                         data-aos-delay="200"
-                        onClick={() => navigate("/")}
+                        onClick={() => navigate("/login")}
                         className="flex items-center justify-center gap-2 bg-blue-600 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition-all duration-300 w-full"
                     >
                         <Home className="w-5 h-5" />
-                        Back to Home
+                        Go to Retailer Login
                     </button>
                 </div>
 

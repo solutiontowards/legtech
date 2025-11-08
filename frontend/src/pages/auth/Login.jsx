@@ -112,15 +112,15 @@ export default function Login() {
                 mobile: form.mobile,
                 code: otp,
             });
-            // This is the fix: wait for the auth context to update with the new user info,
-            // then manually set the user to ensure the context is updated before navigation.
-            const loggedInUser = await refreshUser();
-            if (loggedInUser) setUser(loggedInUser);
+
+            const { token, user } = response.data;
+            localStorage.setItem('token', token);
+            setUser(user);
 
             Swal.fire({
                 icon: 'success',
                 title: 'Login Successful',
-                text: response.data.message || 'You are now logged in.',
+                text: 'You are now logged in.',
                 timer: 2000,
                 showConfirmButton: false,
             }).then(() => navigate('/retailer/dashboard'));
