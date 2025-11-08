@@ -22,6 +22,7 @@ const userSchema = new Schema(
     isOtpVerified: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     walletId: { type: Schema.Types.ObjectId, ref: "Wallet" },
+    accessToken: { type: String, default: null },
   },
   { timestamps: true }
 );

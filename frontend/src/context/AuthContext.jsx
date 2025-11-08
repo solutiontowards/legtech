@@ -10,15 +10,21 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            // Ask the backend to invalidate the token
-            await api.post('/auth/logout');
-        } catch (error) {
-            console.error('Server logout failed:', error);
-        } finally {
-            // Always clear client-side data
+            // Ask the backend to invalidate the token and return its response
+            const { data } = await api.post('/auth/logout');
+            // After the server confirms logout, clear client-side data.
             localStorage.removeItem('token');
             api.defaults.headers.common['Authorization'] = null;
             setUser(null);
+            return data; // e.g., { ok: true, message: '...' }
+        } catch (error) {
+            console.error('Server logout failed:', error);
+            // If server fails, still log out on the client for a consistent UI.
+            localStorage.removeItem('token');
+            api.defaults.headers.common['Authorization'] = null;
+            setUser(null);
+            // Return a generic error response.
+            return { ok: false, message: error.response?.data?.error || 'Server logout failed, but client is logged out.' };
         }
     };
 

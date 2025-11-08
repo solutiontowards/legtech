@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import Wallet from '../models/Wallet.js';
 import { createAndSendOtp, resendOtp, verifyOtp } from '../utils/otp.js';
-import { signToken } from '../utils/jwt.js';
+import { signToken, verifyToken } from '../utils/jwt.js';
 
 const WA_API_URL = 'https://wa.panmitra.in/send-message';
 const WA_API_KEY = 'CwoPN5UEKt3hoqReQP8KGTN23lfZsX';
@@ -255,6 +255,7 @@ export const retailerVerifyLoginOtp = asyncHandler(async (req, res) => {
 
   // Create a token that expires in 12 hours
   const token = signToken({ id: user._id, role: user.role }, '12h');
+  // Save the token to the user document
   user.accessToken = token;
   await user.save();
 
@@ -284,6 +285,7 @@ export const adminVerifyLoginOtp = asyncHandler(async (req, res) => {
 
   // Create a token that expires in 12 hours
   const token = signToken({ id: user._id, role: user.role }, '12h');
+  // Save the token to the user document
   user.accessToken = token;
   await user.save();
 
@@ -298,15 +300,41 @@ export const adminVerifyLoginOtp = asyncHandler(async (req, res) => {
 
 // Logout
 export const logout = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id);
-  if (user) {
-    user.accessToken = null; // Invalidate the token on the server side
-    await user.save();
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    // Even if no token is provided, we can send a success response
+    // as the user is effectively logged out on the client-side.
+    return res.status(200).json({ ok: true, message: 'No session to log out from.' });
   }
-  res.status(200).json({ ok: true, message: 'Logged out successfully' });
+
+  try {
+    const decoded = verifyToken(token);
+    const user = await User.findById(decoded.id);
+    if (user) {
+      user.accessToken = null; // Invalidate the token on the server side
+      await user.save();
+    }
+    res.status(200).json({ ok: true, message: 'Logged out successfully' });
+  } catch (error) {
+    // If token is invalid/expired, the user is already effectively logged out.
+    res.status(200).json({ ok: true, message: 'Session already expired.' });
+  }
 });
 
 // Get Authenticated User
 export const me = asyncHandler(async (req, res) => {
+  // req.user is populated by the auth middleware. We can add an extra check
+  // to ensure the token in the DB matches the one being used.
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!req.user?._id) {
+    return res.status(401).json({ ok: false, message: 'Authentication error. Please log in again.' });
+  }
+  const user = await User.findById(req.user._id);
+
+  if (!user || user.accessToken !== token) {
+    return res.status(401).json({ ok: false, message: 'Invalid or expired session. Please log in again.' });
+  }
+
   res.json({ ok: true, user: req.user });
 });

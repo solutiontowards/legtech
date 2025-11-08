@@ -44,13 +44,16 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       confirmButtonText: "Yes, log me out!",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        const { success, message } = await logout();
-        if (success) {
-          navigate("/");
-          Swal.fire("Logged Out!", "You have been logged out successfully.", "success");
-        } else {
-          Swal.fire("Error!", message, "error");
-        }
+        await logout();
+        navigate("/");
+        // Show success message after navigation
+        Swal.fire({
+          title: "Logged Out!",
+          text: "You have been logged out successfully.",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       }
     });
   };
