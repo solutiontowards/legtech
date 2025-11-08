@@ -1,18 +1,16 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { getWalletBalance, retrySubmissionPayment, verifyRazorpayPayment } from "../../api/retailer";
+import { getWalletBalance, retrySubmissionPayment } from "../../api/retailer";
 import toast, { Toaster } from "react-hot-toast";
 import { Loader2, Wallet, X, AlertCircle, CreditCard } from "lucide-react";
 import Swal from "sweetalert2";
-import { useRazorpay } from "react-razorpay";
 
 const RetryPaymentModal = ({ submission, onClose, onSuccess }) => {
   const { user, refreshUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [walletBalance, setWalletBalance] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("wallet");
-  const Razorpay = useRazorpay();
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -59,46 +57,14 @@ const RetryPaymentModal = ({ submission, onClose, onSuccess }) => {
 
     try {
       const { data } = await retrySubmissionPayment(submission._id, { paymentMethod: "online" });
-      toast.dismiss(toastId);
+      
+      if (data.payment_url) {
+        toast.success("Redirecting to payment gateway...", { id: toastId });
+        window.location.href = data.payment_url;
+      } else {
+        toast.error("Could not retrieve payment link.", { id: toastId });
+      }
 
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: data.order.amount,
-        currency: "INR",
-        name: "Legtech",
-        description: `Payment for Submission #${submission._id.slice(-6)}`,
-        order_id: data.order.id,
-        handler: async (response) => {
-          const verificationToast = toast.loading("Verifying payment...");
-          try {
-            await verifyRazorpayPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              submissionId: submission._id,
-            });
-            toast.success("Payment successful!", { id: verificationToast });
-            await Swal.fire("Success!", "Payment completed successfully.", "success");
-            onSuccess();
-          } catch (err) {
-            toast.error("Payment verification failed.", { id: verificationToast });
-          }
-        },
-        prefill: {
-          name: user.name,
-          email: user.email,
-        },
-        theme: {
-          color: "#2A2185",
-        },
-        modal: {
-          ondismiss: () => {
-            toast.error("Payment was not completed.");
-          },
-        },
-      };
-      const rzp = new Razorpay(options);
-      rzp.open();
     } catch (error) {
       const errorMessage = error.response?.data?.error || "Failed to initialize payment.";
       toast.error(errorMessage, { id: toastId });

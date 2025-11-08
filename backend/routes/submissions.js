@@ -6,13 +6,12 @@ import * as submission from '../controllers/submissionController.js';
 const router = express.Router();
 
 router.post('/', auth, submission.createSubmission);
-router.post('/verify-payment', submission.verifyRazorpayPayment);
+router.put('/:submissionId/retry-payment', auth, submission.retrySubmissionPayment);
 router.get('/me', auth, submission.listRetailerSubmissions);
 router.get('/:submissionId', auth, submission.getRetailerSubmissionById);
 router.put('/:submissionId/re-upload', auth, submission.reUploadDocuments);
 router.get('/admin', auth, authorize('admin'), submission.adminListSubmissions);
 router.put('/:submissionId/status', auth, authorize('admin'), submission.updateSubmissionStatus);
-// export const getDashboardStats = () => api.get("/submissions/stats/dashboard");
 router.get('/stats/dashboard', auth, submission.getRetailerDashboardStats);
 
 export default router;

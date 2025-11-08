@@ -3,9 +3,7 @@ import Submission from '../models/Submission.js';
 import Wallet from '../models/Wallet.js';
 import Transaction from '../models/Transaction.js';
 import Option from '../models/Option.js';
-import Razorpay from 'razorpay';
-
-const razorpay = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_SECRET });
+import axios from 'axios';
 
 export const createSubmission = asyncHandler(async (req,res)=>{
   const { optionId, data, files, paymentMethod } = req.body;
@@ -33,10 +31,10 @@ export const createSubmission = asyncHandler(async (req,res)=>{
     } else {
       // Insufficient funds, create submission with failed payment status
       const submission = await Submission.create({ 
-        retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'failed', status: 'Submitted',
+        retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod: 'wallet', paymentStatus: 'failed', status: 'Payment Failed',
         statusHistory: [{
-          status: 'Submitted',
-          remarks: 'Application submitted with failed wallet payment due to insufficient funds.',
+          status: 'Payment Failed',
+          remarks: 'Submission created but payment failed due to insufficient wallet balance.',
           updatedBy: req.user._id
         }]
       });
@@ -44,9 +42,8 @@ export const createSubmission = asyncHandler(async (req,res)=>{
     }
   }
   
-  // online payment
-  const order = await razorpay.orders.create({ amount: Math.round(amount * 100), currency: 'INR', receipt: `sub_${req.user._id}_${Date.now()}` });
-  const submission = await Submission.create({ 
+  // For online payment, first create the submission record
+  const submission = await Submission.create({
     retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'pending', status: 'Submitted',
     statusHistory: [{
       status: 'Submitted',
@@ -54,17 +51,69 @@ export const createSubmission = asyncHandler(async (req,res)=>{
       updatedBy: req.user._id
     }]
   });
-  res.json({ ok:true, order, submission });
-});
 
-export const verifyRazorpayPayment = asyncHandler(async (req,res)=>{
-  // Implement signature verification here for production
-  const { submissionId } = req.body;
-  const submission = await Submission.findById(submissionId);
-  if (!submission) return res.status(404).json({ error: 'Submission not found' });
-  submission.paymentStatus = 'paid';
-  await submission.save();
-  res.json({ ok:true, submission });
+  // Then, create the payment order with AllAPI
+  const ALLAPI_TOKEN = process.env.ALLAPI_TOKEN;
+  const ALLAPI_URL = process.env.ALLAPI_URL;
+  // Redirect to submission history page after payment
+  const ALLAPI_REDIRECT_URL = process.env.CLIENT_URL ? `${process.env.CLIENT_URL}/retailer/submission-history` : "http://localhost:5173/retailer/submission-history";
+
+  const order_id = `SUBMISSION_${submission._id}_${Date.now()}`;
+  const payload = {
+    token: ALLAPI_TOKEN,
+    order_id,
+    txn_amount: amount,
+    txn_note: `Payment for service: ${option.name}`,
+    product_name: `Service: ${option.name}`,
+    customer_name: req.user.name,
+    customer_mobile: req.user.mobile,
+    customer_email: req.user.email,
+    redirect_url: ALLAPI_REDIRECT_URL,
+  };
+
+  try {
+    console.log(`🟦 Creating submission payment order for submission ${submission._id}`);
+    const response = await axios.post(ALLAPI_URL, payload);
+    const result = response?.data;
+
+    if (result?.status === true && result?.results?.payment_url) {
+      console.log(`✅ Payment order created successfully: ${order_id}`);
+      // Associate the AllAPI order_id with the submission
+      submission.paymentOrderId = order_id;
+      await submission.save();
+
+      return res.json({
+        ok: true,
+        payment_url: result.results.payment_url,
+        order_id,
+        submission,
+      });
+    }
+
+    // If order creation fails, update submission to reflect payment failure
+    console.error(`⚠️ Failed to create order: ${result?.message}`);
+    submission.paymentStatus = 'failed';
+    submission.status = 'Payment Failed';
+    submission.statusHistory.push({
+      status: 'Payment Failed',
+      remarks: `Failed to initialize online payment: ${result?.message || 'Unknown error'}`,
+      updatedBy: req.user._id
+    });
+    await submission.save();
+    return res.status(400).json({ ok: false, message: result?.message || "Failed to create payment order", paymentFailed: true });
+
+  } catch (error) {
+    console.error("❌ AllAPI Order Error:", error.message);
+    submission.paymentStatus = 'failed';
+    submission.status = 'Payment Failed';
+    submission.statusHistory.push({
+      status: 'Payment Failed',
+      remarks: `Server error during payment initialization: ${error.message}`,
+      updatedBy: req.user._id
+    });
+    await submission.save();
+    return res.status(500).json({ ok: false, message: "Error creating payment order with AllAPI", paymentFailed: true });
+  }
 });
 
 export const retrySubmissionPayment = asyncHandler(async (req, res) => {
@@ -97,11 +146,41 @@ export const retrySubmissionPayment = asyncHandler(async (req, res) => {
     return res.json({ ok: true, submission });
   }
 
-  // For online payment, create a new order and send it back
-  const order = await razorpay.orders.create({ amount: Math.round(amount * 100), currency: 'INR', receipt: `retry_${submission._id}_${Date.now()}` });
-  submission.paymentMethod = 'online';
-  await submission.save();
-  res.json({ ok:true, submission });
+  // For online payment, create a new AllAPI order
+  const ALLAPI_TOKEN = process.env.ALLAPI_TOKEN;
+  const ALLAPI_URL = process.env.ALLAPI_URL;
+  const ALLAPI_REDIRECT_URL = process.env.CLIENT_URL ? `${process.env.CLIENT_URL}/retailer/submission-history` : "http://localhost:5173/retailer/submission-history";
+
+  const order_id = `SUBMISSION_${submission._id}_${Date.now()}`;
+  const payload = {
+    token: ALLAPI_TOKEN,
+    order_id,
+    txn_amount: amount,
+    txn_note: `Retry payment for submission`,
+    product_name: `Service Submission Retry`,
+    customer_name: req.user.name,
+    customer_mobile: req.user.mobile,
+    customer_email: req.user.email,
+    redirect_url: ALLAPI_REDIRECT_URL,
+  };
+
+  try {
+    const response = await axios.post(ALLAPI_URL, payload);
+    const result = response?.data;
+
+    if (result?.status === true && result?.results?.payment_url) {
+      submission.paymentMethod = 'online';
+      submission.paymentOrderId = order_id; // Store the new order ID
+      await submission.save();
+      return res.json({ ok: true, payment_url: result.results.payment_url, order_id });
+    }
+
+    return res.status(400).json({ ok: false, message: result?.message || "Failed to create payment order" });
+
+  } catch (error) {
+    console.error("❌ AllAPI Order Error:", error.message);
+    return res.status(500).json({ ok: false, message: "Error creating payment order with AllAPI" });
+  }
 });
 
 export const listRetailerSubmissions = asyncHandler(async (req,res)=>{

@@ -38,6 +38,7 @@ const SubmissionSchema = new Schema(
         "Document Re-uploaded",
         "Rejected",
         "Completed",
+        "Payment Failed",
       ],
       default: "Submitted",
     },

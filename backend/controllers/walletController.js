@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import Wallet from "../models/Wallet.js";
+import Submission from "../models/Submission.js";
 import Transaction from "../models/Transaction.js";
 import mongoose from "mongoose";
 import axios from "axios";
@@ -109,51 +110,64 @@ export const checkOrderStatus = asyncHandler(async (req, res) => {
 
     // ✅ If payment success, credit wallet
     if (order.status === "Success") {
-      const parts = order.order_id.split("_");
-      const retailerId = parts[1];
+      if (order.order_id.startsWith("WALLET_")) {
+        const parts = order.order_id.split("_");
+        const retailerId = parts[1];
 
-      if (!retailerId || !mongoose.Types.ObjectId.isValid(retailerId)) {
-        console.error("❌ Invalid order_id format:", order.order_id);
-        return res.status(400).json({
-          ok: false,
-          message: "Invalid order ID format",
-        });
-      }
+        if (!retailerId || !mongoose.Types.ObjectId.isValid(retailerId)) {
+          console.error("❌ Invalid WALLET order_id format:", order.order_id);
+        } else {
+          const retailerObjectId = new mongoose.Types.ObjectId(retailerId);
+          let wallet = await Wallet.findOne({ retailerId: retailerObjectId });
+          if (!wallet) {
+            wallet = await Wallet.create({ retailerId: retailerObjectId });
+            console.log(`🆕 New wallet created for retailer: ${retailerId}`);
+          }
 
-      const retailerObjectId = new mongoose.Types.ObjectId(retailerId);
+          const alreadyCredited = await Transaction.findOne({ walletId: wallet._id, meta: order.order_id });
 
-      // 🧾 Find or create wallet for retailer
-      let wallet = await Wallet.findOne({ retailerId: retailerObjectId });
-      if (!wallet) {
-        wallet = await Wallet.create({ retailerId: retailerObjectId });
-        console.log(`🆕 New wallet created for retailer: ${retailerId}`);
-      }
+          if (alreadyCredited) {
+            console.log(`⚠️ Wallet transaction already credited: ${order.order_id}`);
+          } else {
+            const txnAmount = Number(order.txn_amount) || 0;
+            const transaction = await Transaction.create({
+              walletId: wallet._id,
+              type: "credit",
+              amount: txnAmount,
+              meta: order.order_id,
+            });
+            wallet.balance += txnAmount;
+            wallet.transactions.push(transaction._id);
+            await wallet.save();
+            console.log(`✅ Wallet credited for retailer ${retailerId}: ₹${txnAmount}`);
+          }
+        }
+      } else if (order.order_id.startsWith("SUBMISSION_")) {
+        const parts = order.order_id.split("_");
+        const submissionId = parts[1];
 
-      // 🔐 Prevent duplicate credit
-      const alreadyCredited = await Transaction.findOne({
-        walletId: wallet._id,
-        meta: order.order_id,
-      });
-
-      if (alreadyCredited) {
-        console.log(`⚠️ Transaction already credited: ${order.order_id}`);
+        if (!submissionId || !mongoose.Types.ObjectId.isValid(submissionId)) {
+          console.error("❌ Invalid SUBMISSION order_id format:", order.order_id);
+        } else {
+          const submission = await Submission.findById(submissionId);
+          if (submission && submission.paymentStatus !== 'paid') {
+            submission.paymentStatus = 'paid';
+            submission.paymentOrderId = order.order_id; // Save the order ID
+            submission.statusHistory.push({
+              status: 'Payment Successful',
+              remarks: `Online payment completed successfully. Order ID: ${order.order_id}`,
+              updatedBy: submission.retailerId, // System/User action
+            });
+            await submission.save();
+            console.log(`✅ Payment status updated to 'paid' for submission ${submissionId}`);
+          } else if (submission) {
+            console.log(`⚠️ Submission ${submissionId} payment was already marked as paid.`);
+          } else {
+            console.error(`❌ Submission with ID ${submissionId} not found for order ${order.order_id}`);
+          }
+        }
       } else {
-        const txnAmount = Number(order.txn_amount) || 0;
-
-        // 💰 Create Transaction
-        const transaction = await Transaction.create({
-          walletId: wallet._id,
-          type: "credit",
-          amount: txnAmount,
-          meta: order.order_id,
-        });
-
-        // 💵 Update Wallet Balance
-        wallet.balance += txnAmount;
-        wallet.transactions.push(transaction._id);
-        await wallet.save();
-
-        console.log(`✅ Wallet credited for retailer ${retailerId}: ₹${txnAmount}`);
+        console.error(`❌ Unrecognized order_id prefix: ${order.order_id}`);
       }
     } else {
       console.log(`❌ Payment failed for ${order.order_id}: ${order.status}`);
@@ -163,8 +177,8 @@ export const checkOrderStatus = asyncHandler(async (req, res) => {
       ok: true,
       order,
       message:
-        order.status === "Success"
-          ? "Payment verified and wallet credited"
+        order.status === "Success" 
+          ? "Payment verified successfully"
           : "Payment not successful",
     });
   } catch (error) {

@@ -29,9 +29,6 @@ export const reUploadDocuments = (id, payload) => api.put(`/submissions/${id}/re
 
 // retrySubmissionPayment
 export const retrySubmissionPayment = (id, payload) => api.put(`/submissions/${id}/retry-payment`, payload);
-// verifyRazorpayPayment
-export const verifyRazorpayPayment = (id, payload) => api.put(`/submissions/${id}/verify-payment`, payload);
 
 // Get total service count
 export const getServiceCount = () => api.get('/services/count');
-
