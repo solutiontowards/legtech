@@ -5,6 +5,7 @@ import {
   getTransactions,
   createPaymentOrderForWallet,
   checkOrderStatus,
+  getRecentTransactions,
 } from "../../api/wallet";
 import {
   Wallet as WalletIcon,
@@ -16,7 +17,7 @@ import {
   ArrowDownCircle,
 } from "lucide-react";
 import Swal from "sweetalert2";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Wallet = () => {
   const { user } = useAuth();
@@ -49,7 +50,7 @@ const Wallet = () => {
    */
   const fetchWalletTransactions = async () => {
     try {
-      const { data } = await getTransactions();
+      const { data } = await getRecentTransactions();
       if (data.ok) setTransactions(data.transactions || []);
     } catch (err) {
       console.error("Transaction Fetch Error:", err);
@@ -246,11 +247,15 @@ const Wallet = () => {
 
         {/* 🧾 Transaction History */}
         <div className="bg-white p-8 rounded-2xl shadow-lg overflow-x-auto">
-          <div className="flex items-center gap-2 mb-4">
-            <Receipt className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-800">Recent Transactions</h2>
+              <div className="flex justify-between items-center gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-full">
+                <Receipt className="w-5 h-5 text-blue-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-800">Recent Transactions</h2>
+            </div>
+            <Link to="/retailer/transactions" className="text-sm font-semibold text-blue-600 hover:underline">View All</Link>
           </div>
-
           {loading ? (
             <div className="text-gray-500 text-sm py-6 text-center">Loading transactions...</div>
           ) : transactions.length > 0 ? (

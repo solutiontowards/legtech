@@ -225,3 +225,25 @@ export const getTransactions = asyncHandler(async (req, res) => {
 
   res.json({ ok: true, transactions });
 });
+
+
+// ✅ Get last 10 recent transactions
+export const getRecentTransactions = asyncHandler(async (req, res) => {
+  // Find wallet for the logged-in retailer
+  const wallet = await Wallet.findOne({ retailerId: req.user._id });
+
+  if (!wallet) {
+    return res.status(404).json({ ok: false, message: "Wallet not found" });
+  }
+
+  // Fetch only the 10 most recent transactions
+  const transactions = await Transaction.find({ walletId: wallet._id })
+    .sort({ createdAt: -1 })
+    .limit(10);
+
+  // Send response
+  res.status(200).json({
+    ok: true,
+    transactions,
+  });
+});

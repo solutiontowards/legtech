@@ -31,7 +31,7 @@ import AdminList from "./pages/admin/AdminList";
 import RetailerProtectRoute from "./components/common/RetailerProtectRoute";
 import Services from "./pages/retailer/Services";
 import Dashboard from "./pages/retailer/Dashboard";
-import TransctionHistory from "./pages/retailer/TransctionHistory";
+import TransactionHistory from "./pages/retailer/TransactionHistory";
 import SubmissionHistory from "./pages/retailer/SubmissionHistory";
 import PaymentChart from "./pages/retailer/PaymentChart";
 import ViewSubmission from "./pages/retailer/ViewSubmission";
@@ -115,7 +115,7 @@ const App = () => {
         <Route path="submission-history" element={<SubmissionHistory />} />
         <Route path="view-submission/:id" element={<ViewSubmission />} />
         <Route path="payment-chart" element={<PaymentChart />} />
-        <Route path="transction" element={<TransctionHistory />} />
+        <Route path="transaction" element={<TransactionHistory />} />
         <Route path="support" element={<Support />} />
         <Route path="wallet" element={<Wallet />} />
 

@@ -6,7 +6,7 @@ import autoTable from "jspdf-autotable";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { getTransactions } from "../../api/wallet";
 
-const TransctionHistory = () => {
+const TransactionHistory = () => {
     const [transactions, setTransactions] = useState([]);
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -153,4 +153,4 @@ const TransctionHistory = () => {
     );
 };
 
-export default TransctionHistory
+export default TransactionHistory

@@ -43,7 +43,7 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
 /* -----------------------------------------------------------
    📊 Stats + Chart Section
 ----------------------------------------------------------- */
-const StatsAndChart = ({ walletBalance, servicesCount, monthlyApplications, chartData }) => (
+const StatsAndChart = ({ walletBalance, servicesCount, monthlyApplications, chartData, loading }) => (
   <div className="space-y-6">
     {/* 🔹 Stat Cards Grid */}
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -54,13 +54,13 @@ const StatsAndChart = ({ walletBalance, servicesCount, monthlyApplications, char
         color="bg-blue-500"
       />
       <StatCard
-        title="Available Services"
+        title="Total Services"
         value={servicesCount}
         icon={CheckCircle}
         color="bg-green-500"
       />
       <StatCard
-        title="Paid Applications (This Month)"
+        title="Monthly Applications"
         value={monthlyApplications}
         icon={BarChart2}
         color="bg-indigo-500"
@@ -75,32 +75,38 @@ const StatsAndChart = ({ walletBalance, servicesCount, monthlyApplications, char
       <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">
         Service Usage This Month
       </h3>
-      <div className="w-full h-[240px] sm:h-[300px] md:h-[340px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            margin={{ top: 10, right: 20, left: -10, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 12 }} />
-            <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
-            <Tooltip
-              cursor={{ fill: "rgba(239,246,255,0.5)" }}
-              contentStyle={{
-                background: "#fff",
-                border: "1px solid #e5e7eb",
-                borderRadius: "0.75rem",
-              }}
-            />
-            <Bar
-              dataKey="applications"
-              name="Applications"
-              fill="#3b82f6"
-              radius={[6, 6, 0, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      {loading ? (
+        <div className="flex justify-center items-center h-[240px] sm:h-[300px] md:h-[340px]">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      ) : (
+        <div className="w-full h-[240px] sm:h-[300px] md:h-[340px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 10, right: 20, left: -10, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 12 }} />
+              <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
+              <Tooltip
+                cursor={{ fill: "rgba(239,246,255,0.5)" }}
+                contentStyle={{
+                  background: "#fff",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "0.75rem",
+                }}
+              />
+              <Bar
+                dataKey="applications"
+                name="Applications"
+                fill="#3b82f6"
+                radius={[6, 6, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   </div>
 );
@@ -184,32 +190,27 @@ const Dashboard = () => {
      🧱 Layout
   ----------------------------------------------------------- */
   return (
-    <div className="p-3 sm:p-4 md:p-6 bg-gray-50 min-h-screen flex flex-col xl:flex-row gap-6 transition-all duration-300 ease-in-out">
+    <div className="p-3 sm:p-4 md:p-6 bg-gray-50 min-h-screen">
       {/* 🧩 Left Side (Main Content) */}
-      <div className="flex-1 w-full">
+      <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-5">
           Retailer Overview
         </h1>
 
         {!user?.isVerified && <VerificationNotice />}
 
-        {loading ? (
-          <div className="flex justify-center items-center h-[200px]">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          </div>
-        ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="xl:col-span-2">
           <StatsAndChart
+              loading={loading}
             walletBalance={walletBalance}
             servicesCount={servicesCount}
             monthlyApplications={dashboardStats.monthlyApplicationsCount}
             chartData={dashboardStats.serviceUsage}
           />
-        )}
-      </div>
-
-      {/* 🧩 Right Side (Notice Board) */}
-      <div className="w-full xl:w-[35%] 2xl:w-[30%]">
-        <NoticeBoard />
+          </div>
+          <NoticeBoard />
+        </div>
       </div>
     </div>
   );
