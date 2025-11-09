@@ -6,58 +6,57 @@ import Wallet from '../models/Wallet.js';
 import { createAndSendOtp, resendOtp, verifyOtp } from '../utils/otp.js';
 import { signToken, verifyToken } from '../utils/jwt.js';
 
-const WA_API_URL = 'https://wa.panmitra.in/send-message';
-const WA_API_KEY = 'CwoPN5UEKt3hoqReQP8KGTN23lfZsX';
-const WA_SENDER = '917872652252'; 
+const WA_API_URL = 'https://wbapi.in/api/send-text';
+const WA_API_KEY = process.env.WBAPI_KEY; // Using the new API key from .env file
 
-// Helper function for sending WhatsApp message via Panmitra API
+// Helper function for sending WhatsApp message via wbapi.in API
 async function sendWhatsApp(mobile, code) {
-  const number = mobile.startsWith('+') ? mobile.replace('+', '') : `91${mobile}`;
-  const message = `Your verification code is ${code}. It expires in ${process.env.OTP_TTL_MINUTES || 5} minutes.`;
-
-  try {
-    const response = await axios.post(WA_API_URL, {
-      api_key: WA_API_KEY,
-      sender: WA_SENDER,
-      number,
-      message,
-    });
-
-    // The Panmitra API might return a success status code (200) but an error in the body
-    if (response.data.status === false) {
-      console.error('❌ Failed to send WhatsApp OTP (API Error):', response.data.msg);
-      throw new Error(response.data.msg || 'Failed to send message!');
-    }
-
-    console.log(`✅ OTP sent to ${number}`);
-  } catch (err) {
-    console.error('❌ Failed to send WhatsApp OTP (Request Error):', err.response?.data || err.message);
-    // Re-throw the original error or a more specific one to be caught by the calling function
-    throw new Error(err.response?.data?.msg || err.message || 'Failed to send OTP. Please try again later.');
-  }
+  const msg = `Your verification code is ${code}. It expires in ${process.env.OTP_TTL_MINUTES || 5} minutes.`;
+  // The new API requires a generic message sending function.
+  // We will call it and throw an error if it fails, so the OTP process is halted.
+  await sendGenericWhatsAppMessage(mobile, msg, true);
 }
 
 // Helper function for sending a generic WhatsApp message
-export async function sendGenericWhatsAppMessage(mobile, message) {
-  const number = mobile.startsWith('+') ? mobile.replace('+', '') : `91${mobile}`;
+export async function sendGenericWhatsAppMessage(mobile, msg, throwOnError = false) {
+  const number = mobile.startsWith("91") ? mobile : `91${mobile.replace("+", "")}`;
+
+  // Ensure the API key is available before making a request
+  if (!WA_API_KEY) {
+    const errorMessage = "WhatsApp API Key (WBAPI_KEY) is not configured.";
+    console.error(`❌ ${errorMessage}`);
+    if (throwOnError) {
+      throw new Error(errorMessage);
+    }
+    return; // Stop if key is missing
+  }
 
   try {
-    const response = await axios.post(WA_API_URL, {
-      api_key: WA_API_KEY,
-      sender: WA_SENDER,
-      number,
-      message,
+    const response = await axios.get(WA_API_URL, {
+      params: {
+        api_key: WA_API_KEY,
+        number,
+        msg,
+      },
     });
 
+    // The API returns `status: true` on success
     if (response.data.status === false) {
-      // Log the error but don't throw, so the main operation doesn't fail
-      console.error('❌ Failed to send generic WhatsApp message (API Error):', response.data.msg);
+      const apiErrorMessage = response.data.message || "Failed to send message!";
+      console.error("❌ Failed to send WhatsApp message (API Error):", apiErrorMessage);
+      if (throwOnError) {
+        throw new Error(apiErrorMessage);
+      }
     } else {
-      console.log(`✅ Generic message sent to ${number}`);
+      console.log(`✅ Message queued for ${number}. Task ID: ${response.data.taskId}`);
     }
   } catch (err) {
-    // Log the error but don't throw
-    console.error('❌ Failed to send generic WhatsApp message (Request Error):', err.response?.data || err.message);
+    const requestErrorMessage = err.response?.data?.message || err.message || "Failed to send message. Please try again later.";
+    console.error("❌ Failed to send WhatsApp message (Request Error):", requestErrorMessage);
+    // Re-throw the error if the calling function needs to handle it (like for OTP)
+    if (throwOnError) {
+      throw new Error(requestErrorMessage);
+    }
   }
 }
 
