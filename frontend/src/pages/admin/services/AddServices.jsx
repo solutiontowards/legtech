@@ -111,7 +111,7 @@ const AddServices = () => {
           text: "The service has been updated successfully!",
           confirmButtonColor: "#16a34a",
         }).then(() => {
-          navigate("/admin/services");
+          navigate("/st-admin/services");
         });
       } else {
         await createService(payload);
@@ -121,7 +121,7 @@ const AddServices = () => {
           text: "The new service has been added successfully!",
           confirmButtonColor: "#16a34a",
         }).then(() => {
-          navigate("/admin/services");
+          navigate("/st-admin/services");
         });
       }
     } catch (error) {

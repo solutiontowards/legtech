@@ -59,7 +59,7 @@ const AddSubServices = () => {
       } catch (error) {
         toast.error("Failed to fetch data.");
         console.error("Error fetching data:", error);
-        if (isEditMode) navigate("/admin/subservices");
+        if (isEditMode) navigate("/st-admin/subservices");
       } finally {
         setLoading(false);
       }
@@ -132,7 +132,7 @@ const AddSubServices = () => {
           text: "The new sub-service has been added successfully!",
           confirmButtonColor: "#16a34a",
         }).then(() => {
-          navigate("/admin/subservices");
+          navigate("/st-admin/subservices");
         });
       }
     } catch (error) {
