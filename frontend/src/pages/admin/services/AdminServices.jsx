@@ -128,7 +128,7 @@ const AdminServices = () => {
             Export PDF
           </button>
           <button
-            onClick={() => navigate("/admin/add-service")}
+            onClick={() => navigate("/st-admin/add-service")}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition text-sm"
           >
             <PlusCircle size={18} />
@@ -178,7 +178,7 @@ const AdminServices = () => {
                   </td>
                   <td className="px-4 py-3 text-center">
                     <button
-                      onClick={() => navigate(`/admin/edit-service/${s.slug}`)}
+                      onClick={() => navigate(`/st-admin/edit-service/${s.slug}`)}
                       className="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
                     >
                       <Edit size={16} />

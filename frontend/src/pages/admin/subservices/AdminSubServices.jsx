@@ -133,7 +133,7 @@ const AdminSubServices = () => {
             Export PDF
           </button>
           <button
-            onClick={() => navigate("/admin/add-subservice")}
+            onClick={() => navigate("/st-admin/add-subservice")}
             className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition text-sm w-full sm:w-auto"
           >
             <PlusCircle size={18} />
@@ -185,7 +185,7 @@ const AdminSubServices = () => {
                   </td>
                   <td className="px-4 py-3 text-center">
                     <button
-                      onClick={() => navigate(`/admin/edit-subservice/${s.parentServiceSlug}/${s.slug}`)}
+                      onClick={() => navigate(`/st-admin/edit-subservice/${s.parentServiceSlug}/${s.slug}`)}
                       className="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
                     >
                       <Edit size={16} />

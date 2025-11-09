@@ -61,7 +61,7 @@ const AdminServicesOption = () => {
         <h1 className="text-2xl font-semibold text-gray-800 flex items-center gap-2 mb-3 sm:mb-0"><Layers className="text-blue-600" /> Manage Options</h1>
         <div className="flex items-center gap-2">
           <input type="text" placeholder="Search options..." className="px-3 py-2 border rounded-lg w-full sm:w-64 text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <button onClick={() => navigate("/admin/add-subservice-option")} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition text-sm">
+          <button onClick={() => navigate("/st-admin/add-subservice-option")} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition text-sm">
             <PlusCircle size={18} /> Add Option
           </button>
         </div>
@@ -99,7 +99,7 @@ const AdminServicesOption = () => {
                     </label>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button onClick={() => navigate(`/admin/edit-subservice-option/${opt.parentServiceSlug}/${opt.parentSubServiceSlug}/${opt.slug}`)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-full">
+                    <button onClick={() => navigate(`/st-admin/edit-subservice-option/${opt.parentServiceSlug}/${opt.parentSubServiceSlug}/${opt.slug}`)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-full">
                       <Edit size={16} />
                     </button>
                   </td>
