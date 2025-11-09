@@ -107,7 +107,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       icon: Users,
       submenu: [
         { to: "/st-admin/add-user", text: "Add New User" },
-        { to: "/st-admin/st-admin-list", text: "Admin List" },
+        { to: "/st-admin/admin-list", text: "Admin List" },
       ],
     },
   ]

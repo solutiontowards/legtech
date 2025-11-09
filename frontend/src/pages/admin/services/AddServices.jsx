@@ -48,7 +48,7 @@ const AddServices = () => {
           setPreview(serviceData.image);
         } catch (error) {
           toast.error("Failed to fetch service details.");
-          navigate("/admin/services");
+          navigate("/st-admin/services");
         } finally {
           setLoading(false);
         }

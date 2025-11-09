@@ -122,7 +122,7 @@ const AddSubServices = () => {
           text: "The sub-service has been updated successfully!",
           confirmButtonColor: "#16a34a",
         }).then(() => {
-          navigate("/admin/subservices");
+          navigate("/st-admin/subservices");
         });
       } else {
         await createSubService(payload);

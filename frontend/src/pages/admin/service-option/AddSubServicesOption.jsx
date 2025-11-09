@@ -150,7 +150,7 @@ const AddSubServicesOption = () => {
         await createOption(payload);
         toast.success("Option created successfully!");
       }
-      navigate("/admin/subservice-option");
+      navigate("/st-admin/subservice-option");
     } catch (error) {
       toast.error(`Failed to ${isEditMode ? 'update' : 'create'} option.`);
       console.error(error);
