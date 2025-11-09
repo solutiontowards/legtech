@@ -5,7 +5,7 @@ import { auth } from '../middlewares/auth.js';
 const router = express.Router();
 
 router.use(auth);
-router.use(authorize('retailer', 'admin'));
+router.use(authorize(['retailer', 'admin']));
 
 
 router.get('/', services.listServices);
