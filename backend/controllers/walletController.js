@@ -33,7 +33,10 @@ export const createPaymentOrderForWallet = asyncHandler(async (req, res) => {
 
   const ALLAPI_TOKEN = process.env.ALLAPI_TOKEN;
   const ALLAPI_URL = process.env.ALLAPI_URL;
-  const ALLAPI_REDIRECT_URL = process.env.CLIENT_URL ? `${process.env.CLIENT_URL}/retailer/wallet` : "http://localhost:5173/retailer/wallet";
+
+  // **THE FIX:** The redirect URL is now a dedicated backend endpoint.
+  // This endpoint will handle the POST data from the payment gateway.
+  const ALLAPI_REDIRECT_URL = `${process.env.API_URL || 'http://localhost:4000'}/api/payment/callback`;
 
   const order_id = `WALLET_${req.user._id}_${Date.now()}`;
   const payload = {
@@ -78,6 +81,73 @@ export const createPaymentOrderForWallet = asyncHandler(async (req, res) => {
 });
 
 /**
+ * 🔄 Handle Payment Gateway Callback
+ * This receives the POST request from the payment gateway and redirects the user
+ * to the appropriate frontend page with a clean GET request.
+ */
+
+/**
+ * 🔄 Handle Payment Gateway Callback
+ * This receives the POST request from the payment gateway and redirects the user
+ * to the appropriate frontend page with a clean GET request.
+ */
+export const paymentCallback = asyncHandler(async (req, res) => {
+  const { order_id, status } = req.body;
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+
+  console.log(`↩️ Received payment callback for order: ${order_id} with status: ${status}`);
+
+  if (order_id) {
+    let redirectPath = "/"; // Default fallback
+    if (order_id.startsWith("WALLET_")) {
+      redirectPath = "/retailer/wallet";
+    } else if (order_id.startsWith("SUBMISSION_")) {
+      redirectPath = "/retailer/submission-history";
+    }
+    res.redirect(`${clientUrl}${redirectPath}?order_id=${order_id}`);
+  } else {
+    // If for some reason there's no order_id, redirect to the client's root.
+    res.redirect(`${clientUrl}/`);
+  }
+});
+
+/**
+ * 헬퍼 함수: 지갑에 금액을 추가하고 트랜잭션을 생성합니다.
+ * @param {string} retailerId - 소매업자 ID
+ * @param {number} amount - 추가할 금액
+ * @param {string} orderId - 주문 ID (메타데이터용)
+ */
+const creditWalletAndLogTransaction = async (retailerId, amount, orderId) => {
+  if (!retailerId || !mongoose.Types.ObjectId.isValid(retailerId)) {
+    console.error("❌ Invalid retailerId for wallet credit:", retailerId);
+    return;
+  }
+
+  const retailerObjectId = new mongoose.Types.ObjectId(retailerId);
+  let wallet = await Wallet.findOne({ retailerId: retailerObjectId });
+
+  if (!wallet) {
+    wallet = await Wallet.create({ retailerId: retailerObjectId });
+    console.log(`🆕 New wallet created for retailer: ${retailerId}`);
+  }
+
+  const alreadyCredited = await Transaction.findOne({ walletId: wallet._id, meta: orderId });
+
+  if (alreadyCredited) {
+    console.log(`⚠️ Wallet transaction already credited: ${orderId}`);
+  } else {
+    const txnAmount = Number(amount) || 0;
+    const transaction = await Transaction.create({
+      walletId: wallet._id, type: "credit", amount: txnAmount, meta: orderId,
+    });
+    wallet.balance += txnAmount;
+    wallet.transactions.push(transaction._id);
+    await wallet.save();
+    console.log(`✅ Wallet credited for retailer ${retailerId}: ₹${txnAmount}`);
+  }
+};
+
+/**
  * 🧾 Verify Payment & Credit Wallet
  */
 export const checkOrderStatus = asyncHandler(async (req, res) => {
@@ -94,54 +164,29 @@ export const checkOrderStatus = asyncHandler(async (req, res) => {
 
     const response = await axios.post(ALLAPI_STATUS_URL, {
       token: ALLAPI_TOKEN,
-      order_id,
+      order_id:order_id,
     });
 
     const result = response?.data;
     const order = result?.results;
 
-    if (!result?.status || !order) {
+    // **THE FIX: The API can return `status: false` even with valid `results`.
+    // We only fail if the `results` object itself is missing or empty.
+    if (!order || (Array.isArray(order) && order.length === 0)) {
       console.error("⚠️ Invalid AllAPI response:", result);
       return res.status(400).json({
         ok: false,
-        message: result?.message || "Unable to verify payment",
+        // Use the API's message, but provide a fallback for true "not found" cases.
+        message: result?.message || "Order ID not found or invalid.",
       });
     }
 
-    // ✅ If payment success, credit wallet
+    // --- Main Payment Verification Logic ---
     if (order.status === "Success") {
       if (order.order_id.startsWith("WALLET_")) {
         const parts = order.order_id.split("_");
         const retailerId = parts[1];
-
-        if (!retailerId || !mongoose.Types.ObjectId.isValid(retailerId)) {
-          console.error("❌ Invalid WALLET order_id format:", order.order_id);
-        } else {
-          const retailerObjectId = new mongoose.Types.ObjectId(retailerId);
-          let wallet = await Wallet.findOne({ retailerId: retailerObjectId });
-          if (!wallet) {
-            wallet = await Wallet.create({ retailerId: retailerObjectId });
-            console.log(`🆕 New wallet created for retailer: ${retailerId}`);
-          }
-
-          const alreadyCredited = await Transaction.findOne({ walletId: wallet._id, meta: order.order_id });
-
-          if (alreadyCredited) {
-            console.log(`⚠️ Wallet transaction already credited: ${order.order_id}`);
-          } else {
-            const txnAmount = Number(order.txn_amount) || 0;
-            const transaction = await Transaction.create({
-              walletId: wallet._id,
-              type: "credit",
-              amount: txnAmount,
-              meta: order.order_id,
-            });
-            wallet.balance += txnAmount;
-            wallet.transactions.push(transaction._id);
-            await wallet.save();
-            console.log(`✅ Wallet credited for retailer ${retailerId}: ₹${txnAmount}`);
-          }
-        }
+        await creditWalletAndLogTransaction(retailerId, order.txn_amount, order.order_id);
       } else if (order.order_id.startsWith("SUBMISSION_")) {
         const parts = order.order_id.split("_");
         const submissionId = parts[1];
@@ -149,13 +194,37 @@ export const checkOrderStatus = asyncHandler(async (req, res) => {
         if (!submissionId || !mongoose.Types.ObjectId.isValid(submissionId)) {
           console.error("❌ Invalid SUBMISSION order_id format:", order.order_id);
         } else {
+          // **THE FIX: Create a debit transaction for successful online service payments**
+          const retailerId = order.order_id.split("_")[2]; // Format: SUBMISSION_submissionId_retailerId_timestamp
+          const retailerObjectId = new mongoose.Types.ObjectId(retailerId);
+          const wallet = await Wallet.findOne({ retailerId: retailerObjectId });
+
+          if (wallet) {
+            // Check if debit already logged to prevent duplicates
+            const alreadyDebited = await Transaction.findOne({ 'meta.orderId': order.order_id });
+            if (!alreadyDebited) {
+              await Transaction.create({
+                walletId: wallet._id,
+                type: 'debit',
+                amount: Number(order.txn_amount) || 0,
+                meta: { reason: 'Online Service Payment', orderId: order.order_id, submissionId: submissionId },
+              });
+              console.log(`✅ Created debit transaction for online payment: ${order.order_id}`);
+            }
+          }
+
           const submission = await Submission.findById(submissionId);
           if (submission && submission.paymentStatus !== 'paid') {
             submission.paymentStatus = 'paid';
+            // **THE FIX**: If the status was 'Payment Failed', reset it to 'Submitted'.
+            if (submission.status === 'Payment Failed') {
+              submission.status = 'Applied';
+            }
             submission.paymentOrderId = order.order_id; // Save the order ID
             submission.statusHistory.push({
-              status: 'Payment Successful',
-              remarks: `Online payment completed successfully. Order ID: ${order.order_id}`,
+              // Use a more descriptive status if it was a retry
+              status: submission.status === 'Applied' ? 'Applied' : 'Payment Successful',
+              remarks: `Online payment completed successfully (Order ID: ${order.order_id}). Application has been submitted.`,
               updatedBy: submission.retailerId, // System/User action
             });
             await submission.save();
@@ -170,7 +239,31 @@ export const checkOrderStatus = asyncHandler(async (req, res) => {
         console.error(`❌ Unrecognized order_id prefix: ${order.order_id}`);
       }
     } else {
-      console.log(`❌ Payment failed for ${order.order_id}: ${order.status}`);
+      console.log(`❌ Payment failed or pending for ${order.order_id}: ${order.status}`);
+      // **THE FIX: Create a 'failed' transaction record for auditing and get correct retailerId**
+      let retailerId;
+      const parts = order.order_id.split("_");
+      if (order.order_id.startsWith("WALLET_")) {
+        retailerId = parts[1];
+      } else if (order.order_id.startsWith("SUBMISSION_")) {
+        retailerId = parts[2]; // For SUBMISSION_, retailerId is the 3rd part
+      }
+      if (retailerId && mongoose.Types.ObjectId.isValid(retailerId)) {
+        const retailerObjectId = new mongoose.Types.ObjectId(retailerId);
+        const wallet = await Wallet.findOne({ retailerId: retailerObjectId });
+        if (wallet) {
+          await Transaction.create({
+            walletId: wallet._id,
+            type: 'failed', // A new type for failed transactions
+            amount: Number(order.txn_amount) || 0,
+            meta: {
+              reason: `Payment Failed: ${order.status}`,
+              orderId: order.order_id,
+            },
+          });
+          console.log(`🔶 Created 'failed' transaction record for order: ${order.order_id}`);
+        }
+      }
     }
 
     return res.json({

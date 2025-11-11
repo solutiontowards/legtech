@@ -11,8 +11,12 @@ const WA_API_KEY = process.env.WBAPI_KEY; // Using the new API key from .env fil
 
 // Helper function for sending WhatsApp message via wbapi.in API
 async function sendWhatsApp(mobile, code) {
-  const msg = `Your verification code is ${code}. It expires in ${process.env.OTP_TTL_MINUTES || 5} minutes.`;
-  // The new API requires a generic message sending function.
+  const msg = `Dear User,
+Your One-Time Password (OTP) for login is ${code}.
+For your security, please do not share this code with anyone.
+If you did not request this OTP, kindly contact Legtech Support immediately at 7029-9595-52.
+Thank you,
+Legtech Team`;  // The new API requires a generic message sending function.
   // We will call it and throw an error if it fails, so the OTP process is halted.
   await sendGenericWhatsAppMessage(mobile, msg, true);
 }

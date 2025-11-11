@@ -12,6 +12,7 @@ import serviceRoutes from './routes/services.js';
 import submissionRoutes from './routes/submissions.js';
 import walletRoutes from './routes/wallet.js';
 import uploadRoutes from './routes/upload.js';
+import paymentRoutes from './routes/paymentRoutes.js'; // 1. Import the new payment routes
 import noticesRoutes from './routes/notices.js';
 
 const app = express();
@@ -28,6 +29,7 @@ app.use(
 );
 
 
+// It is CRITICAL that these middleware are present and before your routes
 app.use(helmet());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -35,6 +37,10 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 connectDB();
+
+// 2. Use the new payment callback route
+// This tells Express to use your new paymentRoutes for any URL starting with /api/payment
+app.use('/api/payment', paymentRoutes);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);

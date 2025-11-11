@@ -2,12 +2,14 @@ import React, { useEffect, useState, useMemo } from "react";
 import { listRetailerSubmissions } from "../../api/retailer";
 import { listServices } from "../../api/services";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import RetryPaymentModal from "./RetryPaymentModal";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Eye, FileDown, FilterX, Search, Filter, RefreshCw, Loader2, Inbox } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { checkOrderStatus } from "../../api/wallet";
 
 const SubmissionHistory = () => {
   const [allSubmissions, setAllSubmissions] = useState([]);
@@ -16,6 +18,9 @@ const SubmissionHistory = () => {
   const [search, setSearch] = useState("");
   const [retryModalOpen, setRetryModalOpen] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [verifying, setVerifying] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Filters
   const [stagedFilters, setStagedFilters] = useState({
@@ -56,6 +61,42 @@ const SubmissionHistory = () => {
     loadData();
   }, []);
 
+  // **THE FIX: Add payment verification logic to this page**
+  const verifyPaymentRedirect = async (orderId) => {
+    if (verifying || !orderId) return;
+    setVerifying(true);
+    navigate("/retailer/submission-history", { replace: true }); // Clean URL
+
+    Swal.fire({
+      title: "Verifying Payment...",
+      html: "Please wait while we confirm your payment.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    try {
+      const { data } = await checkOrderStatus({ order_id: orderId });
+      Swal.close();
+
+      if (data.ok && data.order.status === "Success") { // Check for string "Success"
+        Swal.fire("Payment Successful!", `Your payment for the service was completed.`, "success");
+        loadData(); // Refresh the submission list
+      } else {
+        Swal.fire("Payment Failed", "Your payment could not be completed.", "error");
+      }
+    } catch (error) {
+      Swal.close();
+      const errorMessage = error.response?.data?.message || "Failed to verify payment. Please contact support if the issue persists.";
+      Swal.fire("Error", errorMessage, "error");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.has("order_id")) verifyPaymentRedirect(params.get("order_id"));
+  }, [location.search]);
 
   // Filter Logic
   const handleFilterChange = (e) => {
@@ -273,6 +314,7 @@ const SubmissionHistory = () => {
           <thead className="bg-gray-50 text-gray-600">
             <tr>
               {[
+                "Action",
                 "Service",
                 "Sub-Service",
                 "Option",
@@ -280,7 +322,6 @@ const SubmissionHistory = () => {
                 "Payment Status",
                 "Application Status",
                 "Date",
-                "Action",
               ].map((col) => (
                 <th key={col} className="p-4 font-semibold whitespace-nowrap tracking-wider">
                   {col}
@@ -299,6 +340,12 @@ const SubmissionHistory = () => {
             ) : currentData.length > 0 ? (
               currentData.map((sub) => (
                 <tr key={sub._id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="p-4 text-center">
+                    <Link to={`/retailer/view-submission/${sub._id}`}
+                      className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 inline-block transition-colors" title="View Details">
+                      <Eye size={18} />
+                    </Link>
+                  </td>
                   <td className="p-4 text-gray-800 whitespace-nowrap">
                     {sub.serviceId?.name || "N/A"}
                   </td>
@@ -314,13 +361,12 @@ const SubmissionHistory = () => {
                   <td className="p-4">
                     <div className="flex flex-col items-start gap-1">
                       <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${
-                          sub.paymentStatus === "paid"
-                            ? "bg-green-100 text-green-700"
-                            : sub.paymentStatus === "failed"
+                        className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${sub.paymentStatus === "paid"
+                          ? "bg-green-100 text-green-700"
+                          : sub.paymentStatus === "failed"
                             ? "bg-red-100 text-red-700"
                             : "bg-yellow-100 text-yellow-700"
-                        }`}
+                          }`}
                       >
                         {sub.paymentStatus || "N/A"}
                       </span>
@@ -338,15 +384,14 @@ const SubmissionHistory = () => {
                   </td>
                   <td className="p-4">
                     <span
-                      className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
-                        sub.status === "Submitted"
-                          ? "bg-blue-100 text-blue-700"
-                          : sub.status === "Completed"
+                      className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${sub.status === "Submitted"
+                        ? "bg-blue-100 text-blue-700"
+                        : sub.status === "Completed"
                           ? "bg-green-100 text-green-700"
                           : sub.status === "Rejected"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
+                            ? "bg-red-100 text-red-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
                     >
                       {sub.status}
                     </span>
@@ -354,12 +399,7 @@ const SubmissionHistory = () => {
                   <td className="p-4 text-gray-500 whitespace-nowrap">
                     {new Date(sub.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="p-4 text-center">
-                    <Link to={`/retailer/view-submission/${sub._id}`}
-                      className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 inline-block transition-colors" title="View Details">
-                      <Eye size={18} />
-                    </Link>
-                  </td>
+
                 </tr>
               ))
             ) : (

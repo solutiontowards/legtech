@@ -20,22 +20,22 @@ export const createSubmission = asyncHandler(async (req,res)=>{
       const tx = await Transaction.create({ walletId: wallet._id, type: 'debit', amount, meta: { reason: 'service purchase', optionId } });
       wallet.transactions.push(tx._id); await wallet.save();
       const submission = await Submission.create({ 
-        retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'paid', status: 'Submitted',
+        retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'paid', status: 'Applied',
         statusHistory: [{
-          status: 'Submitted',
+          status: 'Applied',
           remarks: 'Application submitted by retailer.',
           updatedBy: req.user._id
         }]
       });
       return res.json({ ok:true, submission });
     } else {
-      // Insufficient funds, create submission with failed payment status
+      // **THE FIX**: Insufficient funds. Create submission and explicitly set both paymentStatus and status to 'failed'.
       const submission = await Submission.create({ 
         retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod: 'wallet', paymentStatus: 'failed', status: 'Payment Failed',
         statusHistory: [{
           status: 'Payment Failed',
           remarks: 'Submission created but payment failed due to insufficient wallet balance.',
-          updatedBy: req.user._id
+          updatedBy: req.user._id,
         }]
       });
       return res.status(201).json({ ok: true, submission, paymentFailed: true, message: 'Insufficient wallet balance. Submission created with failed payment status.' });
@@ -44,10 +44,10 @@ export const createSubmission = asyncHandler(async (req,res)=>{
   
   // For online payment, first create the submission record
   const submission = await Submission.create({
-    retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'pending', status: 'Submitted',
+    retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'failed', status: 'Payment Failed',
     statusHistory: [{
-      status: 'Submitted',
-      remarks: 'Application submitted by retailer.',
+      status: 'Payment Failed',
+      remarks: 'Submission created but payment failed due to Payment Not Intilized.',
       updatedBy: req.user._id
     }]
   });
@@ -55,10 +55,12 @@ export const createSubmission = asyncHandler(async (req,res)=>{
   // Then, create the payment order with AllAPI
   const ALLAPI_TOKEN = process.env.ALLAPI_TOKEN;
   const ALLAPI_URL = process.env.ALLAPI_URL;
-  // Redirect to submission history page after payment
-  const ALLAPI_REDIRECT_URL = process.env.CLIENT_URL ? `${process.env.CLIENT_URL}/retailer/submission-history` : "http://localhost:5173/retailer/submission-history";
 
-  const order_id = `SUBMISSION_${submission._id}_${Date.now()}`;
+  // **THE FIX:** The redirect URL is now a dedicated backend endpoint.
+  const ALLAPI_REDIRECT_URL = `${process.env.API_URL || 'http://localhost:4000'}/api/payment/callback`;
+
+  // **THE FIX:** Include retailerId in the order_id for transaction logging.
+  const order_id = `SUBMISSION_${submission._id}_${req.user._id}_${Date.now()}`;
   const payload = {
     token: ALLAPI_TOKEN,
     order_id,
@@ -90,13 +92,13 @@ export const createSubmission = asyncHandler(async (req,res)=>{
       });
     }
 
-    // If order creation fails, update submission to reflect payment failure
+    // **THE FIX**: If online order creation fails, update submission to reflect payment failure in both statuses.
     console.error(`⚠️ Failed to create order: ${result?.message}`);
     submission.paymentStatus = 'failed';
     submission.status = 'Payment Failed';
     submission.statusHistory.push({
       status: 'Payment Failed',
-      remarks: `Failed to initialize online payment: ${result?.message || 'Unknown error'}`,
+      remarks: `Failed to initialize online payment: ${result?.message || 'Could not connect to payment gateway.'}`,
       updatedBy: req.user._id
     });
     await submission.save();
@@ -104,6 +106,7 @@ export const createSubmission = asyncHandler(async (req,res)=>{
 
   } catch (error) {
     console.error("❌ AllAPI Order Error:", error.message);
+    // **THE FIX**: If there's a server error during the API call, also mark the submission as failed.
     submission.paymentStatus = 'failed';
     submission.status = 'Payment Failed';
     submission.statusHistory.push({
@@ -140,8 +143,16 @@ export const retrySubmissionPayment = asyncHandler(async (req, res) => {
     const tx = await Transaction.create({ walletId: wallet._id, type: 'debit', amount, meta: { reason: 'service purchase retry', submissionId: submission._id } });
     wallet.transactions.push(tx._id);
     await wallet.save();
+
+    // **THE FIX**: Update both paymentStatus and the main application status.
     submission.paymentStatus = 'paid';
     submission.paymentMethod = 'wallet';
+    submission.status = 'Applied'; // Reset status to Submitted
+    submission.statusHistory.push({
+      status: 'Applied',
+      remarks: 'Payment retry successful via wallet. Application has been re-submitted.',
+      updatedBy: req.user._id
+    });
     await submission.save();
     return res.json({ ok: true, submission });
   }
@@ -149,9 +160,12 @@ export const retrySubmissionPayment = asyncHandler(async (req, res) => {
   // For online payment, create a new AllAPI order
   const ALLAPI_TOKEN = process.env.ALLAPI_TOKEN;
   const ALLAPI_URL = process.env.ALLAPI_URL;
-  const ALLAPI_REDIRECT_URL = process.env.CLIENT_URL ? `${process.env.CLIENT_URL}/retailer/submission-history` : "http://localhost:5173/retailer/submission-history";
 
-  const order_id = `SUBMISSION_${submission._id}_${Date.now()}`;
+  // **THE FIX:** The redirect URL is now a dedicated backend endpoint.
+  const ALLAPI_REDIRECT_URL = `${process.env.API_URL || 'http://localhost:4000'}/api/payment/callback`;
+
+  // **THE FIX:** Include retailerId in the order_id for transaction logging.
+  const order_id = `SUBMISSION_${submission._id}_${req.user._id}_${Date.now()}`;
   const payload = {
     token: ALLAPI_TOKEN,
     order_id,

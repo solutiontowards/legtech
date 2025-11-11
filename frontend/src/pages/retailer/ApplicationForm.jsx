@@ -7,7 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getServiceOptionDetail, createSubmission, getWalletBalance } from "../../api/retailer";
 import { uploadSingle } from "../../api/upload";
 import Swal from "sweetalert2";
-import { Loader2, Upload, File, Wallet, X, AlertCircle, CreditCard, Trash2, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Loader2, File, Wallet, AlertCircle, CreditCard, Trash2, CheckCircle2, ArrowLeft } from "lucide-react";
 
 const FieldRenderer = ({ field, register, errors, watch, setValue }) => {
     const fieldName = field.name;
@@ -21,42 +21,28 @@ const FieldRenderer = ({ field, register, errors, watch, setValue }) => {
                     {field.label}
                     {field.required && <span className="text-red-500 ml-1">*</span>}
                 </label>
-                {selectedFile ? (
-                    <div className="relative p-4 rounded-xl border-2 border-green-200 bg-green-50 hover:bg-green-100 transition-colors">
-                        <div className="flex items-center gap-3">
-                            {selectedFile.type.startsWith("image/") ? (
-                                <img src={URL.createObjectURL(selectedFile)} alt="Preview" className="w-14 h-14 rounded-lg object-cover shadow-sm" />
-                            ) : (
-                                <div className="w-14 h-14 flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg">
-                                    <File className="w-6 h-6 text-blue-600" />
-                                </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{selectedFile.name}</p>
-                                <p className="text-xs text-gray-600">{(selectedFile.size / 1024).toFixed(2)} KB</p>
-                            </div>  
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                                <button type="button" onClick={() => setValue(fieldName, null, { shouldValidate: true })} className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className={`relative px-6 py-10 border-2 border-dashed rounded-xl transition-all cursor-pointer ${errorMessage ? "border-red-400 bg-red-50" : "border-gray-300 bg-gray-50 hover:border-blue-500 hover:bg-blue-50"}`}>
-                        <input type="file" id={fieldName} className="sr-only" accept={field.accept || "*"} {...register(fieldName, { required: field.required ? `${field.label} is required` : false })} />
-                        <label htmlFor={fieldName} className="flex flex-col items-center gap-2 cursor-pointer">
-                            <div className="p-3 bg-blue-100 rounded-full">
-                                <Upload className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <div className="text-center">
-                                <p className="font-semibold text-gray-900">Click to upload</p>
-                                <p className="text-xs text-gray-600">or drag and drop</p>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">{field.placeholder || "Max file size: 10MB"}</p>
-                        </label>
-                    </div>
+                <input
+                    type="file"
+                    id={fieldName}
+                    accept={field.accept || "*"}
+                    {...register(fieldName, { required: field.required ? `${field.label} is required` : false })}
+                    className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all ${errorMessage ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-300"}`}
+                />
+                {selectedFile && (
+                     <div className="mt-3 p-3 rounded-lg border border-green-200 bg-green-50">
+                         <div className="flex items-center justify-between gap-3">
+                             <div className="flex items-center gap-3 min-w-0">
+                                 <File className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                 <div className="min-w-0">
+                                     <p className="text-sm font-semibold text-gray-900 truncate">{selectedFile.name}</p>
+                                     <p className="text-xs text-gray-600">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                                 </div>
+                             </div>
+                             <button type="button" onClick={() => setValue(fieldName, null, { shouldValidate: true })} className="p-1.5 text-red-600 hover:bg-red-100 rounded-full transition-colors">
+                                 <Trash2 className="w-4 h-4" />
+                             </button>
+                         </div>
+                     </div>
                 )}
                 {errorMessage && (
                     <div className="mt-2 flex items-center gap-1.5 text-red-600">

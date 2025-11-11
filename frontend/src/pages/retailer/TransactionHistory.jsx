@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, XCircle } from "lucide-react";
 import { getTransactions } from "../../api/wallet";
 
 const TransactionHistory = () => {
@@ -33,11 +33,16 @@ const TransactionHistory = () => {
     }, []);
 
     const getTransactionDescription = (meta) => {
-        if (meta.reason === "service purchase") return `Payment for ${meta.optionId?.name || 'a service'}`;
-        if (meta.type === "wallet_credit") return `Wallet credit via ${meta.source}`;
-        // Check for manual admin credit reason
-        if (meta.reason) return `Manual Credit: ${meta.reason}`;
-        return "General Transaction";
+        if (typeof meta === "string" && meta.startsWith("WALLET_")) return "Wallet Recharge";
+        // Handle new structured meta
+        if (meta?.reason?.startsWith("Payment Failed")) return `Failed: ${meta.reason}`;
+        if (meta?.reason === "service purchase") return `Payment for Service`;
+        if (meta?.reason === "Online Service Payment") return `Online Payment for Service`;
+        if (meta?.reason === "service purchase retry") return "Retry Payment for Submission";
+        if (meta?.reason) return `Manual Credit: ${meta.reason}`;
+        // Fallback for any other string-based meta
+        if (typeof meta === 'string') return meta;
+        return "Transaction";
     };
 
     const filteredTransactions = transactions.filter((t) => {
@@ -125,13 +130,17 @@ const TransactionHistory = () => {
                                     <td className="px-4 py-3 font-medium text-gray-800">{getTransactionDescription(t.meta)}</td>
                                     <td className="px-4 py-3 text-center">
                                         {t.type === "credit" ? (
-                                            <span className="flex items-center justify-center gap-1 text-green-600"><ArrowDownCircle size={16} /> Credit</span>
+                                            <span className="flex items-center justify-center gap-1.5 text-green-600"><ArrowDownCircle size={16} /> Credit</span>
+                                        ) : t.type === "debit" ? (
+                                            <span className="flex items-center justify-center gap-1.5 text-red-600"><ArrowUpCircle size={16} /> Debit</span>
                                         ) : (
-                                            <span className="flex items-center justify-center gap-1 text-red-600"><ArrowUpCircle size={16} /> Debit</span>
+                                            <span className="flex items-center justify-center gap-1.5 text-gray-500"><XCircle size={16} /> Failed</span>
                                         )}
                                     </td>
-                                    <td className={`px-4 py-3 text-right font-bold ${t.type === "credit" ? "text-green-600" : "text-red-600"}`}>
-                                        {t.type === "credit" ? "+" : "-"}₹{t.amount.toFixed(2)}
+                                    <td className={`px-4 py-3 text-right font-bold ${
+                                        t.type === "credit" ? "text-green-600" : t.type === "debit" ? "text-red-600" : "text-gray-500"
+                                    }`}>
+                                        {t.type === "credit" ? "+" : t.type === "debit" ? "-" : "" }₹{t.amount.toFixed(2)}
                                     </td>
                                 </tr>
                             ))

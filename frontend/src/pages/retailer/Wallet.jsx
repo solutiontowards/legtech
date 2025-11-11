@@ -16,6 +16,7 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   PlusCircle,
+  XCircle, // Import the XCircle icon for failed transactions
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -62,6 +63,7 @@ const Wallet = () => {
   const verifyPaymentRedirect = async (orderId) => {
     if (verifying || !orderId) return;
     setVerifying(true);
+    navigate("/retailer/wallet", { replace: true }); // Clean URL immediately
 
     Swal.fire({
       title: "Verifying Payment...",
@@ -74,25 +76,24 @@ const Wallet = () => {
       const { data } = await checkOrderStatus({ order_id: orderId });
       Swal.close();
 
-      if (data.ok && data.order.status === "Success") {
+      if (data.ok && data.order.status === "Success") { // Check for string "Success"
         Swal.fire({
-          title: "Payment Successful 🎉",
+          title: "Wallet Recharged! 🎉",
           text: `₹${data.order.txn_amount} has been added to your wallet.`,
           icon: "success",
           confirmButtonColor: "#2563EB",
         });
         await Promise.all([fetchWalletBalance(), fetchWalletTransactions()]);
-        navigate("/retailer/wallet", { replace: true });
-      } else if (data.ok && data.order.status === "Failed") {
+      } else if (data.ok && data.order.status !== "Success") { // Check for any non-success status
         Swal.fire("Payment Failed", "Your payment could not be completed.", "error");
-        navigate("/retailer/wallet", { replace: true });
       } else {
         Swal.fire("Payment Pending", "Your transaction is still processing.", "info");
       }
     } catch (error) {
       Swal.close();
       console.error("Payment Verification Error:", error);
-      Swal.fire("Error", "Failed to verify payment. Try again later.", "error");
+      const errorMessage = error.response?.data?.message || "Failed to verify payment. Please contact support if the issue persists.";
+      Swal.fire("Error", errorMessage, "error");
     } finally {
       setVerifying(false);
     }
@@ -130,9 +131,11 @@ const Wallet = () => {
   useEffect(() => {
     if (user) {
       const params = new URLSearchParams(location.search);
-      const orderId = params.get("order_id");
-      if (orderId) verifyPaymentRedirect(orderId);
-      else {
+      if (params.has("order_id")) {
+        // A payment redirect has occurred, verify it.
+        verifyPaymentRedirect(params.get("order_id"));
+      } else {
+        // This is a normal page load, fetch wallet data.
         fetchWalletBalance();
         fetchWalletTransactions();
       }
@@ -143,8 +146,14 @@ const Wallet = () => {
      🔹 Transaction Description Helper
   ---------------------------------------------*/
   const getTransactionDescription = (meta) => {
-    if (typeof meta === "string" && meta.startsWith("WALLET_")) return "Wallet Recharge";
-    if (meta?.reason === "service purchase") return `Payment for ${meta.optionId?.name || "Service"}`;
+    // For backward compatibility with old string-based meta
+    if (typeof meta === "string") {
+      if (meta.startsWith("WALLET_")) return "Wallet Recharge";
+      return "Transaction";
+    }
+    if (meta?.reason === "service purchase") return `Wallet Payment for Service`;
+    if (meta?.reason === "Online Service Payment") return `Online Payment for Service`;
+    if (meta?.reason?.startsWith("Payment Failed")) return `Failed: ${meta.reason}`;
     if (meta?.reason === "service purchase retry") return "Retry Payment for Submission";
     if (meta?.reason) return `Manual Credit: ${meta.reason}`;
     return "Transaction";
@@ -295,9 +304,11 @@ const Wallet = () => {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
                         {tx.type === "credit" ? (
-                          <ArrowDownCircle className="text-green-500 w-5 h-5" />
+                          <ArrowDownCircle className="text-green-600 w-5 h-5" />
+                        ) : tx.type === 'debit' ? (
+                          <ArrowUpCircle className="text-red-600 w-5 h-5" />
                         ) : (
-                          <ArrowUpCircle className="text-red-500 w-5 h-5" />
+                          <XCircle className="text-gray-500 w-5 h-5" />
                         )}
                         <div>
                           <p className="text-gray-900 font-medium">
@@ -311,10 +322,10 @@ const Wallet = () => {
                     </td>
                     <td
                       className={`py-4 px-4 text-right font-semibold ${
-                        tx.type === "credit" ? "text-green-600" : "text-red-600"
+                        tx.type === "credit" ? "text-green-600" : tx.type === 'debit' ? "text-red-600" : "text-gray-500"
                       }`}
                     >
-                      {tx.type === "credit" ? "+" : "-"}₹{tx.amount.toFixed(2)}
+                      {tx.type === "credit" ? "+" : tx.type === 'debit' ? "-" : ""}₹{tx.amount.toFixed(2)}
                     </td>
                   </tr>
                 ))}

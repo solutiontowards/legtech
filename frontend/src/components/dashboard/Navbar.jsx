@@ -56,7 +56,7 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
       }
     });
   };
-  const phoneNumber = "8250883776";
+  const phoneNumber = "9919918196";
 
   useEffect(() => {
     fetchBalance();

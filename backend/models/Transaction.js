@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const TransactionSchema = new Schema(
   {
     walletId: { type: Schema.Types.ObjectId, ref: "Wallet" },
-    type: { type: String, enum: ["debit", "credit"] },
+    type: { type: String, enum: ["debit", "credit", "failed"] },
     amount: Number,
     meta: Schema.Types.Mixed,
   },

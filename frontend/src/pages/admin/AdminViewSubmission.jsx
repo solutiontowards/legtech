@@ -42,7 +42,7 @@ const ActivityItem = ({ item }) => (
       <p className="font-semibold text-gray-800">{item.status}</p>
       <p className="text-sm text-gray-600">{item.remarks}</p>
       <p className="text-xs text-gray-400 mt-1">        {new Date(item.updatedAt).toLocaleString()} by         {item.updatedBy?.role && <span className="capitalize font-medium"> {item.updatedBy.role}</span>}
-</p>
+      </p>
     </div>
   </div>
 );
@@ -231,8 +231,8 @@ const AdminViewSubmission = () => {
                         <div className="flex flex-col items-center text-center text-gray-600">
                           <FileText
                             className={`w-12 h-12 ${isPdf(fileUrl)
-                                ? "text-red-500"
-                                : "text-gray-400"
+                              ? "text-red-500"
+                              : "text-gray-400"
                               }`}
                           />
                           <p className="text-xs mt-2">
@@ -339,13 +339,19 @@ const AdminViewSubmission = () => {
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
               >
-                <option value="Submitted">Submitted</option>
-                <option value="Pending">Pending</option>
-                <option value="Reviewing">Reviewing</option>
+                <option value="Applied">Applied</option>
+                <option value="Verified">Verified</option>
+                <option value="Reject | Failed">Reject | Failed</option>
+                <option value="On Process">On Process</option>
+                <option value="On Hold">On Hold</option>
+                <option value="Success">Success</option>
+                <option value="Objection">Objection</option>
+                <option value="Hold for Customer">Hold for Customer</option>
                 <option value="Document Required">Document Required</option>
                 <option value="Document Re-uploaded" disabled>Document Re-uploaded</option>
                 <option value="Completed">Completed</option>
-                <option value="Rejected">Rejected</option>
+                <option value="Payment Failed">Payment Failed</option>
+
               </select>
             </div>
             <div>

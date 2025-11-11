@@ -265,6 +265,8 @@ const AdminServiceRequest = () => {
           <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
             <tr>
               {[
+                "Action",
+
                 "Retailer",
                 "Service",
                 "Sub-Service",
@@ -275,7 +277,6 @@ const AdminServiceRequest = () => {
                 "Status",
                 "Admin Remarks",
                 "Date",
-                "Action",
               ].map((col) => (
                 <th key={col} className="p-4 font-semibold whitespace-nowrap">
                   {col}
@@ -296,6 +297,14 @@ const AdminServiceRequest = () => {
                   key={sub._id}
                   className="hover:bg-gray-50 transition-colors"
                 >
+                  <td className="p-4 text-center">
+                    <Link
+                      to={`/st-admin/view-submission/${sub._id}`}
+                      className="text-green-600 hover:text-green-800 p-2 rounded-full hover:bg-green-50 inline-block"
+                    >
+                      <Eye size={18} />
+                    </Link>
+                  </td>
                   <td className="p-4 font-medium text-gray-800">
                     {sub.retailerId?.name || "N/A"}
                   </td>
@@ -311,10 +320,10 @@ const AdminServiceRequest = () => {
                   <td className="p-4">
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${sub.paymentStatus === "paid"
-                          ? "bg-green-100 text-green-700"
-                          : sub.paymentStatus === "failed"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-700"
+                        ? "bg-green-100 text-green-700"
+                        : sub.paymentStatus === "failed"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-yellow-100 text-yellow-700"
                         }`}
                     >
                       {sub.paymentStatus || "N/A"}
@@ -322,13 +331,13 @@ const AdminServiceRequest = () => {
                   </td>
                   <td className="p-4">
                     <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${sub.status === "submitted"
-                          ? "bg-blue-100 text-blue-700"
-                          : sub.status === "completed"
-                            ? "bg-green-100 text-green-700"
-                            : sub.status === "rejected"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-gray-100 text-gray-700"
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${sub.status === "Applied"
+                        ? "bg-blue-100 text-blue-700"
+                        : sub.status === "completed"
+                          ? "bg-green-100 text-green-700"
+                          : sub.status === "rejected"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-gray-100 text-gray-700"
                         }`}
                     >
                       {sub.status}
@@ -343,14 +352,7 @@ const AdminServiceRequest = () => {
                   <td className="p-4 text-gray-500 whitespace-nowrap">
                     {new Date(sub.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="p-4 text-center">
-                    <Link
-                      to={`/st-admin/view-submission/${sub._id}`}
-                      className="text-green-600 hover:text-green-800 p-2 rounded-full hover:bg-green-50 inline-block"
-                    >
-                      <Eye size={18} />
-                    </Link>
-                  </td>
+
                 </tr>
               ))
             ) : (
