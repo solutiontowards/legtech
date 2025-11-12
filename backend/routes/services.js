@@ -9,6 +9,7 @@ router.use(authorize(['retailer', 'admin']));
 
 
 router.get('/', services.listServices);
+router.get('/commission-chart', services.getCommissionChart);
 router.get('/count', services.getServiceCount); // Moved up
 router.get('/:serviceSlug', services.getServiceDetail);
 router.get('/:serviceSlug/:subServiceSlug', services.getServiceDetail);

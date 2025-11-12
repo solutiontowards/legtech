@@ -306,7 +306,13 @@ export const getRetailerDashboardStats = asyncHandler(async (req, res) => {
   // 3. Get service usage data for the chart (top 5 services this month)
   const serviceUsage = await Submission.aggregate([
     // Match submissions for the current retailer in the current month
-    { $match: { retailerId, createdAt: { $gte: startDate, $lt: endDate } } },
+    {
+      $match: {
+        retailerId,
+        paymentStatus: 'paid', // Ensure only paid submissions are counted
+        createdAt: { $gte: startDate, $lt: endDate },
+      },
+    },
     // Join with the services collection to get the service name
     { $lookup: { from: 'services', localField: 'serviceId', foreignField: '_id', as: 'service' } },
     // Deconstruct the service array
@@ -326,6 +332,46 @@ export const getRetailerDashboardStats = asyncHandler(async (req, res) => {
     monthlyApplicationsCount,
     serviceUsage,
   });
+});
+
+export const getApplicationStatusStats = asyncHandler(async (req, res) => {
+  const retailerId = req.user._id;
+
+  // Define the specific statuses to be included in the stats
+  const includedStatuses = [
+    "Applied",
+    "On Process",
+    "Completed",
+    "Reject | Failed",
+    "On Hold",
+  ];
+
+  const stats = await Submission.aggregate([
+    // Stage 1: Match only submissions for the logged-in retailer and with specific statuses
+    {
+      $match: {
+        retailerId: retailerId,
+        status: { $in: includedStatuses }, // Filter by the allowed statuses
+      },
+    },
+    // Stage 2: Group documents by the 'status' field and count them
+    {
+      $group: {
+        _id: "$status",
+        count: { $sum: 1 },
+      },
+    },
+    // Stage 3: Rename '_id' to 'status' for a cleaner output
+    {
+      $project: {
+        _id: 0,
+        status: "$_id",
+        count: "$count",
+      },
+    },
+  ]);
+
+  res.json({ ok: true, stats });
 });
 
 export const reUploadDocuments = asyncHandler(async (req, res) => {

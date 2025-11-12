@@ -13,5 +13,6 @@ router.put('/:submissionId/re-upload', auth, submission.reUploadDocuments);
 router.get('/admin', auth, authorize('admin'), submission.adminListSubmissions);
 router.put('/:submissionId/status', auth, authorize('admin'), submission.updateSubmissionStatus);
 router.get('/stats/dashboard', auth, submission.getRetailerDashboardStats);
+router.get('/stats/application-status', auth, submission.getApplicationStatusStats);
 
 export default router;

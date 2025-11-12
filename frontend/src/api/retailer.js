@@ -35,3 +35,6 @@ export const getServiceCount = () => api.get('/services/count');
 
 // Get commission chart data
 export const getCommissionChart = () => api.get('/services/commission-chart');
+
+// getApplicationStatusStats
+export const getApplicationStatusStats = () => api.get('/submissions/stats/application-status');

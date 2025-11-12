@@ -1,4 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { getDashboardStats, getServiceCount, getApplicationStatusStats } from "../../api/retailer";
+import { useNavigate } from "react-router-dom";
+import { getWalletBalance, getRecentTransactions } from "../../api/wallet";
 import {
   Wallet as WalletIcon,
   BarChart2,
@@ -7,12 +11,14 @@ import {
   Award,
   TrendingUp,
   CreditCard,
-  Upload,
-  Download,
   Bell,
   Info,
   Clock,
   AlertCircle,
+  Loader2,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  XCircle,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -29,12 +35,13 @@ import {
   Cell,
 } from "recharts";
 import NoticeBoard from "./NoticeBoard";
+import toast from "react-hot-toast";
 
 /* =========================================================
    Reusable bits
 ========================================================= */
-const StatCard = ({ title, value, icon: Icon, color }) => (
-  <div className="bg-white p-5 rounded-2xl shadow-md flex items-center gap-4 hover:shadow-lg hover:-translate-y-1 transition-all">
+const StatCard = ({ title, value, icon: Icon, color, onClick }) => (
+  <div className="bg-white p-5 rounded-2xl shadow-md flex items-center gap-4 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer" onClick={onClick}>
     <div className={`w-14 h-14 rounded-full flex items-center justify-center ${color}`}>
       <Icon className="h-7 w-7 text-white" />
     </div>
@@ -83,58 +90,49 @@ const ProfitSpark = ({ title, value, change }) => (
   </div>
 );
 
-const TransactionItem = ({ icon: Icon, title, note, amount, credit }) => (
-  <div className="flex items-center justify-between py-3 border-b last:border-b-0">
-    <div className="flex items-center gap-3">
-      <div className={`w-9 h-9 rounded-full flex items-center justify-center ${credit ? "bg-emerald-50" : "bg-indigo-50"}`}>
-        <Icon className={`${credit ? "text-emerald-600" : "text-indigo-600"} w-5 h-5`} />
+const TransactionItem = ({ transaction }) => {
+  const getTransactionDescription = (meta) => {
+    if (typeof meta === "string" && meta.startsWith("WALLET_")) return "Wallet Recharge";
+    if (meta?.reason?.startsWith("Payment Failed")) return `Failed: ${meta.reason}`;
+    if (meta?.reason === "service purchase") return `Wallet Payment for Service`;
+    if (meta?.reason === "Online Service Payment") return `Online Payment for Service`;
+    if (meta?.reason === "service purchase retry") return "Retry Payment for Submission";
+    if (meta?.reason) return `Manual Credit: ${meta.reason}`;
+    if (typeof meta === 'string') return meta;
+    return "Transaction";
+  };
+
+  const isCredit = transaction.type === "credit";
+  const isDebit = transaction.type === "debit";
+  const Icon = isCredit ? ArrowDownCircle : isDebit ? ArrowUpCircle : XCircle;
+  const iconColor = isCredit ? "text-green-600" : isDebit ? "text-red-600" : "text-gray-500";
+  const bgColor = isCredit ? "bg-green-50" : isDebit ? "bg-red-50" : "bg-gray-100";
+  const amountColor = isCredit ? "text-green-600" : isDebit ? "text-red-600" : "text-gray-500";
+  const amountPrefix = isCredit ? "+" : isDebit ? "-" : "";
+
+  return (
+    <div className="flex items-center justify-between py-3 border-b last:border-b-0">
+      <div className="flex items-center gap-3">
+        <div className={`w-9 h-9 rounded-full flex items-center justify-center ${bgColor}`}>
+          <Icon className={`${iconColor} w-5 h-5`} />
+        </div>
+        <div>
+          <div className="text-sm font-medium text-gray-800">{getTransactionDescription(transaction.meta)}</div>
+          <div className="text-xs text-gray-500">{new Date(transaction.createdAt).toLocaleString()}</div>
+        </div>
       </div>
-      <div>
-        <div className="text-sm font-medium text-gray-800">{title}</div>
-        <div className="text-xs text-gray-500">{note}</div>
+      <div className={`text-sm font-semibold ${amountColor}`}>
+        {amountPrefix}₹{transaction.amount.toFixed(2)}
       </div>
     </div>
-    <div className={`text-sm font-semibold ${credit ? "text-emerald-600" : "text-rose-600"}`}>
-      {credit ? "+" : "-"} {amount}
-    </div>
-  </div>
-);
+  );
+};
 
 /* =========================================================
    Dummy data (replace with API later)
 ========================================================= */
-const barData = [
-  { name: "Driving Licence", applications: 18 },
-  { name: "PAN", applications: 9 },
-  { name: "Aadhaar", applications: 12 },
-  { name: "GST", applications: 5 },
-];
-
-const orderStats = [
-  { name: "Electronic", amount: "$1,174" },
-  { name: "Fashion", amount: "$1,074" },
-  { name: "Dr & Med", amount: "$912" },
-  { name: "Sports", amount: "$811" },
-];
-
-
-const orderStatusData = [
-  { status: "Completed", count: 156, color: "#10b981" },
-  { status: "Pending", count: 89, color: "#f59e0b" },
-  { status: "Processing", count: 42, color: "#3b82f6" },
-  { status: "Cancelled", count: 12, color: "#ef4444" },
-]
 
 const sparkData = Array.from({ length: 14 }, (_, i) => ({ t: i + 1, v: 40 + Math.round(Math.random() * 20) }));
-
-
-
-const transactions = [
-  { title: "Mastercard", note: "Receive money", amount: "$82.6 USD", credit: true, icon: Download },
-  { title: "Paypal", note: "Withdraw money", amount: "$28 USD", credit: false, icon: Upload },
-  { title: "Wallet", note: "Receive money", amount: "$45 USD", credit: true, icon: Download },
-  { title: "Transfer", note: "Refund money", amount: "$12 USD", credit: true, icon: Download },
-];
 
 /* =========================================================
    Verification Notice (shown when not verified)
@@ -164,19 +162,71 @@ const VerificationNotice = () => (
    Main Dashboard
 ========================================================= */
 export default function Dashboard() {
-  // you can gate this with auth later; keeping it simple and “verified=false” to show the banner once
-  const [isVerified] = useState(true);
-
-  // state kept only to mirror your current structure (easy API swap later)
-  const [walletBalance, setWalletBalance] = useState(401.0);
-  const [servicesCount, setServicesCount] = useState(6);
-  const [monthlyApplications, setMonthlyApplications] = useState(1);
-  const [chartData, setChartData] = useState([]);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    walletBalance: 0,
+    servicesCount: 0,
+    monthlyApplications: 0,
+    serviceUsage: [],
+  });
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [orderStatusData, setOrderStatusData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // simulate initial load
-    setChartData(barData);
-  }, []);
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        // Define colors for each status
+        const statusColors = {
+          Applied: "#3b82f6", // blue
+          "On Process": "#f97316", // orange
+          Completed: "#22c55e", // green
+          "Reject | Failed": "#ef4444", // red
+          "On Hold": "#eab308", // yellow
+          "Payment Failed": "#ef4444", // red
+          "Document Required": "#a855f7", // purple
+          // Add other statuses and their colors
+          default: "#6b7280", // gray
+        };
+
+        // Fetch all data concurrently for better performance
+        const [statsRes, walletRes, serviceCountRes, transactionsRes, statusStatsRes] = await Promise.all([
+          getDashboardStats(),
+          getWalletBalance(),
+          getServiceCount(),
+          getRecentTransactions(),
+          getApplicationStatusStats(),
+        ]);
+
+        setStats({
+          monthlyApplications: statsRes.data?.monthlyApplicationsCount || 0,
+          serviceUsage: statsRes.data?.serviceUsage || [],
+          walletBalance: walletRes.data?.balance || 0,
+          servicesCount: serviceCountRes.data?.count || 0,
+        });
+        setRecentTransactions(transactionsRes.data?.transactions || []);
+
+        const pieData = statusStatsRes.data.stats.map(stat => ({
+          status: stat.status,
+          count: stat.count,
+          color: statusColors[stat.status] || statusColors.default,
+        }));
+        setOrderStatusData(pieData);
+
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        toast.error("Could not load dashboard data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
 
   return (
     <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
@@ -188,96 +238,131 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {!isVerified ? <VerificationNotice /> : null}
+        {!user?.isVerified ? <VerificationNotice /> : null}
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* ===== Left / Main ===== */}
           <div className="xl:col-span-2 space-y-6">
             {/* Stat cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              <StatCard title="Wallet Balance" value={`₹${walletBalance.toFixed(2)}`} icon={WalletIcon} color="bg-blue-500" />
-              <StatCard title="Total Services" value={servicesCount} icon={CheckCircle} color="bg-green-500" />
-              <StatCard title="Monthly Applications" value={monthlyApplications} icon={BarChart2} color="bg-indigo-500" />
+              <StatCard title="Wallet Balance" value={loading ? "..." : `₹${stats.walletBalance.toFixed(2)}`} icon={WalletIcon} color="bg-blue-500" onClick={() => navigate("/retailer/wallet")} />
+              <StatCard title="Total Services" value={loading ? "..." : stats.servicesCount} icon={CheckCircle} color="bg-green-500" onClick={() => navigate("/retailer/services")} />
+              <StatCard title="Monthly Applications" value={loading ? "..." : stats.monthlyApplications} icon={BarChart2} color="bg-indigo-500" onClick={() => navigate("/retailer/submission-history")} />
             </div>
 
             {/* Chart */}
             <div className="bg-white p-5 rounded-2xl shadow-md">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Service Usage This Month</h3>
               <div className="w-full h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 12 }} />
-                    <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
-                    <Tooltip
-                      cursor={{ fill: "rgba(239,246,255,0.6)" }}
-                      contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.75rem" }}
-                    />
-                    <Bar dataKey="applications" name="Applications" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {loading ? (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading Chart...
+                  </div>
+                ) : stats.serviceUsage.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stats.serviceUsage} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 12 }} />
+                      <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
+                      <Tooltip
+                        cursor={{ fill: "rgba(239,246,255,0.6)" }}
+                        contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.75rem" }}
+                      />
+                      <Bar dataKey="applications" name="Applications" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <Info className="w-5 h-5 mr-2" />
+                    No service usage data for this month yet.
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Order statistics + donut stub */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-             {/* Order Statistics Pie Chart */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Order Statistics</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={orderStatusData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ status, count }) => `${status}: ${count}`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="count"
-              >
-                {orderStatusData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+            {/* =========================
+     Order Statistics Section
+========================= */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* ======= Order Statistics Pie Chart (70%) ======= */}
+              <div className="bg-white rounded-2xl shadow-md p-6 lg:col-span-2 w-full">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                  Order Statistics
+                </h2>
 
+                {loading ? (
+                  <div className="flex items-center justify-center h-[250px] text-gray-500">
+                    <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading Stats...
+                  </div>
+                ) : orderStatusData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <PieChart>
+                      <Pie
+                        data={orderStatusData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={90}
+                        dataKey="count"
+                        nameKey="status"
+                        label={({ status, percent }) =>
+                          `${status} (${(percent * 100).toFixed(0)}%)`
+                        }
+                      >
+                        {orderStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value, name) => [value, name]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[250px] text-gray-500">
+                    No order data to display.
+                  </div>
+                )}
+              </div>
 
-              <div className="bg-white p-5 rounded-2xl shadow-md">
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">Total Order</h3>
-                <p className="text-xs text-gray-500 mb-3">564</p>
-                <div className="flex items-center gap-5">
-                  <div className="relative w-24 h-24">
-                    <svg viewBox="0 0 36 36" className="w-24 h-24">
-                      <path
-                        d="M18 2.0845
-                           a 15.9155 15.9155 0 0 1 0 31.831
-                           a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none"
-                        stroke="#e5e7eb"
-                        strokeWidth="3"
-                      />
-                      <path
-                        d="M18 2.0845
-                           a 15.9155 15.9155 0 0 1 0 31.831"
-                        fill="none"
-                        stroke="#6366f1"
-                        strokeWidth="3"
-                        strokeDasharray="40 60"
-                        strokeLinecap="round"
-                      />
-                    </svg>
+              {/* ======= Total Order Summary Card (30%) ======= */}
+              <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center justify-center w-full">
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">Total Orders</h3>
+                <p className="text-xs text-gray-500 mb-4">This Week</p>
+
+                <div className="relative flex items-center justify-center">
+                  <svg viewBox="0 0 36 36" className="w-28 h-28">
+                    {/* Background circle */}
+                    <path
+                      d="M18 2.0845
+             a 15.9155 15.9155 0 0 1 0 31.831
+             a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="#e5e7eb"
+                      strokeWidth="3"
+                    />
+                    {/* Progress circle */}
+                    <path
+                      d="M18 2.0845
+             a 15.9155 15.9155 0 0 1 0 31.831"
+                      fill="none"
+                      stroke="#6366f1"
+                      strokeWidth="3"
+                      strokeDasharray="70 30" /* 70% progress */
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute text-center">
+                    <p className="text-2xl font-bold text-gray-800">70%</p>
+                    <p className="text-xs text-gray-500">Completed</p>
                   </div>
-                  <div>
-                    <div className="text-3xl font-bold text-gray-800">40%</div>
-                    <div className="text-xs text-gray-500">Weekly</div>
-                  </div>
+                </div>
+
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-600">Total Orders</p>
+                  <p className="text-2xl font-bold text-gray-900">564</p>
                 </div>
               </div>
             </div>
+
 
             {/* Profit / Growth tiles */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -310,21 +395,18 @@ export default function Dashboard() {
           {/* ===== Right / Sidebar ===== */}
           <div className="space-y-6">
             {/* Announcements */}
-         <NoticeBoard />
+            <NoticeBoard />
             {/* Transactions */}
             <div className="bg-white p-5 rounded-2xl shadow-md">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Transactions</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Transactions</h3>
               <div>
-                {transactions.map((t, i) => (
-                  <TransactionItem
-                    key={i}
-                    icon={t.icon}
-                    title={t.title}
-                    note={t.note}
-                    amount={t.amount}
-                    credit={t.credit}
-                  />
-                ))}
+                {loading ? (
+                  <div className="text-center text-gray-500 py-4">Loading transactions...</div>
+                ) : recentTransactions.length > 0 ? (
+                  recentTransactions.map((tx) => <TransactionItem key={tx._id} transaction={tx} />)
+                ) : (
+                  <div className="text-center text-gray-500 py-4">No recent transactions.</div>
+                )}
               </div>
             </div>
 
@@ -334,9 +416,9 @@ export default function Dashboard() {
                 <CreditCard className="w-5 h-5" />
                 <div className="font-medium">Wallet</div>
               </div>
-              <div className="text-3xl font-bold">₹{walletBalance.toFixed(2)}</div>
+              <div className="text-3xl font-bold">{loading ? "..." : `₹${stats.walletBalance.toFixed(2)}`}</div>
               <div className="text-sm text-indigo-100 mt-1">Current Balance</div>
-              <button className="mt-4 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium">
+              <button className="mt-4 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium" onClick={() => navigate('/retailer/wallet')}>
                 Add Money
               </button>
             </div>
@@ -356,7 +438,7 @@ export default function Dashboard() {
                 </ResponsiveContainer>
               </div>
             </div>
-            
+
           </div>
         </div>
       </div>

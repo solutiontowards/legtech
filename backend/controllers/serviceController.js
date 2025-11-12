@@ -78,3 +78,44 @@ export const getServiceCount = asyncHandler(async (req, res) => {
   const count = await Service.countDocuments({ isActive: true });
   res.json({ ok: true, count });
 });
+
+
+// Commission Chart Data
+export const getCommissionChart = asyncHandler(async (req, res) => {
+  const commissionData = await Option.aggregate([
+    // Stage 1: Join with the 'subservices' collection
+    {
+      $lookup: {
+        from: 'subservices',
+        localField: 'subServiceId',
+        foreignField: '_id',
+        as: 'subService',
+      },
+    },
+    // Deconstruct the subService array field from the input documents to output a document for each element
+    { $unwind: '$subService' },
+    // Stage 2: Join with the 'services' collection using the serviceId from the subService
+    {
+      $lookup: {
+        from: 'services',
+        localField: 'subService.serviceId',
+        foreignField: '_id',
+        as: 'service',
+      },
+    },
+    // Deconstruct the service array
+    { $unwind: '$service' },
+    // Stage 3: Project the final fields
+    {
+      $project: {
+        _id: 1,
+        serviceName: '$service.name',
+        subServiceName: '$subService.name',
+        optionName: '$name',
+        customerPrice: '$customerPrice',
+        retailerPrice: '$retailerPrice',
+      },
+    },
+  ]);
+  res.json({ ok: true, commissionData });
+});

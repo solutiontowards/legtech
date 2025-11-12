@@ -346,7 +346,7 @@ export const getRecentTransactions = asyncHandler(async (req, res) => {
   // Fetch only the 10 most recent transactions
   const transactions = await Transaction.find({ walletId: wallet._id })
     .sort({ createdAt: -1 })
-    .limit(10);
+    .limit(5);
 
   // Send response
   res.status(200).json({

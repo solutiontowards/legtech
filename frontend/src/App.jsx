@@ -40,6 +40,7 @@ import ApplicationForm from "./pages/retailer/ApplicationForm";
 import Wallet from "./pages/retailer/Wallet";
 import AdminCreditWallet from "./pages/admin/AdminCreditWallet";
 import CommisionChart from "./pages/retailer/CommisionChart";
+import PriceChart from "./pages/retailer/PriceChart";
 
 const App = () => {
   useEffect(() => {
@@ -120,6 +121,8 @@ const App = () => {
         <Route path="support" element={<Support />} />
         <Route path="wallet" element={<Wallet />} />
         <Route path="commision-chart" element={<CommisionChart />} />
+        <Route path="price-chart" element={<PriceChart />} />
+
 
 
 

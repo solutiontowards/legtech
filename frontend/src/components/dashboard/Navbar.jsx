@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -8,7 +8,6 @@ import {
   ChevronDown,
   Wallet,
   PhoneCall,
-  Settings,
   User,
 } from "lucide-react";
 import { getWalletBalance } from "../../api/wallet";
@@ -19,6 +18,7 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const [walletBalance, setWalletBalance] = useState(null);
+  const profileRef = useRef(null);
 
   const fetchBalance = async () => {
     if (user && user.role === "retailer") {
@@ -60,17 +60,29 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
 
   useEffect(() => {
     fetchBalance();
-    // We listen for changes on the user object from AuthContext
   }, [user]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [profileRef]);
+
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3">
+    <header className="sticky top-0 z-[999] bg-white border-b border-gray-200 shadow-sm">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-2">
         {/* Left section - Logo and menu */}
         <div className="flex items-center gap-3">
           <button
             onClick={toggleSidebar}
-            className="p-2 rounded-lg transition-colors text-gray-600 hover:bg-gray-100 "
+            className="p-2 rounded-full transition-colors text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -79,7 +91,7 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
             <img
               src="/logo.png"
               alt="Logo"
-              className="h-14 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
           </div>
         </div>
@@ -88,10 +100,9 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
         <div className="flex items-center gap-3 sm:gap-5">
           {/* Wallet (for retailer only) */}
           {user?.role === "retailer" && (
-            <Link to="/retailer/wallet" >
-
-              <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-800">
-                <Wallet className="h-4 w-4" />
+            <Link to="/retailer/wallet" className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 hover:bg-gray-100 transition-colors">
+              <div className="flex items-center gap-2 text-indigo-800">
+                <Wallet className="h-5 w-5 text-indigo-600" />
                 <span className="text-sm font-medium">
                   {walletBalance !== null
                     ? `₹${walletBalance.toFixed(2)}`
@@ -104,49 +115,50 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
           {/* Contact button */}
           <a
             href={`tel:${phoneNumber}`}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-100 transition-colors"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-100 transition-colors"
           >
             <PhoneCall className="h-4 w-4 text-gray-600" />
             <span className="text-gray-700">Support</span>
           </a>
 
           {/* Profile dropdown */}
-          <div className="relative">
+          <div className="relative" ref={profileRef}>
             <button
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-full hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              <div className="h-10 w-10 flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-800 to-indigo-600 text-white font-bold text-base">
+              <div className="h-9 w-9 flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm">
                 {user?.name?.charAt(0)?.toUpperCase() || "U"}
               </div>
-
               <div className="hidden sm:block text-left">
-                <p className="text-sm font-semibold text-gray-900 leading-tight">
+                <p className="text-sm font-semibold text-gray-800 leading-tight">
                   {user?.name || "User"}
                 </p>
-                <p className="text-xs text-gray-500">{user?.role || "Admin"}</p>
+                <p className="text-xs text-gray-500 capitalize">
+                  {user?.role || "Admin"}
+                </p>
               </div>
-
               <ChevronDown
-                className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${profileOpen ? "rotate-180" : ""
-                  } hidden sm:block`}
+                className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                  profileOpen ? "rotate-180" : ""
+                } hidden sm:block`}
               />
             </button>
-
             {/* Dropdown menu */}
             {profileOpen && (
-              <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white border border-gray-100 animate-fadeIn">
+              <div
+                className="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transition ease-out duration-100"
+                style={{ transform: 'scale(0.95)', opacity: 0, animation: 'fadeIn 0.1s ease-out forwards' }}
+              >
                 <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-gray-500">{user?.role}</p>
+                  <p className="text-sm font-semibold text-gray-800 truncate">
+                    {user?.name || "User"}
+                  </p>
+                  <p className="text-xs text-gray-500 capitalize">
+                    {user?.role || "Admin"}
+                  </p>
                 </div>
                 <div className="py-1">
-                  {/* <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                    <User className="h-4 w-4 text-gray-500" /> Profile
-                  </button>
-                  <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                    <Settings className="h-4 w-4 text-gray-500" /> Settings
-                  </button> */}
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -162,5 +174,24 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
     </header>
   );
 };
+
+const fadeInAnimation = `
+  @keyframes fadeIn {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+`;
+
+// Inject the animation into the document head
+const styleSheet = document.createElement("style");
+styleSheet.type = "text/css";
+styleSheet.innerText = fadeInAnimation;
+document.head.appendChild(styleSheet);
 
 export default Navbar;

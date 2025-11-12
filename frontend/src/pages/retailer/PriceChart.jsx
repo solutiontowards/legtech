@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { getCommissionChart } from "../../api/retailer";
+import { getCommissionChart } from "../../api/retailer"; // Reusing the same API as it contains retailerPrice
 import toast from "react-hot-toast";
 import { Loader2, Search, FileDown, Inbox, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// Renamed component to follow PascalCase convention
-const CommisionChart = () => {
+const PriceChart = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -18,12 +17,12 @@ const CommisionChart = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const { data: response } = await getCommissionChart(); // Corrected API call
+        const { data: response } = await getCommissionChart(); // Fetching all data, then filtering for retailer price
         if (response.ok) {
           setData(response.commissionData || []);
         }
       } catch (error) {
-        toast.error("Failed to fetch commission data.");
+        toast.error("Failed to fetch price data.");
         console.error(error);
       } finally {
         setLoading(false);
@@ -32,7 +31,6 @@ const CommisionChart = () => {
     fetchData();
   }, []);
 
-  // Memoized filtering for performance
   const filteredData = useMemo(() => {
     return data.filter(
       (item) =>
@@ -43,7 +41,6 @@ const CommisionChart = () => {
   }, [data, search]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  // Slicing data for pagination
   const currentData = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -58,26 +55,23 @@ const CommisionChart = () => {
       "Service": item.serviceName,
       "Sub-Service": item.subServiceName,
       "Option": item.optionName,
-      "Customer Price": `₹${(item.customerPrice || 0).toFixed(2)}`,
-      // Corrected typo from 'reteielr' to 'retailer'
       "Retailer Price": `₹${(item.retailerPrice || 0).toFixed(2)}`,
-      "Commission": `₹${((item.customerPrice || 0) - (item.retailerPrice || 0)).toFixed(2)}`,
     }));
 
     if (type === "excel") {
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Commission Chart");
-      XLSX.writeFile(wb, "CommissionChart.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "Retailer Price Chart");
+      XLSX.writeFile(wb, "RetailerPriceChart.xlsx");
     } else if (type === "pdf") {
       const doc = new jsPDF();
-      doc.text("Retailer Commission Chart", 14, 15);
+      doc.text("Retailer Price Chart", 14, 15);
       autoTable(doc, {
         head: [Object.keys(exportData[0])],
         body: exportData.map((row) => Object.values(row)),
         startY: 20,
       });
-      doc.save("CommissionChart.pdf");
+      doc.save("RetailerPriceChart.pdf");
     }
   };
 
@@ -86,7 +80,7 @@ const CommisionChart = () => {
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-3">
           <BarChart3 className="w-7 h-7 text-blue-600" />
-          Commission Chart
+          Retailer Price Chart
         </h2>
         <div className="flex flex-wrap gap-3">
           <button onClick={() => handleExport("excel")} className="flex items-center gap-2 px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-all duration-200 text-sm font-semibold shadow-sm hover:shadow-md">
@@ -110,27 +104,25 @@ const CommisionChart = () => {
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-50 text-gray-600">
               <tr>
-                {["Service", "Sub-Service", "Option", "Customer Price", "Retailer Price", "Commission"].map((col) => ( // Corrected typo
+                {["Service", "Sub-Service", "Option", "Retailer Price"].map((col) => (
                   <th key={col} className="p-4 font-semibold whitespace-nowrap tracking-wider">{col}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {loading ? (
-                <tr><td colSpan="6" className="text-center p-10"><Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" /><p className="mt-2 text-gray-500">Loading data...</p></td></tr>
+                <tr><td colSpan="4" className="text-center p-10"><Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" /><p className="mt-2 text-gray-500">Loading data...</p></td></tr>
               ) : currentData.length > 0 ? (
-                currentData.map((item, index) => (
+                currentData.map((item) => (
                   <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="p-4 text-gray-800 font-medium">{item.serviceName}</td>
                     <td className="p-4 text-gray-600">{item.subServiceName}</td>
                     <td className="p-4 text-gray-600 font-semibold">{item.optionName}</td>
-                    <td className="p-4 text-gray-800">₹{(item.customerPrice || 0).toFixed(2)}</td>
                     <td className="p-4 text-gray-800">₹{(item.retailerPrice || 0).toFixed(2)}</td>
-                    <td className="p-4 text-green-600 font-bold">₹{((item.customerPrice || 0) - (item.retailerPrice || 0)).toFixed(2)}</td>
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan="6" className="text-center p-10"><Inbox className="w-12 h-12 text-gray-400 mx-auto" /><p className="mt-3 font-semibold text-gray-700">No Data Found</p><p className="text-sm text-gray-500">There is no commission data available to display.</p></td></tr>
+                <tr><td colSpan="4" className="text-center p-10"><Inbox className="w-12 h-12 text-gray-400 mx-auto" /><p className="mt-3 font-semibold text-gray-700">No Data Found</p><p className="text-sm text-gray-500">There is no price data available to display.</p></td></tr>
               )}
             </tbody>
           </table>
@@ -145,7 +137,7 @@ const CommisionChart = () => {
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default CommisionChart;
+export default PriceChart

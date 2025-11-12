@@ -1,30 +1,27 @@
-
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Users,
   Briefcase,
   BriefcaseBusiness,
-  MessageSquare,
   HelpCircle,
-  Settings,
-  Lock,
   LogOut,
   ChevronDown,
   X,
   Package,
-  ShoppingCart,
   PieChart,
-  ServerCogIcon,
   Layers,
   Wallet,
   History,
-  User,
   BarChart3,
   LifeBuoy,
   Megaphone,
-  BriefcaseBusinessIcon,
+  UserCheck,
+  UserPlus,
+  Settings2,
+  UserCog,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Swal from "sweetalert2";
@@ -47,7 +44,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       if (result.isConfirmed) {
         await logout();
         navigate("/");
-        // Show success message after navigation
         Swal.fire({
           title: "Logged Out!",
           text: "You have been logged out successfully.",
@@ -69,14 +65,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     {
       id: "MyBusiness",
       text: "My Business",
-      icon: BriefcaseBusinessIcon,
+      icon: Briefcase,
       submenu: [
-        { to: "/retailer/commision-chart", text: "Commision Chart" },
-        { to: "/retailer/price-chart", text: "Price Chart" },
+        { to: "/retailer/commision-chart", text: "Commision Chart", icon: PieChart },
+        { to: "/retailer/price-chart", text: "Price Chart", icon: BarChart3 },
       ],
     },
     { id: "support", to: "/retailer/support", text: "Support", icon: LifeBuoy },
-  ]
+  ];
 
   const adminLinks = [
     { id: "Dashboard", to: "/st-admin/dashboard", text: "Dashboard", icon: LayoutDashboard },
@@ -85,44 +81,35 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       text: "Retailers",
       icon: Briefcase,
       submenu: [
-        { to: "/st-admin/verify-retailers", text: "Verify Retailers" },
-        { to: "/st-admin/retailers", text: "All Retailers" },
+        { to: "/st-admin/verify-retailers", text: "Verify Retailers", icon: UserCheck },
+        { to: "/st-admin/retailers", text: "All Retailers", icon: Users },
       ],
     },
-
     {
       id: "services",
       text: "Services Managment",
       icon: BriefcaseBusiness,
       submenu: [
-        { to: "/st-admin/services", text: "Services" },
-        { to: "/st-admin/subservices", text: "Sub Services" },
-        { to: "/st-admin/subservice-option", text: "Services Options" },
-
+        { to: "/st-admin/services", text: "Services", icon: Package },
+        { to: "/st-admin/subservices", text: "Sub Services", icon: Layers },
+        { to: "/st-admin/subservice-option", text: "Services Options", icon: Settings2 },
       ],
     },
-
     { id: "Service-Requests", to: "/st-admin/service-requests", text: "Service Requests", icon: LayoutDashboard },
     { id: 'credit-wallet', to: '/st-admin/credit-wallet', text: 'Credit Wallet', icon: Wallet },
-
     { id: "notices", to: "/st-admin/manage-notices", text: "Manage Notices", icon: Megaphone },
-
-
-
-
-
     {
       id: "user",
       text: "User Managment",
       icon: Users,
       submenu: [
-        { to: "/st-admin/add-user", text: "Add New User" },
-        { to: "/st-admin/admin-list", text: "Admin List" },
+        { to: "/st-admin/add-user", text: "Add New User", icon: UserPlus },
+        { to: "/st-admin/admin-list", text: "Admin List", icon: UserCog },
       ],
     },
-  ]
+  ];
 
-  const links = user?.role === "admin" ? adminLinks : retailerLinks
+  const links = user?.role === "admin" ? adminLinks : retailerLinks;
   const toggleMenu = (id) => setExpandedMenu(expandedMenu === id ? null : id);
 
   return (
@@ -136,9 +123,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
       <aside
         className={`fixed md:relative top-0 left-0 z-[9999] h-screen bg-[#2A2185] text-white shadow-xl 
-          transition-all duration-500 overflow-hidden flex flex-col 
-          ${isOpen ? "w-[280px]" : "w-0 md:w-[80px]"}
-        `}
+          transition-all duration-300 ease-in-out overflow-hidden flex flex-col 
+          ${isOpen ? "w-[280px]" : "w-0 md:w-[80px]"}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
@@ -149,9 +135,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             {isOpen && (
               <div>
                 <h1 className="font-semibold text-lg leading-tight">{user?.name}</h1>
-                <p className="text-xs text-gray-300 capitalize">
-                  {user?.role || "Admin"}
-                </p>
+                <p className="text-xs text-gray-300 capitalize">{user?.role || "Admin"}</p>
               </div>
             )}
           </div>
@@ -165,8 +149,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           )}
         </div>
 
-        {/* Menu */}
-        <nav className="flex-1 overflow-y-auto py-6 scrollbar-hide">
+        {/* Menu with custom scrollbar */}
+        <nav className="flex-1 overflow-y-auto py-6 custom-scrollbar">
           <ul className="flex flex-col gap-1">
             {links.map((link) => {
               const Icon = link.icon;
@@ -178,11 +162,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                     <>
                       <button
                         onClick={() => toggleMenu(link.id)}
-                        className={`w-full flex items-center justify-between px-5 py-3 rounded-l-[30px] transition-all duration-300 
-                          ${isExpanded ? "bg-white/10 " : "hover:bg-white/10"}
-                        `}
+                        className={`w-full flex items-center justify-between px-5 py-3 transition-all duration-300 
+                          ${isExpanded ? "bg-white/5 " : "hover:bg-white/10"}`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                           <Icon className="w-5 h-5" />
                           {isOpen && (
                             <span className="text-[15px] font-medium tracking-wide">
@@ -193,52 +176,60 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                         {isOpen && (
                           <ChevronDown
                             size={16}
-                            className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : ""
-                              }`}
+                            className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
                           />
                         )}
                       </button>
-                      {isExpanded && isOpen && (
-                        <div className="ml-10 mt-2 space-y-1 border-l border-white/20 pl-3">
-                          {link.submenu.map((sub, idx) => (
-                            <NavLink
-                              key={idx}
-                              to={sub.to}
-                              className={({ isActive }) =>
-                                `block text-sm px-3 py-2 rounded-lg transition-all ${isActive
-                                  ? "bg-white text-[#2A2185] font-semibold"
-                                  : "text-gray-200 hover:bg-white/10 hover:text-white"
-                                }`
-                              }
-                            >
-                              {sub.text}
-                            </NavLink>
-                          ))}
-                        </div>
-                      )}
+                      <AnimatePresence>
+                        {isExpanded && isOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            className="ml-8 pl-4 border-l-2 border-white/10 overflow-hidden"
+                          >
+                            <div className="py-2 space-y-1">
+                              {link.submenu.map((sub, idx) => {
+                                const SubIcon = sub.icon;
+                                return (
+                                  <NavLink
+                                    key={idx}
+                                    to={sub.to}
+                                    className={({ isActive }) =>
+                                      `flex items-center gap-3 text-sm px-3 py-2.5 rounded-lg transition-all ${
+                                        isActive
+                                          ? "bg-white text-[#2A2185] font-semibold"
+                                          : "text-gray-200 hover:bg-white/10 hover:text-white"
+                                      }`
+                                    }
+                                  >
+                                    <SubIcon className="w-4 h-4" />
+                                    <span>{sub.text}</span>
+                                  </NavLink>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </>
                   ) : (
                     <NavLink
                       to={link.to}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 px-5 py-3 rounded-l-[30px] relative transition-all duration-300 
-                          ${isActive
-                          ? "bg-white text-[#2A2185] font-semibold"
-                          : "hover:bg-white/10 text-white"
+                        `flex items-center gap-4 px-5 py-3 relative transition-all duration-300 ${
+                          isActive
+                            ? "bg-white text-[#2A2185] font-semibold"
+                            : "hover:bg-white/10 text-white"
                         }`
                       }
                     >
-                      {({ isActive }) => (
-                        <>
-                          <Icon className="w-5 h-5" />
-                          {isOpen && (
-                            <span className="text-[15px] font-medium tracking-wide">
-                              {link.text}
-                            </span>
-                          )}
-
-
-                        </>
+                      <Icon className="w-5 h-5" />
+                      {isOpen && (
+                        <span className="text-[15px] font-medium tracking-wide">
+                          {link.text}
+                        </span>
                       )}
                     </NavLink>
                   )}
@@ -252,7 +243,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-5 py-3 rounded-l-[30px] hover:bg-red-500/20 text-red-300 transition-all"
+            className="w-full flex items-center gap-4 px-5 py-3 rounded-lg hover:bg-red-500/20 text-red-300 transition-all"
           >
             <LogOut className="w-5 h-5" />
             {isOpen && <span className="text-[15px] font-medium">Sign Out</span>}
