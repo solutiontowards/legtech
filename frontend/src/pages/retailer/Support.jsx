@@ -40,7 +40,7 @@ const RetailerSupport = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 flex flex-col items-center py-20 px-6">
+    <div className="min-h-screen  text-gray-900 flex flex-col items-center py-20 px-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
