@@ -55,7 +55,7 @@ const NoticeBoard = () => {
       {/* Scroll Area */}
       <div
         ref={scrollContainerRef}
-        className="relative h-[360px] sm:h-[480px] overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 shadow-md pause"
+        className="relative h-[360px] sm:h-[400px] overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 shadow-md pause"
       >
         <div ref={scrollTrackRef} className={`transition-all ${isOverflowing ? "animate-scroll" : ""}`}>
           {notices.length > 0 ? (

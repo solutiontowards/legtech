@@ -257,7 +257,7 @@ export const checkOrderStatus = asyncHandler(async (req, res) => {
             type: 'failed', // A new type for failed transactions
             amount: Number(order.txn_amount) || 0,
             meta: {
-              reason: `Payment Failed: ${order.status}`,
+              reason: `Payment${order.status}`,
               orderId: order.order_id,
             },
           });

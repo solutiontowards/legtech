@@ -35,7 +35,7 @@ const TransactionHistory = () => {
     const getTransactionDescription = (meta) => {
         if (typeof meta === "string" && meta.startsWith("WALLET_")) return "Wallet Recharge";
         // Handle new structured meta
-        if (meta?.reason?.startsWith("Payment Failed")) return `Failed: ${meta.reason}`;
+        if (meta?.reason?.startsWith("Payment Failed")) return `${meta.reason}`;
         if (meta?.reason === "service purchase") return `Payment for Service`;
         if (meta?.reason === "Online Service Payment") return `Online Payment for Service`;
         if (meta?.reason === "service purchase retry") return "Retry Payment for Submission";
