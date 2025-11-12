@@ -19,7 +19,7 @@ import { useAuth } from "../../context/AuthContext";
 const DashboardCard = ({
   image,
   name,
-  price,
+  retailerPrice,
   onClick,
   isVerified,
   showPrice = false,
@@ -84,7 +84,7 @@ const DashboardCard = ({
             }`}
           >
             <IndianRupee size={16} />
-            {price?.toFixed(2)}
+            {(retailerPrice || 0).toFixed(2)}
           </div>
           <motion.button
             onClick={(e) => {
@@ -218,7 +218,7 @@ const Services = () => {
               key={item._id}
               image={item.image}
               name={item.name}
-              price={item.price}
+              retailerPrice={item.retailerPrice}
               showPrice={showPrice}
               isVerified={user?.isVerified}
               onClick={(e) => {

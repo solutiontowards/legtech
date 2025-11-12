@@ -9,7 +9,7 @@ export const createSubmission = asyncHandler(async (req,res)=>{
   const { optionId, data, files, paymentMethod } = req.body;
   const option = await Option.findById(optionId).populate({ path: 'subServiceId', select: 'serviceId' });
   if (!option) return res.status(404).json({ error: 'Option not found' });
-  const amount = option.price || 0;
+  const amount = option.retailerPrice || 0;
 
   if (paymentMethod === 'wallet') {
     const wallet = await Wallet.findOne({ retailerId: req.user._id });

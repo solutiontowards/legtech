@@ -72,7 +72,8 @@ const AdminServicesOption = () => {
           <thead className="bg-blue-600 text-white">
             <tr>
               <th className="px-4 py-3">Option Name</th>
-              <th className="px-4 py-3">Price</th>
+              <th className="px-4 py-3">Customer Price</th>
+              <th className="px-4 py-3">Retailer Price</th>
               <th className="px-4 py-3">Parent Sub-Service</th>
               <th className="px-4 py-3">Parent Service</th>
               <th className="px-4 py-3 text-center">Status</th>
@@ -81,7 +82,7 @@ const AdminServicesOption = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="6" className="text-center py-6">Loading...</td></tr>
+              <tr><td colSpan="7" className="text-center py-6">Loading...</td></tr>
             ) : filteredOptions.length > 0 ? (
               filteredOptions.map((opt) => (
                 <tr key={opt._id} className="border-b hover:bg-gray-50">
@@ -89,7 +90,8 @@ const AdminServicesOption = () => {
                     <img src={opt.image} alt={opt.name} className="h-10 w-10 rounded-md object-cover" />
                     {opt.name}
                   </td>
-                  <td className="px-4 py-3">₹{opt.price.toFixed(2)}</td>
+                  <td className="px-4 py-3">₹{(opt.customerPrice || 0).toFixed(2)}</td>
+                  <td className="px-4 py-3 font-semibold">₹{(opt.retailerPrice || 0).toFixed(2)}</td>
                   <td className="px-4 py-3">{opt.parentSubServiceName}</td>
                   <td className="px-4 py-3">{opt.parentServiceName}</td>
                   <td className="px-4 py-3 text-center">
@@ -106,7 +108,7 @@ const AdminServicesOption = () => {
                 </tr>
               ))
             ) : (
-              <tr><td colSpan="6" className="text-center py-6 font-medium">No options found.</td></tr>
+              <tr><td colSpan="7" className="text-center py-6 font-medium">No options found.</td></tr>
             )}
           </tbody>
         </table>

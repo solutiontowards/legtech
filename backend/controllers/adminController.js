@@ -68,6 +68,7 @@ export const verifyRetailer = asyncHandler(async (req,res)=>{
   user.isVerified = verified === true;
 
   // Send welcome message if verified
+  // Note: sendGenericWhatsAppMessage would need to be imported if used.
   if (verified === true) {
 const welcomeMessage = `Hello ${user.name},
 
@@ -80,6 +81,7 @@ If you have any questions or need assistance, feel free to reach out to our supp
 Best regards,  
 Team Legtech `;
     sendGenericWhatsAppMessage(user.mobile, welcomeMessage);
+    // sendGenericWhatsAppMessage(user.mobile, welcomeMessage);
   }
   await user.save();
   res.json({ ok:true, user });
@@ -307,7 +309,8 @@ export const createOption = asyncHandler(async (req, res) => {
     subServiceId,
     name,
     slug,
-    price,
+    customerPrice,
+    retailerPrice,
     image,
     imageMeta,
     externalLink,
@@ -336,7 +339,8 @@ export const createOption = asyncHandler(async (req, res) => {
     subServiceId,
     name: name.trim(),
     slug: generatedSlug,
-    price,
+    customerPrice,
+    retailerPrice,
     image,
     imageMeta,
     externalLink,
@@ -353,7 +357,7 @@ export const createOption = asyncHandler(async (req, res) => {
 // ===================== UPDATE OPTION =====================
 export const updateOption = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { name, slug, price, image, imageMeta, externalLink, isExternal, formFields, isActive } =
+  const { name, slug, customerPrice, retailerPrice, image, imageMeta, externalLink, isExternal, formFields, isActive } =
     req.body;
 
   const option = await Option.findById(id);
@@ -372,7 +376,8 @@ export const updateOption = asyncHandler(async (req, res) => {
     slug ||
     name?.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") ||
     option.slug;
-  option.price = price ?? option.price;
+  option.customerPrice = customerPrice ?? option.customerPrice;
+  option.retailerPrice = retailerPrice ?? option.retailerPrice;
   option.image = image ?? option.image;
   option.imageMeta = imageMeta ?? option.imageMeta;
   option.externalLink = externalLink ?? option.externalLink;

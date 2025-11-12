@@ -25,7 +25,8 @@ const AddSubServicesOption = () => {
     subServiceId: "",
     name: "",
     slug: "",
-    price: 0,
+    customerPrice: 0,
+    retailerPrice: 0,
     image: null,
     isExternal: false,
     externalLink: "",
@@ -58,7 +59,8 @@ const AddSubServicesOption = () => {
             subServiceId: fetchedOption.subServiceId,
             name: fetchedOption.name,
             slug: fetchedOption.slug,
-            price: fetchedOption.price,
+            customerPrice: fetchedOption.customerPrice,
+            retailerPrice: fetchedOption.retailerPrice,
             image: fetchedOption.image,
             isExternal: fetchedOption.isExternal,
             externalLink: fetchedOption.externalLink,
@@ -232,9 +234,15 @@ const AddSubServicesOption = () => {
               <input type="text" name="name" value={option.name} onChange={handleInputChange} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="e.g., Basic Plan" />
             </div>
 
-            <div>
-              <label className="text-gray-700 font-medium flex items-center gap-2 mb-2"><DollarSign size={18} /> Price</label>
-              <input type="number" name="price" value={option.price} onChange={handleInputChange} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="0.00" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="text-gray-700 font-medium flex items-center gap-2 mb-2"><DollarSign size={18} /> Customer Price</label>
+                <input type="number" name="customerPrice" value={option.customerPrice} onChange={handleInputChange} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="0.00" />
+              </div>
+              <div>
+                <label className="text-gray-700 font-medium flex items-center gap-2 mb-2"><DollarSign size={18} /> Retailer Price</label>
+                <input type="number" name="retailerPrice" value={option.retailerPrice} onChange={handleInputChange} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="0.00" />
+              </div>
             </div>
 
             <div className="flex items-center gap-4 pt-2">

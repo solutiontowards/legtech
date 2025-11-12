@@ -137,7 +137,7 @@ const ApplicationForm = () => {
         fetchBalance();
     }, [serviceSlug, subServiceSlug, optionSlug, navigate, reset, user?.wallet?.balance]);
 
-    const hasSufficientFunds = walletBalance != null && option?.price != null && walletBalance >= option.price;
+    const hasSufficientFunds = walletBalance != null && option?.retailerPrice != null && walletBalance >= option.retailerPrice;
 
     const onSubmit = async (formData) => {
         setIsSubmitting(true);
@@ -302,11 +302,11 @@ const ApplicationForm = () => {
                                     <h3 className="text-lg font-bold text-gray-900">Summary</h3>
                                     <div className="flex justify-between items-center text-gray-600">
                                         <span>Service Cost</span>
-                                        <span className="font-medium text-gray-900">₹{option.price.toFixed(2)}</span>
+                                        <span className="font-medium text-gray-900">₹{(option.retailerPrice || 0).toFixed(2)}</span>
                                     </div>
                                     <div className="border-t border-dashed pt-4 flex justify-between items-center text-lg">
                                         <span className="font-bold text-gray-900">Total Amount</span>
-                                        <span className="font-extrabold text-blue-600">₹{option.price.toFixed(2)}</span>
+                                        <span className="font-extrabold text-blue-600">₹{(option.retailerPrice || 0).toFixed(2)}</span>
                                     </div>
                                 </div>
 

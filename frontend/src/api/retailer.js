@@ -32,3 +32,6 @@ export const retrySubmissionPayment = (id, payload) => api.put(`/submissions/${i
 
 // Get total service count
 export const getServiceCount = () => api.get('/services/count');
+
+// Get commission chart data
+export const getCommissionChart = () => api.get('/services/commission-chart');

@@ -39,6 +39,7 @@ import Support from "./pages/retailer/Support";
 import ApplicationForm from "./pages/retailer/ApplicationForm";
 import Wallet from "./pages/retailer/Wallet";
 import AdminCreditWallet from "./pages/admin/AdminCreditWallet";
+import CommisionChart from "./pages/retailer/CommisionChart";
 
 const App = () => {
   useEffect(() => {
@@ -118,6 +119,8 @@ const App = () => {
         <Route path="transaction" element={<TransactionHistory />} />
         <Route path="support" element={<Support />} />
         <Route path="wallet" element={<Wallet />} />
+        <Route path="commision-chart" element={<CommisionChart />} />
+
 
 
       </Route>

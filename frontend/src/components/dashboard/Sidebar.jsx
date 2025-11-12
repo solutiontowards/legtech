@@ -24,6 +24,7 @@ import {
   BarChart3,
   LifeBuoy,
   Megaphone,
+  BriefcaseBusinessIcon,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Swal from "sweetalert2";
@@ -65,6 +66,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { id: "history", to: "/retailer/submission-history", text: "History", icon: History },
     { id: "paymentChart", to: "/retailer/payment-chart", text: "Payment Chart", icon: BarChart3 },
     { id: "wallet", to: "/retailer/wallet", text: "Wallet", icon: Wallet },
+    {
+      id: "MyBusiness",
+      text: "My Business",
+      icon: BriefcaseBusinessIcon,
+      submenu: [
+        { to: "/retailer/commision-chart", text: "Commision Chart" },
+        { to: "/retailer/price-chart", text: "Price Chart" },
+      ],
+    },
     { id: "support", to: "/retailer/support", text: "Support", icon: LifeBuoy },
   ]
 
@@ -94,7 +104,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
     { id: "Service-Requests", to: "/st-admin/service-requests", text: "Service Requests", icon: LayoutDashboard },
     { id: 'credit-wallet', to: '/st-admin/credit-wallet', text: 'Credit Wallet', icon: Wallet },
-    
+
     { id: "notices", to: "/st-admin/manage-notices", text: "Manage Notices", icon: Megaphone },
 
 
