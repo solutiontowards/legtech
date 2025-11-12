@@ -374,6 +374,92 @@ export const getApplicationStatusStats = asyncHandler(async (req, res) => {
   res.json({ ok: true, stats });
 });
 
+export const getTotalOrdersStats = asyncHandler(async (req, res) => {
+  const retailerId = req.user._id;
+  const now = new Date();
+
+  // 1. Current Month's Stats (from the start of the month to now)
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const totalOrdersThisMonth = await Submission.countDocuments({
+    retailerId,
+    paymentStatus: 'paid', // Only count paid submissions
+    createdAt: { $gte: currentMonthStart },
+  });
+
+  // 2. Previous Month's Stats
+  const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+  const totalOrdersLastMonth = await Submission.countDocuments({
+    retailerId,
+    paymentStatus: 'paid', // Only count paid submissions
+    createdAt: { $gte: previousMonthStart, $lte: previousMonthEnd },
+  });
+
+  // 3. Calculate Percentage Change
+  let percentageChange = 0;
+  if (totalOrdersLastMonth > 0) {
+    percentageChange =
+      ((totalOrdersThisMonth - totalOrdersLastMonth) / totalOrdersLastMonth) * 100;
+  } else if (totalOrdersThisMonth > 0) {
+    // If last month had 0 orders, any orders this month is infinite growth, so we show 100%
+    percentageChange = 100;
+  }
+
+  res.json({
+    ok: true,
+    stats: {
+      totalOrdersThisMonth,
+      percentageChange: parseFloat(percentageChange.toFixed(1)), // Return as a number
+    },
+  });
+});
+
+export const getWeeklyOrdersStats = asyncHandler(async (req, res) => {
+  const retailerId = req.user._id;
+  const now = new Date();
+
+  // Helper to get the start of the week (Sunday)
+  const getStartOfWeek = (d) => {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = date.getDate() - day;
+    return new Date(date.setDate(diff));
+  };
+
+  // 1. Current Week's Stats (from Sunday to now)
+  const startOfThisWeek = getStartOfWeek(now);
+  startOfThisWeek.setHours(0, 0, 0, 0);
+
+  const totalOrdersThisWeek = await Submission.countDocuments({
+    retailerId,
+    paymentStatus: 'paid',
+    createdAt: { $gte: startOfThisWeek },
+  });
+
+  // 2. Previous Week's Stats (from previous Sunday to Saturday)
+  const startOfLastWeek = new Date(startOfThisWeek);
+  startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
+  const endOfLastWeek = new Date(startOfThisWeek);
+  endOfLastWeek.setDate(endOfLastWeek.getDate() - 1);
+  endOfLastWeek.setHours(23, 59, 59, 999);
+
+  const totalOrdersLastWeek = await Submission.countDocuments({
+    retailerId,
+    paymentStatus: 'paid',
+    createdAt: { $gte: startOfLastWeek, $lte: endOfLastWeek },
+  });
+
+  // 3. Calculate Percentage Change
+  let percentageChange = 0;
+  if (totalOrdersLastWeek > 0) {
+    percentageChange = ((totalOrdersThisWeek - totalOrdersLastWeek) / totalOrdersLastWeek) * 100;
+  } else if (totalOrdersThisWeek > 0) {
+    percentageChange = 100;
+  }
+
+  res.json({ ok: true, stats: { totalOrdersThisWeek, percentageChange: parseFloat(percentageChange.toFixed(1)) } });
+});
+
 export const reUploadDocuments = asyncHandler(async (req, res) => {
   const { submissionId } = req.params;
   const { files } = req.body;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { getDashboardStats, getServiceCount, getApplicationStatusStats } from "../../api/retailer";
+import { getDashboardStats, getServiceCount, getApplicationStatusStats, getTotalOrdersStats, getWeeklyOrdersStats } from "../../api/retailer";
 import { useNavigate } from "react-router-dom";
 import { getWalletBalance, getRecentTransactions } from "../../api/wallet";
 import {
@@ -171,6 +171,14 @@ export default function Dashboard() {
     serviceUsage: [],
   });
   const [recentTransactions, setRecentTransactions] = useState([]);
+  const [totalOrdersStats, setTotalOrdersStats] = useState({
+    total: 0,
+    percentageChange: 0,
+  });
+  const [weeklyOrdersStats, setWeeklyOrdersStats] = useState({
+    total: 0,
+    percentageChange: 0,
+  });
   const [orderStatusData, setOrderStatusData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -192,12 +200,14 @@ export default function Dashboard() {
         };
 
         // Fetch all data concurrently for better performance
-        const [statsRes, walletRes, serviceCountRes, transactionsRes, statusStatsRes] = await Promise.all([
+        const [statsRes, walletRes, serviceCountRes, transactionsRes, statusStatsRes, totalOrdersRes, weeklyOrdersRes] = await Promise.all([
           getDashboardStats(),
           getWalletBalance(),
           getServiceCount(),
           getRecentTransactions(),
           getApplicationStatusStats(),
+          getTotalOrdersStats(),
+          getWeeklyOrdersStats(),
         ]);
 
         setStats({
@@ -207,6 +217,14 @@ export default function Dashboard() {
           servicesCount: serviceCountRes.data?.count || 0,
         });
         setRecentTransactions(transactionsRes.data?.transactions || []);
+        setTotalOrdersStats({
+          total: totalOrdersRes.data.stats.totalOrdersThisMonth,
+          percentageChange: totalOrdersRes.data.stats.percentageChange,
+        });
+        setWeeklyOrdersStats({
+          total: weeklyOrdersRes.data.stats.totalOrdersThisWeek,
+          percentageChange: weeklyOrdersRes.data.stats.percentageChange,
+        });
 
         const pieData = statusStatsRes.data.stats.map(stat => ({
           status: stat.status,
@@ -324,43 +342,49 @@ export default function Dashboard() {
               </div>
 
               {/* ======= Total Order Summary Card (30%) ======= */}
-              <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center justify-center w-full">
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">Total Orders</h3>
-                <p className="text-xs text-gray-500 mb-4">This Week</p>
+              {loading ? (
+                <div className="bg-white rounded-2xl shadow-md p-6 flex items-center justify-center w-full">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center justify-center w-full">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-1">Total Orders</h3>
+                  <p className="text-xs text-gray-500 mb-4">This Month vs. Last Month</p>
 
-                <div className="relative flex items-center justify-center">
-                  <svg viewBox="0 0 36 36" className="w-28 h-28">
-                    {/* Background circle */}
-                    <path
-                      d="M18 2.0845
-             a 15.9155 15.9155 0 0 1 0 31.831
-             a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="#e5e7eb"
-                      strokeWidth="3"
-                    />
-                    {/* Progress circle */}
-                    <path
-                      d="M18 2.0845
-             a 15.9155 15.9155 0 0 1 0 31.831"
-                      fill="none"
-                      stroke="#6366f1"
-                      strokeWidth="3"
-                      strokeDasharray="70 30" /* 70% progress */
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute text-center">
-                    <p className="text-2xl font-bold text-gray-800">70%</p>
-                    <p className="text-xs text-gray-500">Completed</p>
+                  <div className="relative flex items-center justify-center">
+                    <svg viewBox="0 0 36 36" className="w-28 h-28">
+                      <path
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        stroke="#e5e7eb"
+                        strokeWidth="3"
+                      />
+                      <path
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
+                        fill="none"
+                        stroke={totalOrdersStats.percentageChange >= 0 ? "#22c55e" : "#ef4444"}
+                        strokeWidth="3"
+                        strokeDasharray={`${Math.abs(totalOrdersStats.percentageChange)}, 100`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute text-center">
+                      <p className={`text-2xl font-bold ${totalOrdersStats.percentageChange >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        {totalOrdersStats.percentageChange >= 0 ? "▲" : "▼"}
+                        {Math.abs(totalOrdersStats.percentageChange)}%
+                      </p>
+                      <p className="text-xs text-gray-500">Change</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 text-center">
+                    <p className="text-sm text-gray-600">Orders This Month</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {totalOrdersStats.total}
+                    </p>
                   </div>
                 </div>
-
-                <div className="mt-4 text-center">
-                  <p className="text-sm text-gray-600">Total Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">564</p>
-                </div>
-              </div>
+              )}
             </div>
 
 
@@ -381,8 +405,20 @@ export default function Dashboard() {
                 </a>
               </div>
 
-              <MiniKPI title="Growth" value="78%" sub="62% Company Growth" change="+18%" positive />
-              <MiniKPI title="Orders" value="276k" sub="This week" change="-14.82%" positive={false} />
+              <MiniKPI
+                title="Monthly Growth"
+                value={`${totalOrdersStats.percentageChange}%`}
+                sub="vs. Last Month"
+                change={`${totalOrdersStats.percentageChange >= 0 ? '+' : ''}${totalOrdersStats.percentageChange}%`}
+                positive={totalOrdersStats.percentageChange >= 0}
+              />
+              <MiniKPI
+                title="Weekly Orders"
+                value={weeklyOrdersStats.total}
+                sub="This Week"
+                change={`${weeklyOrdersStats.percentageChange >= 0 ? '+' : ''}${weeklyOrdersStats.percentageChange}%`}
+                positive={weeklyOrdersStats.percentageChange >= 0}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

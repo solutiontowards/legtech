@@ -38,3 +38,9 @@ export const getCommissionChart = () => api.get('/services/commission-chart');
 
 // getApplicationStatusStats
 export const getApplicationStatusStats = () => api.get('/submissions/stats/application-status');
+
+// Get Total Orders statistics
+export const getTotalOrdersStats = () => api.get('/submissions/stats/total-orders');
+
+// Get Weekly Orders statistics
+export const getWeeklyOrdersStats = () => api.get('/submissions/stats/weekly-orders');
