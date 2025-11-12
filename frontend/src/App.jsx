@@ -41,6 +41,7 @@ import Wallet from "./pages/retailer/Wallet";
 import AdminCreditWallet from "./pages/admin/AdminCreditWallet";
 import CommisionChart from "./pages/retailer/CommisionChart";
 import PriceChart from "./pages/retailer/PriceChart";
+import RetailerWishes from "./pages/admin/RetailerWishes";
 
 const App = () => {
   useEffect(() => {
@@ -90,6 +91,7 @@ const App = () => {
         <Route path="add-user" element={<AddNewUser />} />
         <Route path="admin-list" element={<AdminList />} />
         <Route path="credit-wallet" element={<AdminCreditWallet />} />
+        <Route path="retailer-wishes" element={<RetailerWishes />} />
 
 
 

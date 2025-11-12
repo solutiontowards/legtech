@@ -23,6 +23,7 @@ import {
   WalletCards,
   ArrowRightLeft,
   Wallet,
+  MessageCircle,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Swal from "sweetalert2";
@@ -108,6 +109,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         { to: "/st-admin/admin-list", text: "Admin List", icon: UserCog },
       ],
     },
+    { id: 'wishes', to: "/st-admin/retailer-wishes", text: "Global Messages", icon: MessageCircle }
   ];
 
   const links = user?.role === "admin" ? adminLinks : retailerLinks;

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { getDashboardStats, getServiceCount, getApplicationStatusStats, getTotalOrdersStats, getWeeklyOrdersStats, getDailyOrdersStats, getStatusCardStats, getMonthlyProfitStats, getWeeklyProfitStats, getDailyProfitStats, getTotalRevenue } from "../../api/retailer";
+import { getDashboardStats, getServiceCount, getApplicationStatusStats, getTotalOrdersStats, getWeeklyOrdersStats, getDailyOrdersStats, getStatusCardStats, getMonthlyProfitStats, getWeeklyProfitStats, getDailyProfitStats, getTotalRevenue, getActiveWishes } from "../../api/retailer";
+import { motion } from "framer-motion";
+
 import { useNavigate } from "react-router-dom";
 import { getWalletBalance, getRecentTransactions } from "../../api/wallet";
 import {
@@ -19,6 +21,7 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   XCircle,
+  Gift,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -158,6 +161,31 @@ const VerificationNotice = () => (
   </div>
 );
 
+
+const GlobalMessageCard = ({ message }) => {
+  if (!message) return null;
+
+  return (
+    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 shadow-sm border border-blue-100 text-white transition-all duration-300 hover:shadow-md hover:-translate-y-[2px]">
+      <div className="flex items-start gap-4">
+        {/* Icon Section */}
+        <div className="min-w-[60px] h-[60px] rounded-full flex items-center justify-center bg-white/20 border border-white/30 shadow-inner">
+          <Info className="h-8 w-8 text-white" />
+        </div>
+
+        {/* Text Section */}
+        <div className="flex flex-col">
+          {/* <h3 className="text-lg font-semibold tracking-wide">
+            Welcome to <span className="text-yellow-300">Legtech Dashboard</span>
+          </h3> */}
+          <p className="text-sm md:text-[15px] mt-1 leading-relaxed text-blue-50 font-medium">
+            {message}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
 /* =========================================================
    Main Dashboard
 ========================================================= */
@@ -194,6 +222,7 @@ export default function Dashboard() {
   const [dailyProfit, setDailyProfit] = useState({ total: 0, percentageChange: 0 });
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activeWish, setActiveWish] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -213,7 +242,7 @@ export default function Dashboard() {
         };
 
         // Fetch all data concurrently for better performance
-        const [statsRes, walletRes, serviceCountRes, transactionsRes, statusStatsRes, totalOrdersRes, weeklyOrdersRes, dailyOrdersRes, statusCardsRes, monthlyProfitRes, weeklyProfitRes, dailyProfitRes, totalRevenueRes] = await Promise.all([
+        const [statsRes, walletRes, serviceCountRes, transactionsRes, statusStatsRes, totalOrdersRes, weeklyOrdersRes, dailyOrdersRes, statusCardsRes, monthlyProfitRes, weeklyProfitRes, dailyProfitRes, totalRevenueRes, wishesRes] = await Promise.all([
           getDashboardStats(),
           getWalletBalance(),
           getServiceCount(),
@@ -227,6 +256,7 @@ export default function Dashboard() {
           getWeeklyProfitStats(),
           getDailyProfitStats(),
           getTotalRevenue(),
+          getActiveWishes(),
         ]);
 
         setStats({
@@ -253,6 +283,11 @@ export default function Dashboard() {
         setWeeklyProfit(weeklyProfitRes.data.stats);
         setDailyProfit(dailyProfitRes.data.stats);
         setTotalRevenue(totalRevenueRes.data.totalRevenue);
+
+        // Set the most recent active wish
+        if (wishesRes.data.wishes && wishesRes.data.wishes.length > 0) {
+          setActiveWish(wishesRes.data.wishes[0]); // The API sorts by most recent
+        }
 
         const pieData = statusStatsRes.data.stats.map(stat => ({
           status: stat.status,
@@ -287,23 +322,10 @@ export default function Dashboard() {
         {!user?.isVerified ? <VerificationNotice /> : null}
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          
+
           {/* ===== Left / Main ===== */}
           <div className="xl:col-span-2 space-y-6">
-                      <div className="bg-white rounded-2xl p-5 shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
-                  <Award className="text-indigo-600 w-5 h-5" />
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-800">Congratulations Muneer</div>
-                  <div className="text-xs text-gray-500">You have done 72% more sales today. Check your new badge in your profile.</div>
-                </div>
-              </div>
-              <a href="#badges" className="inline-block mt-4 text-indigo-600 text-sm font-medium hover:underline">
-                View Badges
-              </a>
-            </div>
+            <GlobalMessageCard message={activeWish?.message} />
 
             {/* Stat cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -312,7 +334,7 @@ export default function Dashboard() {
               <StatCard title="Monthly Applications" value={loading ? "..." : stats.monthlyApplications} icon={BarChart2} color="bg-indigo-500" onClick={() => navigate("/retailer/submission-history")} />
             </div>
 
-  
+
             {/* Chart */}
             <div className="bg-white p-5 rounded-2xl shadow-md">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Service Usage This Month</h3>
@@ -435,7 +457,7 @@ export default function Dashboard() {
 
             {/* Profit / Growth tiles */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      
+
 
               <MiniKPI
                 title="Monthly Growth"
@@ -512,21 +534,21 @@ export default function Dashboard() {
                 Add Money
               </button>
             </div>
-        {/* Growth small */}
-              <div className="bg-white p-5 rounded-2xl shadow-md">
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="text-emerald-600 w-5 h-5" />
-                  <div className="font-medium text-gray-800">Revenue</div>
-                </div>
-                <div className="text-2xl font-semibold mt-2">₹{loading ? '...' : totalRevenue.toFixed(2)}</div>
-                <div className="h-20">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={sparkData}>
-                      <Area dataKey="v" type="monotone" stroke="#6366f1" fill="#c7d2fe" fillOpacity={0.4} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+            {/* Growth small */}
+            <div className="bg-white p-5 rounded-2xl shadow-md">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="text-emerald-600 w-5 h-5" />
+                <div className="font-medium text-gray-800">Revenue</div>
               </div>
+              <div className="text-2xl font-semibold mt-2">₹{loading ? '...' : totalRevenue.toFixed(2)}</div>
+              <div className="h-20">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={sparkData}>
+                    <Area dataKey="v" type="monotone" stroke="#6366f1" fill="#c7d2fe" fillOpacity={0.4} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
 
           </div>

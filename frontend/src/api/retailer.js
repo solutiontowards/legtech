@@ -56,3 +56,6 @@ export const getMonthlyProfitStats = () => api.get('/submissions/stats/profit/mo
 export const getWeeklyProfitStats = () => api.get('/submissions/stats/profit/weekly');
 export const getDailyProfitStats = () => api.get('/submissions/stats/profit/daily');
 export const getTotalRevenue = () => api.get('/submissions/stats/revenue');
+
+// Get active global wishes for the dashboard
+export const getActiveWishes = () => api.get('/wishes');

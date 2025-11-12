@@ -31,3 +31,10 @@ export const updateSubmissionStatus = (id, payload) => api.put(`/admin/submissio
 // credit wallet
 export const creditWallet = (payload) => api.post('/wallet/credit-wallet', payload);
 
+// Wishes
+export const createWish = (payload) => api.post('/wishes', payload);
+export const getActiveWishes = () => api.get('/wishes');
+export const getAllWishes = () => api.get('/wishes/all');
+export const updateWish = (id, payload) => api.put(`/wishes/${id}`, payload);
+export const deleteWish = (id) => api.delete(`/wishes/${id}`);
+
