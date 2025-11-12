@@ -4,24 +4,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Users,
-  Briefcase,
   BriefcaseBusiness,
-  HelpCircle,
   LogOut,
   ChevronDown,
   X,
   Package,
   PieChart,
   Layers,
-  Wallet,
   History,
   BarChart3,
   LifeBuoy,
   Megaphone,
   UserCheck,
   UserPlus,
-  Settings2,
   UserCog,
+  Store,
+  ClipboardList,
+  WalletCards,
+  ArrowRightLeft,
+  Wallet,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Swal from "sweetalert2";
@@ -57,20 +58,20 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   const retailerLinks = [
     { id: "dashboard", to: "/retailer/dashboard", text: "Dashboard", icon: LayoutDashboard },
-    { id: "services", to: "/retailer/services", text: "Services", icon: Layers },
-    { id: "transction", to: "/retailer/transaction", text: "Transactions", icon: PieChart },
+    { id: "services", to: "/retailer/services", text: "Services", icon: BriefcaseBusiness },
+    { id: "transction", to: "/retailer/transaction", text: "Transactions", icon: ArrowRightLeft },
     { id: "history", to: "/retailer/submission-history", text: "History", icon: History },
-    { id: "paymentChart", to: "/retailer/payment-chart", text: "Payment Chart", icon: BarChart3 },
     { id: "wallet", to: "/retailer/wallet", text: "Wallet", icon: Wallet },
     {
       id: "MyBusiness",
       text: "My Business",
-      icon: Briefcase,
+      icon: Store,
       submenu: [
         { to: "/retailer/commision-chart", text: "Commision Chart", icon: PieChart },
         { to: "/retailer/price-chart", text: "Price Chart", icon: BarChart3 },
       ],
     },
+    { id: "paymentChart", to: "/retailer/payment-chart", text: "Payment Chart", icon: BarChart3 },
     { id: "support", to: "/retailer/support", text: "Support", icon: LifeBuoy },
   ];
 
@@ -79,7 +80,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     {
       id: "retailers",
       text: "Retailers",
-      icon: Briefcase,
+      icon: Store,
       submenu: [
         { to: "/st-admin/verify-retailers", text: "Verify Retailers", icon: UserCheck },
         { to: "/st-admin/retailers", text: "All Retailers", icon: Users },
@@ -92,15 +93,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       submenu: [
         { to: "/st-admin/services", text: "Services", icon: Package },
         { to: "/st-admin/subservices", text: "Sub Services", icon: Layers },
-        { to: "/st-admin/subservice-option", text: "Services Options", icon: Settings2 },
+        { to: "/st-admin/subservice-option", text: "Services Options", icon: UserCog },
       ],
     },
-    { id: "Service-Requests", to: "/st-admin/service-requests", text: "Service Requests", icon: LayoutDashboard },
-    { id: 'credit-wallet', to: '/st-admin/credit-wallet', text: 'Credit Wallet', icon: Wallet },
+    { id: "Service-Requests", to: "/st-admin/service-requests", text: "Service Requests", icon: ClipboardList },
+    { id: 'credit-wallet', to: '/st-admin/credit-wallet', text: 'Credit Wallet', icon: WalletCards },
     { id: "notices", to: "/st-admin/manage-notices", text: "Manage Notices", icon: Megaphone },
     {
       id: "user",
-      text: "User Managment",
+      text: "User Management",
       icon: Users,
       submenu: [
         { to: "/st-admin/add-user", text: "Add New User", icon: UserPlus },
@@ -162,13 +163,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                     <>
                       <button
                         onClick={() => toggleMenu(link.id)}
-                        className={`w-full flex items-center justify-between px-5 py-3 transition-all duration-300 
+                        className={`w-full flex items-center justify-between px-5 py-3.5 transition-all duration-300 
                           ${isExpanded ? "bg-white/5 " : "hover:bg-white/10"}`}
                       >
                         <div className="flex items-center gap-4">
-                          <Icon className="w-5 h-5" />
+                          <Icon className="w-6 h-6" />
                           {isOpen && (
-                            <span className="text-[15px] font-medium tracking-wide">
+                            <span className="text-base font-medium tracking-wide">
                               {link.text}
                             </span>
                           )}
@@ -197,14 +198,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                     key={idx}
                                     to={sub.to}
                                     className={({ isActive }) =>
-                                      `flex items-center gap-3 text-sm px-3 py-2.5 rounded-lg transition-all ${
+                                      `flex items-center gap-4 text-[15px] px-4 py-3 rounded-lg transition-all ${
                                         isActive
                                           ? "bg-white text-[#2A2185] font-semibold"
                                           : "text-gray-200 hover:bg-white/10 hover:text-white"
                                       }`
                                     }
                                   >
-                                    <SubIcon className="w-4 h-4" />
+                                    <SubIcon className="w-5 h-5" />
                                     <span>{sub.text}</span>
                                   </NavLink>
                                 );
@@ -218,16 +219,16 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                     <NavLink
                       to={link.to}
                       className={({ isActive }) =>
-                        `flex items-center gap-4 px-5 py-3 relative transition-all duration-300 ${
+                        `flex items-center gap-4 px-5 py-3.5 relative transition-all duration-300 ${
                           isActive
                             ? "bg-white text-[#2A2185] font-semibold"
                             : "hover:bg-white/10 text-white"
                         }`
                       }
                     >
-                      <Icon className="w-5 h-5" />
+                      <Icon className="w-6 h-6" />
                       {isOpen && (
-                        <span className="text-[15px] font-medium tracking-wide">
+                        <span className="text-base font-medium tracking-wide">
                           {link.text}
                         </span>
                       )}
@@ -243,10 +244,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-4 px-5 py-3 rounded-lg hover:bg-red-500/20 text-red-300 transition-all"
+            className="w-full flex items-center gap-4 px-5 py-3.5 rounded-lg hover:bg-red-500/20 text-red-300 transition-all"
           >
-            <LogOut className="w-5 h-5" />
-            {isOpen && <span className="text-[15px] font-medium">Sign Out</span>}
+            <LogOut className="w-6 h-6" />
+            {isOpen && <span className="text-base font-medium">Sign Out</span>}
           </button>
         </div>
       </aside>

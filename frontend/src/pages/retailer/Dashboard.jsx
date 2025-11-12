@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { getDashboardStats, getServiceCount, getApplicationStatusStats, getTotalOrdersStats, getWeeklyOrdersStats } from "../../api/retailer";
+import { getDashboardStats, getServiceCount, getApplicationStatusStats, getTotalOrdersStats, getWeeklyOrdersStats, getDailyOrdersStats, getStatusCardStats, getMonthlyProfitStats, getWeeklyProfitStats, getDailyProfitStats, getTotalRevenue } from "../../api/retailer";
 import { useNavigate } from "react-router-dom";
 import { getWalletBalance, getRecentTransactions } from "../../api/wallet";
 import {
@@ -179,7 +179,20 @@ export default function Dashboard() {
     total: 0,
     percentageChange: 0,
   });
+  const [dailyOrdersStats, setDailyOrdersStats] = useState({
+    total: 0,
+    percentageChange: 0,
+  });
+  const [statusCardStats, setStatusCardStats] = useState({
+    completed: { total: 0, percentageChange: 0 },
+    pending: { total: 0 },
+    cancelled: { total: 0, percentageChange: 0 },
+  });
   const [orderStatusData, setOrderStatusData] = useState([]);
+  const [monthlyProfit, setMonthlyProfit] = useState({ total: 0, percentageChange: 0 });
+  const [weeklyProfit, setWeeklyProfit] = useState({ total: 0, percentageChange: 0 });
+  const [dailyProfit, setDailyProfit] = useState({ total: 0, percentageChange: 0 });
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -200,7 +213,7 @@ export default function Dashboard() {
         };
 
         // Fetch all data concurrently for better performance
-        const [statsRes, walletRes, serviceCountRes, transactionsRes, statusStatsRes, totalOrdersRes, weeklyOrdersRes] = await Promise.all([
+        const [statsRes, walletRes, serviceCountRes, transactionsRes, statusStatsRes, totalOrdersRes, weeklyOrdersRes, dailyOrdersRes, statusCardsRes, monthlyProfitRes, weeklyProfitRes, dailyProfitRes, totalRevenueRes] = await Promise.all([
           getDashboardStats(),
           getWalletBalance(),
           getServiceCount(),
@@ -208,6 +221,12 @@ export default function Dashboard() {
           getApplicationStatusStats(),
           getTotalOrdersStats(),
           getWeeklyOrdersStats(),
+          getDailyOrdersStats(),
+          getStatusCardStats(),
+          getMonthlyProfitStats(),
+          getWeeklyProfitStats(),
+          getDailyProfitStats(),
+          getTotalRevenue(),
         ]);
 
         setStats({
@@ -225,6 +244,15 @@ export default function Dashboard() {
           total: weeklyOrdersRes.data.stats.totalOrdersThisWeek,
           percentageChange: weeklyOrdersRes.data.stats.percentageChange,
         });
+        setDailyOrdersStats({
+          total: dailyOrdersRes.data.stats.totalOrdersToday,
+          percentageChange: dailyOrdersRes.data.stats.percentageChange,
+        });
+        setStatusCardStats(statusCardsRes.data.stats);
+        setMonthlyProfit(monthlyProfitRes.data.stats);
+        setWeeklyProfit(weeklyProfitRes.data.stats);
+        setDailyProfit(dailyProfitRes.data.stats);
+        setTotalRevenue(totalRevenueRes.data.totalRevenue);
 
         const pieData = statusStatsRes.data.stats.map(stat => ({
           status: stat.status,
@@ -248,7 +276,7 @@ export default function Dashboard() {
 
   return (
     <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-auto mx-auto">
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Retailer Overview</h1>
           <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -259,8 +287,24 @@ export default function Dashboard() {
         {!user?.isVerified ? <VerificationNotice /> : null}
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          
           {/* ===== Left / Main ===== */}
           <div className="xl:col-span-2 space-y-6">
+                      <div className="bg-white rounded-2xl p-5 shadow-md">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+                  <Award className="text-indigo-600 w-5 h-5" />
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-800">Congratulations Muneer</div>
+                  <div className="text-xs text-gray-500">You have done 72% more sales today. Check your new badge in your profile.</div>
+                </div>
+              </div>
+              <a href="#badges" className="inline-block mt-4 text-indigo-600 text-sm font-medium hover:underline">
+                View Badges
+              </a>
+            </div>
+
             {/* Stat cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               <StatCard title="Wallet Balance" value={loading ? "..." : `₹${stats.walletBalance.toFixed(2)}`} icon={WalletIcon} color="bg-blue-500" onClick={() => navigate("/retailer/wallet")} />
@@ -268,6 +312,7 @@ export default function Dashboard() {
               <StatCard title="Monthly Applications" value={loading ? "..." : stats.monthlyApplications} icon={BarChart2} color="bg-indigo-500" onClick={() => navigate("/retailer/submission-history")} />
             </div>
 
+  
             {/* Chart */}
             <div className="bg-white p-5 rounded-2xl shadow-md">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Service Usage This Month</h3>
@@ -390,20 +435,7 @@ export default function Dashboard() {
 
             {/* Profit / Growth tiles */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-2xl p-5 shadow-md">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
-                    <Award className="text-indigo-600 w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-800">Congratulations Muneer</div>
-                    <div className="text-xs text-gray-500">You have done 72% more sales today. Check your new badge in your profile.</div>
-                  </div>
-                </div>
-                <a href="#badges" className="inline-block mt-4 text-indigo-600 text-sm font-medium hover:underline">
-                  View Badges
-                </a>
-              </div>
+      
 
               <MiniKPI
                 title="Monthly Growth"
@@ -419,17 +451,39 @@ export default function Dashboard() {
                 change={`${weeklyOrdersStats.percentageChange >= 0 ? '+' : ''}${weeklyOrdersStats.percentageChange}%`}
                 positive={weeklyOrdersStats.percentageChange >= 0}
               />
+              <MiniKPI
+                title="Today Orders"
+                value={dailyOrdersStats.total}
+                sub="Yesterday"
+                change={`${dailyOrdersStats.percentageChange >= 0 ? '+' : ''}${dailyOrdersStats.percentageChange}%`}
+                positive={dailyOrdersStats.percentageChange >= 0}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <ProfitSpark title="Profit Report" value="$92,654k" change="72.2%" />
-              <ProfitSpark title="Profit Report" value="$92,654k" change="72.2%" />
-              <ProfitSpark title="Profit Report" value="$92,654k" change="72.2%" />
+              <ProfitSpark
+                title="Monthly Profit Report"
+                value={`₹${monthlyProfit.total.toFixed(2)}`}
+                change={`${monthlyProfit.percentageChange.toFixed(1)}%`}
+              />
+              <ProfitSpark
+                title="Weekly Profit Report"
+                value={`₹${weeklyProfit.total.toFixed(2)}`}
+                change={`${weeklyProfit.percentageChange.toFixed(1)}%`}
+              />
+              <ProfitSpark
+                title="Daly Profit Report"
+                value={`₹${dailyProfit.total.toFixed(2)}`}
+                change={`${dailyProfit.percentageChange.toFixed(1)}%`}
+              />
             </div>
           </div>
 
           {/* ===== Right / Sidebar ===== */}
           <div className="space-y-6">
+
+
+
             {/* Announcements */}
             <NoticeBoard />
             {/* Transactions */}
@@ -458,61 +512,74 @@ export default function Dashboard() {
                 Add Money
               </button>
             </div>
+        {/* Growth small */}
+              <div className="bg-white p-5 rounded-2xl shadow-md">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="text-emerald-600 w-5 h-5" />
+                  <div className="font-medium text-gray-800">Revenue</div>
+                </div>
+                <div className="text-2xl font-semibold mt-2">₹{loading ? '...' : totalRevenue.toFixed(2)}</div>
+                <div className="h-20">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={sparkData}>
+                      <Area dataKey="v" type="monotone" stroke="#6366f1" fill="#c7d2fe" fillOpacity={0.4} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
 
-            {/* Growth small */}
-            <div className="bg-white p-5 rounded-2xl shadow-md">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="text-emerald-600 w-5 h-5" />
-                <div className="font-medium text-gray-800">Revenue</div>
-              </div>
-              <div className="text-2xl font-semibold mt-2">$4,321</div>
-              <div className="h-20">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={sparkData}>
-                    <Area dataKey="v" type="monotone" stroke="#6366f1" fill="#c7d2fe" fillOpacity={0.4} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
 
           </div>
         </div>
       </div>
       {/* Status Cards Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
-        <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
-          <div className="flex items-center gap-4">
-            <CheckCircle className="w-10 h-10 text-green-500" />
-            <div>
-              <p className="text-gray-600 text-sm">Completed Orders</p>
-              <p className="text-2xl font-bold text-gray-900">156</p>
-              <p className="text-xs text-green-600 mt-1">+12% from last month</p>
+      {loading ? (
+        <div className="text-center mt-5">
+          <Loader2 className="w-6 h-6 animate-spin inline-block text-gray-500" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
+          {/* Completed Orders */}
+          <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
+            <div className="flex items-center gap-4">
+              <CheckCircle className="w-10 h-10 text-green-500" />
+              <div>
+                <p className="text-gray-600 text-sm">Completed Orders</p>
+                <p className="text-2xl font-bold text-gray-900">{statusCardStats.completed.total}</p>
+                <p className={`text-xs mt-1 ${statusCardStats.completed.percentageChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {statusCardStats.completed.percentageChange >= 0 ? '▲' : '▼'} {Math.abs(statusCardStats.completed.percentageChange)}% from last month
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
-          <div className="flex items-center gap-4">
-            <Clock className="w-10 h-10 text-orange-500" />
-            <div>
-              <p className="text-gray-600 text-sm">Pending Orders</p>
-              <p className="text-2xl font-bold text-gray-900">89</p>
-              <p className="text-xs text-orange-600 mt-1">Awaiting processing</p>
+          {/* Pending Orders */}
+          <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
+            <div className="flex items-center gap-4">
+              <Clock className="w-10 h-10 text-orange-500" />
+              <div>
+                <p className="text-gray-600 text-sm">Pending Orders</p>
+                <p className="text-2xl font-bold text-gray-900">{statusCardStats.pending.total}</p>
+                <p className="text-xs text-orange-600 mt-1">Awaiting processing</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-red-500">
-          <div className="flex items-center gap-4">
-            <AlertCircle className="w-10 h-10 text-red-500" />
-            <div>
-              <p className="text-gray-600 text-sm">Cancelled Orders</p>
-              <p className="text-2xl font-bold text-gray-900">12</p>
-              <p className="text-xs text-red-600 mt-1">-4% from last month</p>
+          {/* Cancelled Orders */}
+          <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-red-500">
+            <div className="flex items-center gap-4">
+              <AlertCircle className="w-10 h-10 text-red-500" />
+              <div>
+                <p className="text-gray-600 text-sm">Cancelled Orders</p>
+                <p className="text-2xl font-bold text-gray-900">{statusCardStats.cancelled.total}</p>
+                <p className={`text-xs mt-1 ${statusCardStats.cancelled.percentageChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {statusCardStats.cancelled.percentageChange >= 0 ? '▲' : '▼'} {Math.abs(statusCardStats.cancelled.percentageChange)}% from last month
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
     </div>
   );

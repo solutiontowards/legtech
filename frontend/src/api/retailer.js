@@ -44,3 +44,15 @@ export const getTotalOrdersStats = () => api.get('/submissions/stats/total-order
 
 // Get Weekly Orders statistics
 export const getWeeklyOrdersStats = () => api.get('/submissions/stats/weekly-orders');
+
+// Get Daily Orders statistics
+export const getDailyOrdersStats = () => api.get('/submissions/stats/daily-orders');
+
+// Get statistics for the main status cards
+export const getStatusCardStats = () => api.get('/submissions/stats/status-cards');
+
+// Get Profit and Revenue statistics
+export const getMonthlyProfitStats = () => api.get('/submissions/stats/profit/monthly');
+export const getWeeklyProfitStats = () => api.get('/submissions/stats/profit/weekly');
+export const getDailyProfitStats = () => api.get('/submissions/stats/profit/daily');
+export const getTotalRevenue = () => api.get('/submissions/stats/revenue');

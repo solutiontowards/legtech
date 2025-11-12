@@ -374,6 +374,168 @@ export const getApplicationStatusStats = asyncHandler(async (req, res) => {
   res.json({ ok: true, stats });
 });
 
+// =========================================================
+// Profit & Revenue Statistics
+// =========================================================
+
+/**
+ * Helper function to calculate profit over a given period.
+ * Profit = customerPrice - retailerPrice
+ */
+const calculateProfitForPeriod = async (retailerId, startDate, endDate) => {
+  const result = await Submission.aggregate([
+    // Match paid submissions for the retailer within the date range
+    {
+      $match: {
+        retailerId,
+        paymentStatus: 'paid',
+        createdAt: { $gte: startDate, $lt: endDate },
+      },
+    },
+    // Join with options to get pricing
+    {
+      $lookup: {
+        from: 'options',
+        localField: 'optionId',
+        foreignField: '_id',
+        as: 'option',
+      },
+    },
+    { $unwind: '$option' },
+    // Calculate profit for each submission
+    {
+      $project: {
+        profit: { $subtract: ['$option.customerPrice', '$option.retailerPrice'] },
+      },
+    },
+    // Sum up the profit
+    {
+      $group: {
+        _id: null,
+        totalProfit: { $sum: '$profit' },
+      },
+    },
+  ]);
+
+  return result.length > 0 ? result[0].totalProfit : 0;
+};
+
+/**
+ * Helper function to calculate percentage change
+ */
+const calculateChange = (current, previous) => {
+  if (previous > 0) {
+    return parseFloat((((current - previous) / previous) * 100).toFixed(1));
+  }
+  return current > 0 ? 100 : 0;
+};
+
+export const getMonthlyProfitStats = asyncHandler(async (req, res) => {
+  const retailerId = req.user._id;
+  const now = new Date();
+
+  // Current month
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const currentProfit = await calculateProfitForPeriod(retailerId, currentMonthStart, currentMonthEnd);
+
+  // Previous month
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1);
+  const previousProfit = await calculateProfitForPeriod(retailerId, lastMonthStart, lastMonthEnd);
+
+  const percentageChange = calculateChange(currentProfit, previousProfit);
+
+  res.json({ ok: true, stats: { total: currentProfit, percentageChange } });
+});
+
+export const getWeeklyProfitStats = asyncHandler(async (req, res) => {
+  const retailerId = req.user._id;
+  const now = new Date();
+
+  // Current week (starts on Sunday)
+  const currentWeekStart = new Date(now);
+  currentWeekStart.setDate(now.getDate() - now.getDay());
+  currentWeekStart.setHours(0, 0, 0, 0);
+  const currentWeekEnd = new Date(currentWeekStart);
+  currentWeekEnd.setDate(currentWeekStart.getDate() + 7);
+  const currentProfit = await calculateProfitForPeriod(retailerId, currentWeekStart, currentWeekEnd);
+
+  // Previous week
+  const lastWeekStart = new Date(currentWeekStart);
+  lastWeekStart.setDate(currentWeekStart.getDate() - 7);
+  const lastWeekEnd = currentWeekStart;
+  const previousProfit = await calculateProfitForPeriod(retailerId, lastWeekStart, lastWeekEnd);
+
+  const percentageChange = calculateChange(currentProfit, previousProfit);
+
+  res.json({ ok: true, stats: { total: currentProfit, percentageChange } });
+});
+
+export const getDailyProfitStats = asyncHandler(async (req, res) => {
+  const retailerId = req.user._id;
+  const now = new Date();
+
+  // Today
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(now);
+  todayEnd.setHours(23, 59, 59, 999);
+  const currentProfit = await calculateProfitForPeriod(retailerId, todayStart, new Date(todayEnd.getTime() + 1));
+
+  // Yesterday
+  const yesterdayStart = new Date(todayStart);
+  yesterdayStart.setDate(todayStart.getDate() - 1);
+  const yesterdayEnd = new Date(todayEnd);
+  yesterdayEnd.setDate(todayEnd.getDate() - 1);
+  const previousProfit = await calculateProfitForPeriod(retailerId, yesterdayStart, new Date(yesterdayEnd.getTime() + 1));
+
+  const percentageChange = calculateChange(currentProfit, previousProfit);
+
+  res.json({ ok: true, stats: { total: currentProfit, percentageChange } });
+});
+
+export const getTotalRevenue = asyncHandler(async (req, res) => {
+  const retailerId = req.user._id;
+
+  const result = await Submission.aggregate([
+    // Match all paid submissions for the retailer
+    {
+      $match: {
+        retailerId,
+        paymentStatus: 'paid',
+      },
+    },
+    // Join with options to get pricing
+    {
+      $lookup: {
+        from: 'options',
+        localField: 'optionId',
+        foreignField: '_id',
+        as: 'option',
+      },
+    },
+    { $unwind: '$option' },
+    // Calculate profit for each submission
+    {
+      $project: {
+        profit: { $subtract: ['$option.customerPrice', '$option.retailerPrice'] },
+      },
+    },
+    // Sum up the total profit
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: '$profit' },
+      },
+    },
+  ]);
+
+  const totalRevenue = result.length > 0 ? result[0].totalRevenue : 0;
+
+  res.json({ ok: true, totalRevenue });
+});
+
 export const getTotalOrdersStats = asyncHandler(async (req, res) => {
   const retailerId = req.user._id;
   const now = new Date();
@@ -459,6 +621,102 @@ export const getWeeklyOrdersStats = asyncHandler(async (req, res) => {
 
   res.json({ ok: true, stats: { totalOrdersThisWeek, percentageChange: parseFloat(percentageChange.toFixed(1)) } });
 });
+
+export const getDailyOrdersStats = asyncHandler(async (req, res) => {
+  const retailerId = req.user._id;
+  const now = new Date();
+
+  // 1. Today's Stats
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+  const totalOrdersToday = await Submission.countDocuments({
+    retailerId,
+    paymentStatus: 'paid',
+    createdAt: { $gte: todayStart, $lte: todayEnd },
+  });
+
+  // 2. Yesterday's Stats
+  const yesterdayStart = new Date(todayStart);
+  yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+  const yesterdayEnd = new Date(todayEnd);
+  yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+
+  const totalOrdersYesterday = await Submission.countDocuments({
+    retailerId,
+    paymentStatus: 'paid',
+    createdAt: { $gte: yesterdayStart, $lte: yesterdayEnd },
+  });
+
+  // 3. Calculate Percentage Change
+  const percentageChange = calculateChange(totalOrdersToday, totalOrdersYesterday);
+
+  res.json({
+    ok: true,
+    stats: {
+      totalOrdersToday,
+      percentageChange,
+    },
+  });
+});
+
+export const getStatusCardStats = asyncHandler(async (req, res) => {
+  const retailerId = req.user._id;
+  const now = new Date();
+
+  // --- Date Ranges ---
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+
+  // --- Helper Function for Percentage Change ---
+  const calculateChange = (current, previous) => {
+    if (previous > 0) {
+      return parseFloat((((current - previous) / previous) * 100).toFixed(1));
+    }
+    return current > 0 ? 100 : 0;
+  };
+
+  // --- Database Queries (Concurrent) ---
+  const [
+    completedCurrentMonth,
+    completedLastMonth,
+    pendingTotal,
+    cancelledCurrentMonth,
+    cancelledLastMonth,
+  ] = await Promise.all([
+    // Completed Orders
+    Submission.countDocuments({ retailerId, status: 'Completed', createdAt: { $gte: currentMonthStart } }),
+    Submission.countDocuments({ retailerId, status: 'Completed', createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd } }),
+    // Pending Orders (total count of 'Applied' status)
+    Submission.countDocuments({ retailerId, status: 'Applied' }),
+    // Cancelled Orders
+    Submission.countDocuments({ retailerId, status: 'Reject | Failed', createdAt: { $gte: currentMonthStart } }),
+    Submission.countDocuments({ retailerId, status: 'Reject | Failed', createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd } }),
+  ]);
+
+  // --- Calculate Percentages ---
+  const completedChange = calculateChange(completedCurrentMonth, completedLastMonth);
+  const cancelledChange = calculateChange(cancelledCurrentMonth, cancelledLastMonth);
+
+  // --- Final Stats Object ---
+  const stats = {
+    completed: {
+      total: await Submission.countDocuments({ retailerId, status: 'Completed' }),
+      percentageChange: completedChange,
+    },
+    pending: {
+      total: pendingTotal,
+    },
+    cancelled: {
+      total: await Submission.countDocuments({ retailerId, status: 'Reject | Failed' }),
+      percentageChange: cancelledChange,
+    },
+  };
+
+  res.json({ ok: true, stats });
+});
+
 
 export const reUploadDocuments = asyncHandler(async (req, res) => {
   const { submissionId } = req.params;

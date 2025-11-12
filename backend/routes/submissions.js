@@ -16,5 +16,13 @@ router.get('/stats/dashboard', auth, submission.getRetailerDashboardStats);
 router.get('/stats/application-status', auth, submission.getApplicationStatusStats);
 router.get('/stats/total-orders', auth, submission.getTotalOrdersStats);
 router.get('/stats/weekly-orders', auth, submission.getWeeklyOrdersStats);
+router.get('/stats/daily-orders', auth, submission.getDailyOrdersStats);
+router.get('/stats/status-cards', auth, submission.getStatusCardStats);
+
+// Profit and Revenue Stats
+router.get('/stats/profit/monthly', auth, submission.getMonthlyProfitStats);
+router.get('/stats/profit/weekly', auth, submission.getWeeklyProfitStats);
+router.get('/stats/profit/daily', auth, submission.getDailyProfitStats);
+router.get('/stats/revenue', auth, submission.getTotalRevenue);
 
 export default router;
