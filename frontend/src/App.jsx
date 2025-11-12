@@ -42,6 +42,7 @@ import AdminCreditWallet from "./pages/admin/AdminCreditWallet";
 import CommisionChart from "./pages/retailer/CommisionChart";
 import PriceChart from "./pages/retailer/PriceChart";
 import RetailerWishes from "./pages/admin/RetailerWishes";
+import ComingSoon from "./components/common/ComingSoon";
 
 const App = () => {
   useEffect(() => {
@@ -125,6 +126,7 @@ const App = () => {
         <Route path="commision-chart" element={<CommisionChart />} />
         <Route path="price-chart" element={<PriceChart />} />
 
+        <Route path="*" element={<ComingSoon />} />
 
 
 

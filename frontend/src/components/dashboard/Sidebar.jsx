@@ -23,7 +23,16 @@ import {
   WalletCards,
   ArrowRightLeft,
   Wallet,
-  MessageCircle,
+  MessageCircle, // Admin icon
+  // New icons for retailer sidebar
+  UserCircle,
+  Settings,
+  PieChart as PieChartIcon,
+  BarChart3 as BarChartIcon,
+  ConciergeBell,
+  Tv,
+  FileText,
+  Landmark,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Swal from "sweetalert2";
@@ -60,19 +69,48 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const retailerLinks = [
     { id: "dashboard", to: "/retailer/dashboard", text: "Dashboard", icon: LayoutDashboard },
     { id: "services", to: "/retailer/services", text: "Services", icon: BriefcaseBusiness },
-    { id: "transction", to: "/retailer/transaction", text: "Transactions", icon: ArrowRightLeft },
-    { id: "history", to: "/retailer/submission-history", text: "History", icon: History },
-    { id: "wallet", to: "/retailer/wallet", text: "Wallet", icon: Wallet },
+    { id: "submissions", to: "/retailer/submission-history", text: "Submissions", icon: History },
+    { id: "transactions", to: "/retailer/transaction", text: "Transactions", icon: ArrowRightLeft },
     {
-      id: "MyBusiness",
+      id: "wallet",
+      text: "Wallet",
+      icon: Wallet,
+      submenu: [
+        { to: "/retailer/wallet", text: "Add Money", icon: WalletCards },
+        { to: "/retailer/fund-request", text: "Fund Request", icon: Landmark },
+        { to: "/retailer/fund-request-history", text: "Request History", icon: History },
+      ],
+    },
+    {
+      id: "service-request",
+      text: "Service Request",
+      icon: ConciergeBell,
+      submenu: [
+        { to: "/retailer/dth-recharge", text: "DTH Recharge", icon: Tv },
+        { to: "/retailer/bill-pay", text: "Bill Pay (BBPS)", icon: FileText },
+        { to: "/retailer/aaps", text: "AEPS", icon: Landmark },
+        { to: "/retailer/payout", text: "Payout", icon: WalletCards },
+        { to: "/retailer/uti-pan-report", text: "UTI Pan Report", icon: FileText },
+      ],
+    },
+    {
+      id: "my-business",
       text: "My Business",
       icon: Store,
       submenu: [
-        { to: "/retailer/commision-chart", text: "Commision Chart", icon: PieChart },
-        { to: "/retailer/price-chart", text: "Price Chart", icon: BarChart3 },
+        { to: "/retailer/commision-chart", text: "Commission Chart", icon: PieChartIcon },
+        { to: "/retailer/price-chart", text: "Price Chart", icon: BarChartIcon },
       ],
     },
-    { id: "paymentChart", to: "/retailer/payment-chart", text: "Payment Chart", icon: BarChart3 },
+    {
+      id: "account",
+      text: "Account",
+      icon: UserCircle,
+      submenu: [
+        { to: "/retailer/profile", text: "My Profile", icon: UserCircle },
+        { to: "/retailer/settings", text: "Settings", icon: Settings },
+      ],
+    },
     { id: "support", to: "/retailer/support", text: "Support", icon: LifeBuoy },
   ];
 
@@ -200,10 +238,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                     key={idx}
                                     to={sub.to}
                                     className={({ isActive }) =>
-                                      `flex items-center gap-4 text-[15px] px-4 py-3 rounded-lg transition-all ${
-                                        isActive
-                                          ? "bg-white text-[#2A2185] font-semibold"
-                                          : "text-gray-200 hover:bg-white/10 hover:text-white"
+                                      `flex items-center gap-4 text-[15px] px-4 py-3 rounded-lg transition-all ${isActive
+                                        ? "bg-white text-[#2A2185] font-semibold"
+                                        : "text-gray-200 hover:bg-white/10 hover:text-white"
                                       }`
                                     }
                                   >
@@ -221,10 +258,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                     <NavLink
                       to={link.to}
                       className={({ isActive }) =>
-                        `flex items-center gap-4 px-5 py-3.5 relative transition-all duration-300 ${
-                          isActive
-                            ? "bg-white text-[#2A2185] font-semibold"
-                            : "hover:bg-white/10 text-white"
+                        `flex items-center gap-4 px-5 py-3.5 relative transition-all duration-300 ${isActive
+                          ? "bg-white text-[#2A2185] font-semibold"
+                          : "hover:bg-white/10 text-white"
                         }`
                       }
                     >

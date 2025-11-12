@@ -602,7 +602,13 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-
+<style jsx>
+  {`
+    .recharts-pie-label-text {
+      font-size: 12px !important;
+    }
+  `}
+</style>
     </div>
   );
 }
