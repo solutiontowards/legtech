@@ -85,7 +85,7 @@ export default function Login() {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: err.response?.data?.message || 'Failed to send OTP. ',
+                text: err.response?.data?.error || err.response?.data?.message || 'Failed to send OTP. Please try again.',
             });
         } finally {
             setLoading(false);
@@ -128,7 +128,7 @@ export default function Login() {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: err.response?.data?.error || 'Invalid OTP. Please try again.',
+                text: err.response?.data?.error || err.response?.data?.message || 'Invalid OTP. Please try again.',
             });
             setErrors({ ...errors, otp: err.response?.data?.error || 'Invalid OTP' });
         } finally {
@@ -161,7 +161,7 @@ export default function Login() {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: err.response?.data?.error || 'Failed to resend OTP. Please check your credentials.',
+                text: err.response?.data?.error || err.response?.data?.message || 'Failed to resend OTP. Please check your credentials.',
             });
         } finally {
             setLoading(false);
