@@ -15,6 +15,7 @@ import uploadRoutes from './routes/upload.js';
 import paymentRoutes from './routes/paymentRoutes.js'; // 1. Import the new payment routes
 import noticesRoutes from './routes/notices.js';
 import wishesRoutes from './routes/wishes.js';
+import kycRoutes from './routes/kycRoutes.js';
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/notices', noticesRoutes);
 app.use('/api/wishes', wishesRoutes)
+app.use('/api/kyc', kycRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true, time: new Date() }));
 app.get("/", (req, res) => res.send("Server is running"));

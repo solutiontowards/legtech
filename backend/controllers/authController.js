@@ -137,7 +137,7 @@ export const verifyRegisterOtp = asyncHandler(async (req, res) => {
     mobile,
     role: 'retailer',
     isOtpVerified: true,
-    isVerified: false,
+    isKycVerified: false,
   });
 
   await user.setPassword(password);
@@ -151,20 +151,16 @@ export const verifyRegisterOtp = asyncHandler(async (req, res) => {
   // Send a welcome message to the newly registered retailer
 const welcomeMessage = `Hello ${name},
 
-Welcome to Legtech! 🎉  
-Your retailer account has been successfully created.
+Thank you for registering with Legtech! 🎉  
+Your account has been successfully created.
 
-You can log in anytime at https://legtech.in/login to access your dashboard and manage your profile.
+Please log in at https://legtech.in/login and complete your KYC verification to activate your account and access all services.
 
-Please note that your account is currently pending verification by our admin team.  
-Once verified, you’ll gain full access to all Legtech services and features.
-
-💡 To expedite the approval process, we recommend adding a minimum balance to your wallet.
-
-Thank you for choosing Legtech — empowering retailers with smart technology.
+If you need any assistance, feel free to contact our support team.
 
 Best regards,  
 The Legtech Team`;
+
 
   try {
     sendGenericWhatsAppMessage(mobile, welcomeMessage);
@@ -176,7 +172,7 @@ The Legtech Team`;
   res.json({
     ok: true,
     message: 'Registration successful. Await admin verification.',
-    user: { id: user._id, mobile: user.mobile, isVerified: user.isVerified },
+    user: { id: user._id, mobile: user.mobile, isKycVerified: user.isKycVerified },
   });
 });
 // Retailer Login Step 1 – Verify Password & Send OTP
@@ -266,7 +262,7 @@ export const retailerVerifyLoginOtp = asyncHandler(async (req, res) => {
     ok: true,
     message: 'Retailer login successful',
     token,
-    user: { id: user._id, name: user.name, role: user.role, isVerified: user.isVerified },
+    user: { id: user._id, name: user.name, role: user.role, isKycVerified: user.isKycVerified },
   });
 });
 
@@ -296,7 +292,7 @@ export const adminVerifyLoginOtp = asyncHandler(async (req, res) => {
     ok: true,
     message: 'Admin login successful',
     token,
-    user: { id: user._id, name: user.name, role: user.role, isVerified: user.isVerified },
+    user: { id: user._id, name: user.name, role: user.role },
   });
 });
 
@@ -339,5 +335,5 @@ export const me = asyncHandler(async (req, res) => {
     return res.status(401).json({ ok: false, message: 'Invalid or expired session. Please log in again.' });
   }
 
-  res.json({ ok: true, user: req.user });
+  res.json({ ok: true, user });
 });

@@ -43,6 +43,9 @@ import CommisionChart from "./pages/retailer/CommisionChart";
 import PriceChart from "./pages/retailer/PriceChart";
 import RetailerWishes from "./pages/admin/RetailerWishes";
 import ComingSoon from "./components/common/ComingSoon";
+import KycRequests from "./pages/admin/KycRequests";
+import KycVerificationPage from "./pages/admin/KycVerificationPage";
+import KycPage from "./pages/retailer/KycPage";
 
 const App = () => {
   useEffect(() => {
@@ -92,6 +95,8 @@ const App = () => {
         <Route path="add-user" element={<AddNewUser />} />
         <Route path="admin-list" element={<AdminList />} />
         <Route path="credit-wallet" element={<AdminCreditWallet />} />
+        <Route path="kyc-requests" element={<KycRequests />} />
+        <Route path="kyc-verification/:id" element={<KycVerificationPage />} />
         <Route path="retailer-wishes" element={<RetailerWishes />} />
 
 
@@ -125,6 +130,7 @@ const App = () => {
         <Route path="wallet" element={<Wallet />} />
         <Route path="commision-chart" element={<CommisionChart />} />
         <Route path="price-chart" element={<PriceChart />} />
+        <Route path="kyc" element={<KycPage />} />
 
         <Route path="*" element={<ComingSoon />} />
 

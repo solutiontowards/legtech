@@ -59,3 +59,5 @@ export const getTotalRevenue = () => api.get('/submissions/stats/revenue');
 
 // Get active global wishes for the dashboard
 export const getActiveWishes = () => api.get('/wishes');
+export const submitKyc = (payload) => api.post('/kyc', payload);
+export const getMyKycDetails = () => api.get('/kyc');

@@ -200,13 +200,13 @@ export default function Register() {
                 email: form.email,
                 password: form.password,
             });
-            Swal.fire({
-                icon: 'success',
-                title: 'Registration Successful',
-                text: 'Awaiting approval. Please login to see your dashboard. Services will be available after approval.',
-                showConfirmButton: true,
-                timer: undefined,
-            });
+        Swal.fire({
+  icon: 'success',
+  title: 'Registration Successful',
+  text: 'Thank you for registering. Please log in and submit your KYC details. Services will be activated after your KYC is approved.',
+  showConfirmButton: true,
+});
+
 
             setTimeout(() => navigate('/login'), 3000);
         } catch (err) {

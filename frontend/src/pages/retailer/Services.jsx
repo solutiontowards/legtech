@@ -12,6 +12,7 @@ import {
 import Swal from "sweetalert2";
 import { listServices, getServiceDetail } from "../../api/retailer";
 import { useAuth } from "../../context/AuthContext";
+import KycPromptNotice from "../../components/common/KycPromptNotice";
 
 /* -------------------------------------------------------------------
  🧩 Reusable Card Component (for both Service & Option cards)
@@ -21,19 +22,19 @@ const DashboardCard = ({
   name,
   retailerPrice,
   onClick,
-  isVerified,
+  isKycVerified,
   showPrice = false,
   buttonText = "View Details",
   isOption = false,
 }) => (
   <motion.div
-    onClick={isVerified ? onClick : () => {}}
+    onClick={isKycVerified ? onClick : () => {}}
     className={`group relative bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm transition-all duration-300 ${
-      isVerified
+      isKycVerified
         ? "hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
         : "cursor-not-allowed"
     }`}
-    whileHover={isVerified ? { scale: 1.02 } : {}}
+    whileHover={isKycVerified ? { scale: 1.02 } : {}}
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4 }}
@@ -44,18 +45,18 @@ const DashboardCard = ({
         src={image}
         alt={name}
         className={`h-full w-full object-cover transition-transform duration-700 ${
-          isVerified ? "group-hover:scale-110" : ""
+          isKycVerified ? "group-hover:scale-110" : ""
         }`}
       />
 
-      {!isVerified && (
+      {!isKycVerified && (
         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-center px-3">
           <Lock size={38} />
-          <p className="mt-2 font-semibold text-sm">Retailer Not Verified</p>
+          <p className="mt-2 font-semibold text-sm">KYC Required</p>
         </div>
       )}
 
-      {isVerified && (
+      {isKycVerified && (
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
       )}
     </div>
@@ -69,7 +70,7 @@ const DashboardCard = ({
         <ArrowRight
           size={18}
           className={`transition-transform ${
-            isVerified
+            isKycVerified
               ? "text-blue-600 group-hover:translate-x-1"
               : "text-gray-400"
           }`}
@@ -80,7 +81,7 @@ const DashboardCard = ({
         <div className="flex items-center justify-between">
           <div
             className={`flex items-center gap-1 font-bold text-lg ${
-              isVerified ? "text-blue-600" : "text-gray-400"
+              isKycVerified ? "text-blue-600" : "text-gray-400"
             }`}
           >
             <IndianRupee size={16} />
@@ -89,11 +90,11 @@ const DashboardCard = ({
           <motion.button
             onClick={(e) => {
               e.stopPropagation();
-              if (isVerified) onClick(e);
+              if (isKycVerified) onClick(e);
             }}
-            whileHover={isVerified ? { scale: 1.05 } : {}}
-            whileTap={isVerified ? { scale: 0.95 } : {}}
-            disabled={!isVerified}
+            whileHover={isKycVerified ? { scale: 1.05 } : {}}
+            whileTap={isKycVerified ? { scale: 0.95 } : {}}
+            disabled={!isKycVerified}
             className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Apply Now
@@ -162,9 +163,27 @@ const Services = () => {
     };
     fetchData();
   }, [serviceSlug, subServiceSlug]);
-
+  useEffect(() => {
+    if (user && !user.isKycVerified) {
+      Swal.fire({
+        title: 'KYC Verification Required',
+        text: 'Please complete your KYC to access all our services.',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Complete KYC Now',
+        cancelButtonText: 'Later',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/retailer/kyc');
+        }
+      });
+    }
+  }, [user, navigate]);
+  
   const handleApplyClick = (option) => {
-    if (user?.isVerified) {
+    if (user?.isKycVerified) {
       navigate(`/retailer/apply/${serviceSlug}/${subServiceSlug}/${option.slug}`);
     }
   };
@@ -220,9 +239,9 @@ const Services = () => {
               name={item.name}
               retailerPrice={item.retailerPrice}
               showPrice={showPrice}
-              isVerified={user?.isVerified}
+              isKycVerified={user?.isKycVerified}
               onClick={(e) => {
-                if (!user?.isVerified) return;
+                if (!user?.isKycVerified) return;
                 if (subServiceSlug) handleApplyClick(item);
                 else if (serviceSlug)
                   navigate(`/retailer/services/${serviceSlug}/${item.slug}`);
@@ -263,6 +282,9 @@ const Services = () => {
           ))}
         </nav>
       </motion.div>
+
+      {/* KYC Prompt Notice */}
+      {!user?.isKycVerified && <KycPromptNotice />}
 
       {/* Grid Content */}
       {renderContent()}

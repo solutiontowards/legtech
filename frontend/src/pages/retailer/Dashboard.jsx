@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getDashboardStats, getServiceCount, getApplicationStatusStats, getTotalOrdersStats, getWeeklyOrdersStats, getDailyOrdersStats, getStatusCardStats, getMonthlyProfitStats, getWeeklyProfitStats, getDailyProfitStats, getTotalRevenue, getActiveWishes } from "../../api/retailer";
 import { motion } from "framer-motion";
 
+import Swal from 'sweetalert2';
 import { useNavigate } from "react-router-dom";
 import { getWalletBalance, getRecentTransactions } from "../../api/wallet";
 import {
@@ -39,6 +40,7 @@ import {
 } from "recharts";
 import NoticeBoard from "./NoticeBoard";
 import toast from "react-hot-toast";
+import KycPromptNotice from "../../components/common/KycPromptNotice";
 
 /* =========================================================
    Reusable bits
@@ -140,26 +142,6 @@ const sparkData = Array.from({ length: 14 }, (_, i) => ({ t: i + 1, v: 40 + Math
 /* =========================================================
    Verification Notice (shown when not verified)
 ========================================================= */
-const VerificationNotice = () => (
-  <div className="bg-orange-50 border-l-4 border-orange-500 rounded-r-xl p-5 shadow-sm">
-    <div className="flex items-start gap-4">
-      <ShieldAlert className="w-6 h-6 text-orange-500" />
-      <div>
-        <h3 className="text-lg font-semibold text-orange-800">Account Pending Verification</h3>
-        <p className="text-sm text-orange-700 mt-1">
-          Your retailer account is not active yet. Please wait for admin approval.
-        </p>
-        <p className="text-sm text-orange-700 mt-1">
-          To speed up verification, add a small wallet balance — it helps prioritize your application.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-3">
-          <a href="/retailer/wallet" className="px-4 py-2 text-sm rounded-md text-white bg-orange-600 hover:bg-orange-700">Top-up Wallet</a>
-          <a href="/retailer/services" className="px-4 py-2 text-sm rounded-md text-orange-700 border border-orange-500 hover:bg-orange-100">Explore Services</a>
-        </div>
-      </div>
-    </div>
-  </div>
-);
 
 
 const GlobalMessageCard = ({ message }) => {
@@ -307,6 +289,24 @@ export default function Dashboard() {
     if (user) {
       fetchDashboardData();
     }
+
+    if (user && !user.isKycVerified) {
+      Swal.fire({
+        title: 'KYC Verification Required',
+        text: 'Please complete your KYC to access all our services.',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Complete KYC Now',
+        cancelButtonText: 'Later',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/retailer/kyc');
+        }
+      });
+    }
+
   }, [user]);
 
   return (
@@ -319,10 +319,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {!user?.isVerified ? <VerificationNotice /> : null}
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
+        {!user?.isKycVerified ? <KycPromptNotice /> : null}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
           {/* ===== Left / Main ===== */}
           <div className="xl:col-span-2 space-y-6">
             <GlobalMessageCard message={activeWish?.message} />

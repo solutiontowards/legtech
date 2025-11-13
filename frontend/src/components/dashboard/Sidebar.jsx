@@ -121,8 +121,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       text: "Retailers",
       icon: Store,
       submenu: [
+
         { to: "/st-admin/verify-retailers", text: "Verify Retailers", icon: UserCheck },
         { to: "/st-admin/retailers", text: "All Retailers", icon: Users },
+        {to:"/st-admin/kyc-requests",text:"KYC Requests",icon:UserCog}
       ],
     },
     {

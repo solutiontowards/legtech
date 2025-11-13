@@ -28,6 +28,11 @@ export const adminListSubmissions = () => api.get('/admin/submissions');
 export const getSubmissionById = (id) => api.get(`/admin/submission/${id}`);
 export const updateSubmissionStatus = (id, payload) => api.put(`/admin/submission/${id}/status`, payload);
 
+// KYC Management
+export const getPendingKycRequests = () => api.get('/admin/kyc-pending');
+export const getKycRequestById = (id) => api.get(`/admin/kyc/${id}`);
+export const updateKycStatus = (id, payload) => api.put(`/admin/kyc/${id}/status`, payload);
+
 // credit wallet
 export const creditWallet = (payload) => api.post('/wallet/credit-wallet', payload);
 
@@ -37,4 +42,3 @@ export const getActiveWishes = () => api.get('/wishes');
 export const getAllWishes = () => api.get('/wishes/all');
 export const updateWish = (id, payload) => api.put(`/wishes/${id}`, payload);
 export const deleteWish = (id) => api.delete(`/wishes/${id}`);
-

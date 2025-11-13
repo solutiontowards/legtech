@@ -18,20 +18,18 @@ const userSchema = new Schema(
     mobile: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ["admin", "retailer"], default: "retailer" },
-    isVerified: { type: Boolean, default: false },
+    isKycVerified: { type: Boolean, default: false },
     isOtpVerified: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     walletId: { type: Schema.Types.ObjectId, ref: "Wallet" },
     accessToken: { type: String, default: null },
+    kycDetails: { type: Schema.Types.ObjectId, ref: 'KycDetail' },
   },
   { timestamps: true }
 );
 
 // If user role is admin, auto-activate user
 userSchema.pre("save", function (next) {
-  if (this.role === "admin") {
-    this.isVerified = true;
-  }
   next();
 });
 

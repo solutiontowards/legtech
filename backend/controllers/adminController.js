@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import User from '../models/User.js';
 import Wallet from '../models/Wallet.js';
+import KycDetail from '../models/KycDetail.js';
 import { sendGenericWhatsAppMessage } from './authController.js';
 import Service from '../models/Service.js';
 import SubService from '../models/SubService.js';
@@ -9,14 +10,14 @@ import { adminListSubmissions, getSubmissionById, updateSubmissionStatus } from 
 
 // list pending retailers
 export const getPendingRetailers = asyncHandler(async (req,res)=>{
-  const pending = await User.find({ role: 'retailer', isVerified: false });
+  const pending = await User.find({ role: 'retailer', isKycVerified: false }).populate('kycDetails', 'status');
   res.json({ ok:true, pending });
 });
 
 
 // Get all retailers Retailer
 export const getRetailers = asyncHandler(async (req,res)=>{
-  const retailers = await User.find({ role: 'retailer' });
+  const retailers = await User.find({ role: 'retailer' }).populate('kycDetails', 'status');
   res.json({ ok:true, retailers });
 });
 
@@ -55,38 +56,6 @@ export const updateUser = asyncHandler(async (req, res) => {
 
 
 
-
-
-
-
-
-
-export const verifyRetailer = asyncHandler(async (req,res)=>{
-  const { retailerId, verified } = req.body;
-  const user = await User.findById(retailerId);
-  if (!user) return res.status(404).json({ error: 'Retailer not found' });
-  user.isVerified = verified === true;
-
-  // Send welcome message if verified
-  // Note: sendGenericWhatsAppMessage would need to be imported if used.
-  if (verified === true) {
-const welcomeMessage = `Hello ${user.name},
-
-🎉 Congratulations! Your retailer account has been successfully verified by the Legtech Admin Team.
-
-You now have full access to all platform features and services. To get started, please add funds to your wallet and begin exploring the available tools and services designed to support your business.
-
-If you have any questions or need assistance, feel free to reach out to our support team.
-
-Best regards,  
-Team Legtech `;
-    sendGenericWhatsAppMessage(user.mobile, welcomeMessage);
-    // sendGenericWhatsAppMessage(user.mobile, welcomeMessage);
-  }
-  await user.save();
-  res.json({ ok:true, user });
-});
-
 // ===================== CREATE USER (ADMIN/RETAILER) BY ADMIN =====================
 export const createUser = asyncHandler(async (req, res) => {
   const { name, email, mobile, password, role } = req.body;
@@ -109,7 +78,7 @@ export const createUser = asyncHandler(async (req, res) => {
     email,
     mobile,
     role,
-    isVerified: true, // Instantly verified as it's created by an admin
+    isKycVerified: role === 'admin', // Admins are auto-verified, retailers are not
     isOtpVerified: true, // OTP is bypassed
   });
 
@@ -127,6 +96,76 @@ export const createUser = asyncHandler(async (req, res) => {
   user.passwordHash = undefined;
 
   res.status(201).json({ ok: true, message: `User (${role}) created successfully`, user });
+});
+
+// ===================== KYC MANAGEMENT =====================
+
+// @desc    Get all pending KYC verification requests
+// @route   GET /api/admin/kyc-pending
+// @access  Private (Admin)
+export const getPendingKycRequests = asyncHandler(async (req, res) => {
+  const requests = await KycDetail.find({ status: 'pending' }).populate('retailerId', 'name email mobile');
+  res.json({ ok: true, requests });
+});
+
+// @desc    Get a single KYC request by its ID
+// @route   GET /api/admin/kyc/:id
+// @access  Private (Admin)
+export const getKycRequestById = asyncHandler(async (req, res) => {
+  const request = await KycDetail.findById(req.params.id).populate('retailerId', 'name email mobile createdAt');
+  if (!request) {
+    return res.status(404).json({ message: 'KYC request not found.' });
+  }
+  res.json({ ok: true, request });
+});
+
+// @desc    Verify or reject a KYC request
+// @route   PUT /api/admin/kyc/:id/status
+// @access  Private (Admin)
+export const updateKycStatus = asyncHandler(async (req, res) => {
+  const { status, rejectionReason } = req.body; // status can be 'approved' or 'rejected'
+
+  const kycRequest = await KycDetail.findById(req.params.id);
+  if (!kycRequest) {
+    return res.status(404).json({ message: 'KYC request not found.' });
+  }
+
+  if (status === 'approved') {
+    kycRequest.status = 'approved';
+    kycRequest.rejectionReason = undefined;
+    await User.findByIdAndUpdate(kycRequest.retailerId, { isKycVerified: true });
+    
+    const user = await User.findById(kycRequest.retailerId);
+    if (user) {
+      const welcomeMessage = `Hello ${user.name},\n\n🎉 Congratulations! Your KYC has been successfully verified by the Legtech Admin Team.\n\nYou now have full access to all platform features and services.\n\nBest regards,\nTeam Legtech`;
+      try {
+        await sendGenericWhatsAppMessage(user.mobile, welcomeMessage);
+      } catch (error) {
+        console.error("Failed to send KYC approval notification:", error);
+      }
+    }
+
+    // You can add a WhatsApp notification here for approval
+  } else if (status === 'rejected') {
+    if (!rejectionReason) {
+      return res.status(400).json({ message: 'Rejection reason is required.' });
+    }
+    kycRequest.status = 'rejected';
+    kycRequest.rejectionReason = rejectionReason;
+    await User.findByIdAndUpdate(kycRequest.retailerId, { isKycVerified: false });
+    // You can add a WhatsApp notification here for rejection
+    const user = await User.findById(kycRequest.retailerId);
+    if (user) {
+      const rejectionMessage = `Hello ${user.name},\n\nWe regret to inform you that your KYC submission has been rejected.\n\nReason: ${rejectionReason}\n\nPlease log in to your dashboard to correct the details and re-submit.\n\nBest regards,\nTeam Legtech`;
+      try {
+        await sendGenericWhatsAppMessage(user.mobile, rejectionMessage);
+      } catch (error) {
+        console.error("Failed to send KYC rejection notification:", error);
+      }
+    }
+  }
+  await kycRequest.save();
+  res.json({ ok: true, message: `KYC request has been ${status}.`, kycRequest });
 });
 
 // ===================== CREATE SERVICE =====================

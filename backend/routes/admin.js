@@ -9,7 +9,6 @@ router.use(auth);
 router.use(authorize('admin'));
 
 router.get('/pending-retailers', admin.getPendingRetailers);
-router.post('/verify-retailer', admin.verifyRetailer);
 router.get('/retailers', admin.getRetailers);
 router.get('/admins', admin.getAdmins);
 router.post('/user', admin.createUser); 
@@ -42,6 +41,11 @@ router.get('/retailer-count', admin.getRetailerCount);
 router.get('/submissions', admin.adminListSubmissions);
 router.get('/submission/:submissionId', admin.getSubmissionById);
 router.put('/submission/:submissionId/status', admin.updateSubmissionStatus);
+
+// KYC Management
+router.get('/kyc-pending', admin.getPendingKycRequests);
+router.get('/kyc/:id', admin.getKycRequestById);
+router.put('/kyc/:id/status', admin.updateKycStatus);
 
 
 

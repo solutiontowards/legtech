@@ -4,6 +4,8 @@ import SubService from '../models/SubService.js';
 import Option from '../models/Option.js';
 
 export const listServices = asyncHandler(async (req,res)=>{
+
+
   const services = await Service.find({ isActive: true }).populate({
     path: "subServices",
     match: { isActive: true },
@@ -16,6 +18,7 @@ export const listServices = asyncHandler(async (req,res)=>{
 });
 
 export const getServiceDetail = asyncHandler(async (req,res)=>{
+
   const { serviceSlug, subServiceSlug } = req.params;
   const service = await Service.findOne({ slug: serviceSlug }).populate({
     path: "subServices",
@@ -45,6 +48,8 @@ export const getServiceDetail = asyncHandler(async (req,res)=>{
 });
 
 export const getOptionDetail = asyncHandler(async (req, res) => {
+
+
   const { serviceSlug, subServiceSlug, optionSlug } = req.params;
 
   // 1. Find the parent service by its slug
