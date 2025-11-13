@@ -16,10 +16,20 @@ export const getPendingRetailers = asyncHandler(async (req,res)=>{
 
 
 // Get all retailers Retailer
-export const getRetailers = asyncHandler(async (req,res)=>{
-  const retailers = await User.find({ role: 'retailer' }).populate('kycDetails', 'status');
-  res.json({ ok:true, retailers });
+export const getRetailers = asyncHandler(async (req, res) => {
+  const retailers = await User.find({ role: 'retailer' })
+    .populate({
+      path: 'kycDetails',
+      select: 'status',
+      match: { status: 'approved' }   // Only approved KYC
+    });
+
+  // Remove users whose kycDetails is null after match
+  const verifiedRetailers = retailers.filter(r => r.kycDetails);
+
+  res.json({ ok: true, retailers: verifiedRetailers });
 });
+
 
 // Get all Admin 
 export const getAdmins = asyncHandler(async (req,res)=>{
@@ -91,6 +101,29 @@ export const createUser = asyncHandler(async (req, res) => {
   }
 
   await user.save();
+
+  // Send a welcome message if a retailer is created
+  if (role === 'retailer') {
+    const welcomeMessage = `Hello ${name},
+
+Thank you for registering with Legtech! 🎉  
+Your account has been successfully created by an admin.
+
+Your login credentials are:
+Mobile: ${mobile}
+Password: ${password}
+
+Please log in at https://legtech.in/login and complete your KYC verification to activate your account and access all services.
+
+Best regards,  
+The Legtech Team`;
+
+    try {
+      await sendGenericWhatsAppMessage(mobile, welcomeMessage);
+    } catch (error) {
+      console.error("Failed to send welcome message from admin creation:", error);
+    }
+  }
 
   // Don't send back the password hash
   user.passwordHash = undefined;

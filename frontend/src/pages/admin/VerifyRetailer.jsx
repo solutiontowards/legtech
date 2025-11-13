@@ -44,7 +44,7 @@ const VerifyRetailer = () => {
   const getKycStatus = (retailer) => {
     if (retailer.kycDetails?.status === 'pending') return <span className="px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">Pending</span>;
     if (retailer.kycDetails?.status === 'rejected') return <span className="px-2 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">Rejected</span>;
-    return <span className="px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">Not Submitted</span>;
+    return <span className="px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">KYC Not Submitted</span>;
   };
 
   // Pagination logic

@@ -323,7 +323,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
           {/* ===== Left / Main ===== */}
           <div className="xl:col-span-2 space-y-6">
-            <GlobalMessageCard message={activeWish?.message} />
+            {user?.isKycVerified && <GlobalMessageCard message={activeWish?.message} />}
 
             {/* Stat cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">

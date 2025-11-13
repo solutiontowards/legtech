@@ -20,10 +20,12 @@ const KycPage = () => {
       try {
         const { data } = await getMyKycDetails();
         setKycData(data);
+        const fileFields = ['aadhaarFront', 'aadhaarBack', 'panCardImage', 'photo', 'bankDocument'];
         if (data.details) {
           // Pre-fill form if details exist (for resubmission)
           Object.keys(data.details).forEach(key => {
-            if (key !== 'status' && key !== 'rejectionReason') {
+            // Only pre-fill non-file input fields
+            if (!fileFields.includes(key) && key !== 'status' && key !== 'rejectionReason') {
               setValue(key, data.details[key]);
             }
           });
@@ -128,23 +130,23 @@ const KycPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">Aadhaar Number <span className="text-red-500">*</span></label>
-              <input type="text" {...register('aadhaarNumber', { required: 'Aadhaar number is required' })} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+              <input type="text" {...register('aadhaarNumber', { required: 'Aadhaar number is required' })} placeholder='Aadhaar Number' className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
               {errors.aadhaarNumber && <p className="text-red-500 text-xs mt-1">{errors.aadhaarNumber.message}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">PAN Number <span className="text-red-500">*</span></label>
-              <input type="text" {...register('panNumber', { required: 'PAN number is required' })} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+              <input type="text" {...register('panNumber', { required: 'PAN number is required' })}  placeholder='PAN Number' className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
               {errors.panNumber && <p className="text-red-500 text-xs mt-1">{errors.panNumber.message}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FileUpload label="Aadhaar Front Page" name="aadhaarFront" register={register} error={errors.aadhaarFront} watch={watch} setValue={setValue} required={!kycData?.details?.aadhaarFront} />
-            <FileUpload label="Aadhaar Back Page" name="aadhaarBack" register={register} error={errors.aadhaarBack} watch={watch} setValue={setValue} required={!kycData?.details?.aadhaarBack} />
-            <FileUpload label="PAN Card Image" name="panCardImage" register={register} error={errors.panCardImage} watch={watch} setValue={setValue} required={!kycData?.details?.panCardImage} />
-            <FileUpload label="Your Photo" name="photo" register={register} error={errors.photo} watch={watch} setValue={setValue} required={!kycData?.details?.photo} />
-            <FileUpload label="Bank Cheque / Passbook" name="bankDocument" register={register} error={errors.bankDocument} watch={watch} setValue={setValue} required={!kycData?.details?.bankDocument} />
+            <FileUpload label="Aadhaar Front Page" name="aadhaarFront" register={register} error={errors.aadhaarFront} watch={watch} setValue={setValue} required={!kycData?.details?.aadhaarFront} existingFileUrl={kycData?.details?.aadhaarFront} />
+            <FileUpload label="Aadhaar Back Page" name="aadhaarBack" register={register} error={errors.aadhaarBack} watch={watch} setValue={setValue} required={!kycData?.details?.aadhaarBack} existingFileUrl={kycData?.details?.aadhaarBack} />
+            <FileUpload label="PAN Card Image" name="panCardImage" register={register} error={errors.panCardImage} watch={watch} setValue={setValue} required={!kycData?.details?.panCardImage} existingFileUrl={kycData?.details?.panCardImage} />
+            <FileUpload label="Your Photo" name="photo" register={register} error={errors.photo} watch={watch} setValue={setValue} required={!kycData?.details?.photo} existingFileUrl={kycData?.details?.photo} />
+            <FileUpload label="Bank Cheque / Passbook" name="bankDocument" register={register} error={errors.bankDocument} watch={watch} setValue={setValue} required={!kycData?.details?.bankDocument} existingFileUrl={kycData?.details?.bankDocument} />
           </div>
 
           <div className="pt-4">

@@ -98,7 +98,7 @@ const AllRetailer = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <h2 className="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">
-          All Retailers
+          Active Retailers
         </h2>
 
         <div className="flex items-center gap-2">
