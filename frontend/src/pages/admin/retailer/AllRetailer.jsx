@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getRetailers, updateUser } from "../../../api/admin";
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { Eye } from "lucide-react";
 
 const AllRetailer = () => {
   const [list, setList] = useState([]);
@@ -11,6 +13,7 @@ const AllRetailer = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const itemsPerPage = 10;
+  const navigate = useNavigate();
 
   // Load all retailers
   async function load() {
@@ -59,7 +62,7 @@ const AllRetailer = () => {
     const cleanData = list.map(
       ({ passwordHash, __v, walletId, ...rest }) => ({
         ...rest,
-        isVerified: rest.isVerified ? "Yes" : "No",
+        isKycVerified: rest.isKycVerified ? "Yes" : "No",
         createdAt: new Date(rest.createdAt).toLocaleString(),
       })
     );
@@ -80,7 +83,7 @@ const AllRetailer = () => {
       r.email || "-",
       r.mobile || "-",
       new Date(r.createdAt).toLocaleDateString(),
-      r.isVerified ? "Verified" : "Pending",
+      r.isKycVerified ? "Verified" : "Pending",
     ]);
 
     autoTable(doc, {
@@ -140,12 +143,13 @@ const AllRetailer = () => {
               <th className="px-4 py-3 text-center">Admin Varification</th>
               <th className="px-4 py-3 text-center">Status</th>
               <th className="px-4 py-3 text-center">Activity</th>
+              <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="7" className="text-center py-6 text-gray-500">Loading retailers...</td>
+                <td colSpan="8" className="text-center py-6 text-gray-500">Loading retailers...</td>
               </tr>
             ) : visible.length > 0 ? (
               visible.map((r, index) => (
@@ -156,8 +160,8 @@ const AllRetailer = () => {
                   <td className="px-4 py-3">{r.mobile}</td>
                   <td className="px-4 py-3 text-gray-600">{new Date(r.createdAt).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${r.isVerified ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
-                      {r.isVerified ? "Verified" : "Pending"}
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${r.isKycVerified ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+                      {r.isKycVerified ? "Verified" : "Pending"}
                     </span>
                   </td>
 
@@ -172,11 +176,20 @@ const AllRetailer = () => {
                       <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                   </td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => navigate(`/st-admin/retailer/kyc-details/${r._id}`)}
+                      className="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
+                      title="View KYC Details"
+                    >
+                      <Eye size={18} />
+                    </button>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="text-center py-6 text-gray-500 font-medium">No retailers found.</td>
+                <td colSpan="8" className="text-center py-6 text-gray-500 font-medium">No retailers found.</td>
               </tr>
             )}
           </tbody>

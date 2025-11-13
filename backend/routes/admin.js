@@ -46,6 +46,7 @@ router.put('/submission/:submissionId/status', admin.updateSubmissionStatus);
 router.get('/kyc-pending', admin.getPendingKycRequests);
 router.get('/kyc/:id', admin.getKycRequestById);
 router.put('/kyc/:id/status', admin.updateKycStatus);
+router.get('/kyc/retailer/:retailerId', admin.getKycDetailsByRetailerId);
 
 
 

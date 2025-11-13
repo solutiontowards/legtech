@@ -10,7 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Swal from "sweetalert2";
-import { listServices, getServiceDetail } from "../../api/retailer";
+import { listServices, getServiceDetail, getMyKycDetails } from "../../api/retailer";
 import { useAuth } from "../../context/AuthContext";
 import KycPromptNotice from "../../components/common/KycPromptNotice";
 
@@ -116,6 +116,7 @@ const Services = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("All Services");
+  const [kycData, setKycData] = useState(null);
   const [breadcrumbs, setBreadcrumbs] = useState([]);
 
   useEffect(() => {
@@ -163,25 +164,61 @@ const Services = () => {
     };
     fetchData();
   }, [serviceSlug, subServiceSlug]);
+
   useEffect(() => {
-    if (user && !user.isKycVerified) {
-      Swal.fire({
-        title: 'KYC Verification Required',
-        text: 'Please complete your KYC to access all our services.',
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: 'Complete KYC Now',
-        cancelButtonText: 'Later',
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-      }).then((result) => {
-        if (result.isConfirmed) {
-          navigate('/retailer/kyc');
+    const fetchKycData = async () => {
+      if (user && !user.isKycVerified) {
+        try {
+          const { data } = await getMyKycDetails();
+          setKycData(data);
+        } catch (error) {
+          console.error("Failed to fetch KYC status on services page.");
         }
-      });
-    }
+      }
+    };
+
+    fetchKycData();
   }, [user, navigate]);
   
+  useEffect(() => {
+    if (user && !user.isKycVerified && kycData) {
+      if (kycData.kycStatus === 'pending') {
+        Swal.fire({
+          title: 'KYC Under Review',
+          text: 'Your documents are being reviewed by our team. We will notify you once the process is complete.',
+          icon: 'info',
+          confirmButtonText: 'OK',
+        });
+      } else if (kycData.kycStatus === 'rejected') {
+        Swal.fire({
+          title: 'KYC Application Rejected',
+          html: `Your previous submission was rejected. <br><b>Reason:</b> ${kycData.details?.rejectionReason || 'Not specified'}`,
+          icon: 'error',
+          showCancelButton: true,
+          confirmButtonText: 'Re-submit KYC',
+          cancelButtonText: 'Later',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate('/retailer/kyc');
+          }
+        });
+      } else { // Not submitted yet
+        Swal.fire({
+          title: 'KYC Verification Required',
+          text: 'Please complete your KYC to access all our services.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Complete KYC Now',
+          cancelButtonText: 'Later',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate('/retailer/kyc');
+          }
+        });
+      }
+    }
+  }, [user, kycData, navigate]);
+
   const handleApplyClick = (option) => {
     if (user?.isKycVerified) {
       navigate(`/retailer/apply/${serviceSlug}/${subServiceSlug}/${option.slug}`);
@@ -284,7 +321,7 @@ const Services = () => {
       </motion.div>
 
       {/* KYC Prompt Notice */}
-      {!user?.isKycVerified && <KycPromptNotice />}
+      {!user?.isKycVerified && <KycPromptNotice kycData={kycData} />}
 
       {/* Grid Content */}
       {renderContent()}

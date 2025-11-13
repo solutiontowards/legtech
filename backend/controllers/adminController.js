@@ -16,20 +16,10 @@ export const getPendingRetailers = asyncHandler(async (req,res)=>{
 
 
 // Get all retailers Retailer
-export const getRetailers = asyncHandler(async (req, res) => {
-  const retailers = await User.find({ role: 'retailer' })
-    .populate({
-      path: 'kycDetails',
-      select: 'status',
-      match: { status: 'approved' }   // Only approved KYC
-    });
-
-  // Remove users whose kycDetails is null after match
-  const verifiedRetailers = retailers.filter(r => r.kycDetails);
-
-  res.json({ ok: true, retailers: verifiedRetailers });
+export const getRetailers = asyncHandler(async (req,res)=>{
+  const retailers = await User.find({ role: 'retailer',  isKycVerified: true }).populate('kycDetails', 'status');
+  res.json({ ok:true, retailers });
 });
-
 
 // Get all Admin 
 export const getAdmins = asyncHandler(async (req,res)=>{
@@ -151,6 +141,25 @@ export const getKycRequestById = asyncHandler(async (req, res) => {
   }
   res.json({ ok: true, request });
 });
+
+// @desc    Get KYC details by Retailer ID
+// @route   GET /api/admin/kyc/retailer/:retailerId
+// @access  Private (Admin)
+export const getKycDetailsByRetailerId = asyncHandler(async (req, res) => {
+  const { retailerId } = req.params;
+  const retailer = await User.findById(retailerId).select('name email mobile createdAt');
+  if (!retailer) {
+    return res.status(404).json({ message: 'Retailer not found.' });
+  }
+
+  const details = await KycDetail.findOne({ retailerId: retailerId });
+  if (!details) {
+    return res.status(404).json({ message: 'KYC details not found for this retailer.' });
+  }
+
+  res.json({ ok: true, details: { retailer, details } });
+});
+
 
 // @desc    Verify or reject a KYC request
 // @route   PUT /api/admin/kyc/:id/status

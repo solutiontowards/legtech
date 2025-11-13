@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { getDashboardStats, getServiceCount, getApplicationStatusStats, getTotalOrdersStats, getWeeklyOrdersStats, getDailyOrdersStats, getStatusCardStats, getMonthlyProfitStats, getWeeklyProfitStats, getDailyProfitStats, getTotalRevenue, getActiveWishes } from "../../api/retailer";
+import { getDashboardStats, getServiceCount, getApplicationStatusStats, getTotalOrdersStats, getWeeklyOrdersStats, getDailyOrdersStats, getStatusCardStats, getMonthlyProfitStats, getWeeklyProfitStats, getDailyProfitStats, getTotalRevenue, getActiveWishes, getMyKycDetails } from "../../api/retailer";
 import { motion } from "framer-motion";
 
 import Swal from 'sweetalert2';
@@ -205,6 +205,7 @@ export default function Dashboard() {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeWish, setActiveWish] = useState(null);
+  const [kycData, setKycData] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -224,7 +225,7 @@ export default function Dashboard() {
         };
 
         // Fetch all data concurrently for better performance
-        const [statsRes, walletRes, serviceCountRes, transactionsRes, statusStatsRes, totalOrdersRes, weeklyOrdersRes, dailyOrdersRes, statusCardsRes, monthlyProfitRes, weeklyProfitRes, dailyProfitRes, totalRevenueRes, wishesRes] = await Promise.all([
+        const [statsRes, walletRes, serviceCountRes, transactionsRes, statusStatsRes, totalOrdersRes, weeklyOrdersRes, dailyOrdersRes, statusCardsRes, monthlyProfitRes, weeklyProfitRes, dailyProfitRes, totalRevenueRes, wishesRes, kycRes] = await Promise.all([
           getDashboardStats(),
           getWalletBalance(),
           getServiceCount(),
@@ -239,6 +240,7 @@ export default function Dashboard() {
           getDailyProfitStats(),
           getTotalRevenue(),
           getActiveWishes(),
+          getMyKycDetails(),
         ]);
 
         setStats({
@@ -265,6 +267,7 @@ export default function Dashboard() {
         setWeeklyProfit(weeklyProfitRes.data.stats);
         setDailyProfit(dailyProfitRes.data.stats);
         setTotalRevenue(totalRevenueRes.data.totalRevenue);
+        setKycData(kycRes.data);
 
         // Set the most recent active wish
         if (wishesRes.data.wishes && wishesRes.data.wishes.length > 0) {
@@ -290,24 +293,46 @@ export default function Dashboard() {
       fetchDashboardData();
     }
 
-    if (user && !user.isKycVerified) {
-      Swal.fire({
-        title: 'KYC Verification Required',
-        text: 'Please complete your KYC to access all our services.',
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: 'Complete KYC Now',
-        cancelButtonText: 'Later',
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-      }).then((result) => {
-        if (result.isConfirmed) {
-          navigate('/retailer/kyc');
-        }
-      });
-    }
+  }, [user, navigate]);
 
-  }, [user]);
+  useEffect(() => {
+    if (user && !user.isKycVerified && kycData) {
+      if (kycData.kycStatus === 'pending') {
+        Swal.fire({
+          title: 'KYC Under Review',
+          text: 'Your documents are being reviewed by our team. We will notify you once the process is complete.',
+          icon: 'info',
+          confirmButtonText: 'OK',
+        });
+      } else if (kycData.kycStatus === 'rejected') {
+        Swal.fire({
+          title: 'KYC Application Rejected',
+          html: `Your previous submission was rejected. <br><b>Reason:</b> ${kycData.details?.rejectionReason || 'Not specified'}`,
+          icon: 'error',
+          showCancelButton: true,
+          confirmButtonText: 'Re-submit KYC',
+          cancelButtonText: 'Later',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate('/retailer/kyc');
+          }
+        });
+      } else { // Not submitted yet
+        Swal.fire({
+          title: 'KYC Verification Required',
+          text: 'Please complete your KYC to access all our services.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Complete KYC Now',
+          cancelButtonText: 'Later',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate('/retailer/kyc');
+          }
+        });
+      }
+    }
+  }, [user, kycData, navigate]);
 
   return (
     <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
@@ -319,7 +344,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {!user?.isKycVerified ? <KycPromptNotice /> : null}
+        {!user?.isKycVerified && <KycPromptNotice kycData={kycData} />}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
           {/* ===== Left / Main ===== */}
           <div className="xl:col-span-2 space-y-6">

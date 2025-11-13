@@ -31,6 +31,7 @@ export const updateSubmissionStatus = (id, payload) => api.put(`/admin/submissio
 // KYC Management
 export const getPendingKycRequests = () => api.get('/admin/kyc-pending');
 export const getKycRequestById = (id) => api.get(`/admin/kyc/${id}`);
+export const getKycDetailsByRetailerId = (retailerId) => api.get(`/admin/kyc/retailer/${retailerId}`);
 export const updateKycStatus = (id, payload) => api.put(`/admin/kyc/${id}/status`, payload);
 
 // credit wallet

@@ -46,6 +46,7 @@ import ComingSoon from "./components/common/ComingSoon";
 import KycRequests from "./pages/admin/KycRequests";
 import KycVerificationPage from "./pages/admin/KycVerificationPage";
 import KycPage from "./pages/retailer/KycPage";
+import ViewKycDetails from "./pages/admin/retailer/ViewKycDetails";
 
 const App = () => {
   useEffect(() => {
@@ -98,7 +99,7 @@ const App = () => {
         <Route path="kyc-requests" element={<KycRequests />} />
         <Route path="kyc-verification/:id" element={<KycVerificationPage />} />
         <Route path="retailer-wishes" element={<RetailerWishes />} />
-
+        <Route path="retailer/kyc-details/:retailerId" element={<ViewKycDetails />} />
 
 
 
