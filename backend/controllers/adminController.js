@@ -6,6 +6,7 @@ import { sendGenericWhatsAppMessage } from './authController.js';
 import Service from '../models/Service.js';
 import SubService from '../models/SubService.js';
 import Option from '../models/Option.js';
+import Submission from '../models/Submission.js';
 import { adminListSubmissions, getSubmissionById, updateSubmissionStatus } from './submissionController.js';
 
 // list pending retailers
@@ -521,9 +522,27 @@ export const getRetailerCount= asyncHandler(async (req, res) => {
   res.json({ ok: true, count });
 });
 
+// @desc    Upload a final document for a submission
+// @route   PUT /api/admin/submissions/:id/upload-final
+// @access  Private (Admin)
+export const uploadFinalDocument = asyncHandler(async (req, res) => {
+  const { submissionId } = req.params;
+  const { finalDocumentUrl } = req.body;
+
+  if (!finalDocumentUrl) {
+    return res.status(400).json({ message: 'Final document URL is required.' });
+  }
+
+  const submission = await Submission.findById(submissionId);
+  if (!submission) {
+    return res.status(404).json({ message: 'Submission not found.' });
+  }
+
+  submission.finalDocument = finalDocumentUrl;
+  await submission.save();
+
+  res.json({ ok: true, message: 'Final document uploaded successfully.', submission });
+});
+
 // ===================== SUBMISSIONS =====================
-export {
-  adminListSubmissions,
-  getSubmissionById,
-  updateSubmissionStatus
-};
+export { adminListSubmissions, getSubmissionById, updateSubmissionStatus };

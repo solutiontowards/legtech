@@ -48,6 +48,8 @@ import KycVerificationPage from "./pages/admin/KycVerificationPage";
 import KycPage from "./pages/retailer/KycPage";
 import ViewKycDetails from "./pages/admin/retailer/ViewKycDetails";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import Profile from "./pages/retailer/Profile";
+import FindDocuments from "./pages/retailer/FindDocuments";
 
 const App = () => {
   useEffect(() => {
@@ -134,6 +136,9 @@ const App = () => {
         <Route path="commision-chart" element={<CommisionChart />} />
         <Route path="price-chart" element={<PriceChart />} />
         <Route path="kyc" element={<KycPage />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="find-documents" element={<FindDocuments />} />
+
 
         <Route path="*" element={<ComingSoon />} />
 

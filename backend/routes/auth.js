@@ -12,7 +12,8 @@ import {
   adminVerifyLoginOtp,
   forgotPassword,
   verifyForgotPasswordOtp,
-  resetPassword
+  resetPassword,
+  getUserProfile
 } from '../controllers/authController.js';
 import { auth } from '../middlewares/auth.js';
 import { authLimiter } from '../middlewares/rateLimit.js';
@@ -36,6 +37,9 @@ router.post('/verify-adminlogin-otp', authLimiter, adminVerifyLoginOtp);
 // Authenticated routes
 router.post('/logout', auth, logout);
 router.get('/me', auth, me);
+// getUserProfile
+router.get('/profile', auth, getUserProfile);
+
 
 // Forgot Password routes
 router.post('/forgot-password', authLimiter, forgotPassword);

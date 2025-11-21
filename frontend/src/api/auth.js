@@ -12,3 +12,7 @@ export const forgotPasswordVerifyOtp = (mobile, code) =>
 
 export const resetPassword = (mobile, code, password) => 
     api.post("/auth/reset-password", { mobile, code, password });
+
+// Get Profile
+export const getProfile = () => 
+    api.get("/auth/profile");

@@ -3,9 +3,12 @@ import { useParams, Link } from "react-router-dom";
 import {
   getSubmissionById,
   updateSubmissionStatus,
+  uploadFinalDocument,
 } from "../../api/admin";
+import { uploadSingle } from "../../api/upload";
 import toast from "react-hot-toast";
 import {
+  UploadCloud,
   ArrowLeft,
   Download,
   FileText,
@@ -19,6 +22,7 @@ import {
   Loader2,
   History,
   Hash,
+  X,
 } from "lucide-react";
 
 const DetailItem = ({ icon: Icon, label, value }) => (
@@ -64,6 +68,8 @@ const AdminViewSubmission = () => {
   const [status, setStatus] = useState("");
   const [adminRemarks, setAdminRemarks] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [finalPdf, setFinalPdf] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const loadSubmission = async () => {
     try {
@@ -95,6 +101,33 @@ const AdminViewSubmission = () => {
       toast.error("Failed to update submission.");
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFinalPdf(e.target.files[0]);
+    }
+  };
+
+  const handleFinalUpload = async () => {
+    if (!finalPdf) {
+      toast.error("Please select a PDF file to upload.");
+      return;
+    }
+    setIsUploading(true);
+    try {
+      // This assumes you have an 'uploadSingle' function in your API utils
+      // that handles file uploads and returns a URL.
+      const { data: uploadedFile } = await uploadSingle(finalPdf);
+      await uploadFinalDocument(id, { finalDocumentUrl: uploadedFile.url });
+      toast.success("Final document uploaded successfully!");
+      setFinalPdf(null); // Clear file input
+      loadSubmission(); // Refresh data to show the new document
+    } catch (error) {
+      toast.error("Failed to upload final document.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -156,8 +189,18 @@ const AdminViewSubmission = () => {
               />
               <DetailItem
                 icon={Tag}
-                label="Service"
-                value={`${submission.serviceId?.name || 'N/A'} - ${submission.optionId?.subServiceId?.name || 'N/A'} - ${submission.optionId?.name || 'N/A'}`}
+                label="Service Name"
+                value={submission.serviceId?.name || 'N/A'}
+              />
+              <DetailItem
+                icon={Tag}
+                label="Sub-Service Name"
+                value={submission.optionId?.subServiceId?.name || 'N/A'}
+              />
+              <DetailItem
+                icon={Tag}
+                label="Option Name"
+                value={submission.optionId?.name || 'N/A'}
               />
               <DetailItem
                 icon={DollarSign}
@@ -306,6 +349,31 @@ const AdminViewSubmission = () => {
             </div>
           )}
 
+          {/* Final Document Display */}
+          {submission.finalDocument && (
+            <div>
+              <h3 className="text-lg font-semibold text-blue-600 border-b border-blue-200 pb-2 mb-3">
+                Final Document
+              </h3>
+              <div className="bg-blue-50 p-4 rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-6 h-6 text-blue-700" />
+                  <span className="font-medium text-blue-800">
+                    Final document is available.
+                  </span>
+                </div>
+                <a
+                  href={submission.finalDocument}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
+                >
+                  <Download size={14} /> View
+                </a>
+              </div>
+            </div>
+          )}
+
           {/* Activity History */}
           <div>
             <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">
@@ -327,7 +395,8 @@ const AdminViewSubmission = () => {
         </div>
 
         {/* Right: Actions */}
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 h-fit sticky top-20">
+        <div className="space-y-6 h-fit sticky top-6">
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
           <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
             Manage Status
           </h2>
@@ -391,6 +460,34 @@ const AdminViewSubmission = () => {
               )}
             </button>
           </form>
+        </div>
+
+          {/* Final PDF Upload Section */}
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+            <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
+              Upload Final Document
+            </h2>
+            <div className="space-y-4">
+              <input type="file" accept=".pdf" onChange={handleFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+
+              {finalPdf && (
+                <div className="flex items-center justify-between bg-gray-100 p-2 rounded-md text-sm">
+                  <span className="truncate text-gray-800" title={finalPdf.name}>{finalPdf.name}</span>
+                  <button onClick={() => setFinalPdf(null)} className="p-1 rounded-full hover:bg-red-100 text-red-500">
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
+              <button onClick={handleFinalUpload} disabled={isUploading || !finalPdf} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition disabled:bg-gray-400">
+                {isUploading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
+                ) : (
+                  <><UploadCloud size={16} /> Upload Document</>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

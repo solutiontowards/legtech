@@ -363,6 +363,23 @@ export const me = asyncHandler(async (req, res) => {
   res.json({ ok: true, user });
 });
 
+// @desc    Get full user profile including KYC details
+// @route   GET /api/auth/profile
+// @access  Private
+export const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).populate('kycDetails');
+
+  if (!user) {
+    return res.status(404).json({ ok: false, message: 'User not found.' });
+  }
+
+  // To be safe, don't send back sensitive data like password hashes or tokens
+  user.passwordHash = undefined;
+  user.accessToken = undefined;
+
+  res.json({ ok: true, profile: user });
+});
+
 // Forgot Password Step 1: Send OTP
 export const forgotPassword = asyncHandler(async (req, res) => {
   const { mobile } = req.body;

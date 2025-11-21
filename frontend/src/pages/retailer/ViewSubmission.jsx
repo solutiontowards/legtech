@@ -167,8 +167,18 @@ const ViewSubmission = () => {
             />
             <DetailItem
               icon={Tag}
-              label="Service"
-              value={`${submission.serviceId?.name || 'N/A'} - ${submission.optionId?.subServiceId?.name || 'N/A'} - ${submission.optionId?.name || 'N/A'}`}
+              label="Service Name"
+              value={submission.serviceId?.name || 'N/A'}
+            />
+            <DetailItem
+              icon={Tag}
+              label="Sub-Service Name"
+              value={submission.optionId?.subServiceId?.name || 'N/A'}
+            />
+            <DetailItem
+              icon={Tag}
+              label="Option Name"
+              value={submission.optionId?.name || 'N/A'}
             />
             <DetailItem
               icon={DollarSign}
