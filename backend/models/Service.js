@@ -11,9 +11,8 @@ const ServiceSchema = new Schema({
     required: true,
     unique: true,
   },
-  description: {
-    type: String,
-  },
+  // Replaced description with a list of required documents
+  requiredDocuments: { type: [String], default: [] },
   isActive: {
     type: Boolean,
     default: true,

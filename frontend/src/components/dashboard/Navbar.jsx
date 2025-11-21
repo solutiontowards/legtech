@@ -19,23 +19,29 @@ const Navbar = ({ toggleSidebar }) => {
   // -------------------------------------------
   // GOOGLE TRANSLATE SCRIPT LOAD
   // -------------------------------------------
-  useEffect(() => {
-    const googleTranslateScript = document.createElement("script");
-    googleTranslateScript.src =
-      "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-    document.body.appendChild(googleTranslateScript);
+  const googleTranslateElementInit = () => {
+    new window.google.translate.TranslateElement(
+      {
+        pageLanguage: "en",
+        includedLanguages: "en,hi,bn",
+        autoDisplay: false,
+        layout: window.google.translate.TranslateElement.InlineLayout.HORIZONTAL,
+      },
+      "google_translate_element"
+    );
+  };
 
-    window.googleTranslateElementInit = () => {
-      new window.google.translate.TranslateElement(
-        {
-          pageLanguage: "en",
-          includedLanguages: "en,hi,bn",
-          autoDisplay: false,
-          layout:
-            window.google.translate.TranslateElement.InlineLayout.HORIZONTAL,
-        },
-        "google_translate_element"
-      );
+  useEffect(() => {
+    // Define the init function on the window object
+    window.googleTranslateElementInit = googleTranslateElementInit;
+
+    // Check if the script already exists to avoid duplicates
+    if (!document.querySelector("script[src*='translate.google.com']")) {
+      const googleTranslateScript = document.createElement("script");
+      googleTranslateScript.id = "google-translate-script";
+      googleTranslateScript.src =
+        "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      document.body.appendChild(googleTranslateScript);
     };
   }, []);
 
@@ -54,11 +60,26 @@ const Navbar = ({ toggleSidebar }) => {
   // -------------------------------------------
   // MANUAL LANGUAGE CHANGE
   // -------------------------------------------
-  const changeLanguage = (lang) => {
+  const changeLanguage = (langCode) => {
     const select = document.querySelector(".goog-te-combo");
     if (select) {
-      select.value = lang;
-      select.dispatchEvent(new Event("change"));
+      if (langCode === 'en') {
+        // If switching back to English, we only need to do it once.
+        select.value = 'en';
+        select.dispatchEvent(new Event("change"));
+      } else {
+        // To ensure a clean translation when switching between non-English languages,
+        // we first revert to the original language (English).
+        select.value = 'en';
+        select.dispatchEvent(new Event("change"));
+
+        // A short delay is crucial to allow the widget to process the reversion
+        // before applying the new language.
+        select.value = langCode;
+        select.dispatchEvent(new Event("change"));
+      }
+    } else {
+      console.error("Google Translate dropdown not found.");
     }
     setLanguageOpen(false);
   };
@@ -122,7 +143,7 @@ const Navbar = ({ toggleSidebar }) => {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
+  
   return (
     <>
       {/* Hidden Google translate element */}

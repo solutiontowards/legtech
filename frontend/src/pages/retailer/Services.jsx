@@ -8,6 +8,8 @@ import {
   Lock,
   IndianRupee,
   ArrowRight,
+  FileText,
+  CheckCircle,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { listServices, getServiceDetail, getMyKycDetails } from "../../api/retailer";
@@ -24,86 +26,134 @@ const DashboardCard = ({
   onClick,
   isKycVerified,
   showPrice = false,
-  buttonText = "View Details",
-  isOption = false,
-}) => (
-  <motion.div
-    onClick={isKycVerified ? onClick : () => {}}
-    className={`group relative bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm transition-all duration-300 ${
-      isKycVerified
-        ? "hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
-        : "cursor-not-allowed"
-    }`}
-    whileHover={isKycVerified ? { scale: 1.02 } : {}}
-    initial={{ opacity: 0, y: 30 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.4 }}
-  >
-    {/* Image Section */}
-    <div className="relative h-48 overflow-hidden">
-      <motion.img
-        src={image}
-        alt={name}
-        className={`h-full w-full object-cover transition-transform duration-700 ${
-          isKycVerified ? "group-hover:scale-110" : ""
-        }`}
-      />
-
-      {!isKycVerified && (
-        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-center px-3">
-          <Lock size={38} />
-          <p className="mt-2 font-semibold text-sm">KYC Required</p>
-        </div>
-      )}
-
-      {isKycVerified && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-      )}
-    </div>
-
-    {/* Text & Action Section */}
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-gray-900 truncate">
-          {name}
-        </h3>
-        <ArrowRight
-          size={18}
-          className={`transition-transform ${
-            isKycVerified
-              ? "text-blue-600 group-hover:translate-x-1"
-              : "text-gray-400"
-          }`}
+}) => {
+  return (
+    <motion.div
+      onClick={isKycVerified ? onClick : undefined}
+      className={`
+        group relative overflow-hidden rounded-2xl border 
+        bg-white shadow-md transition-all duration-300
+        ${isKycVerified ? "cursor-pointer hover:shadow-xl hover:-translate-y-1" : "cursor-not-allowed opacity-90"}
+      `}
+      initial={{ opacity: 0, y: 22 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={isKycVerified ? { scale: 1.015 } : {}}
+    >
+      {/* Image */}
+      <div className="relative h-48 w-full overflow-hidden">
+        <motion.img
+          src={image}
+          alt={name}
+          className={`h-full w-full object-cover transition-transform duration-700 
+            ${isKycVerified ? "group-hover:scale-110" : ""}
+          `}
         />
+
+        {/* KYC Required Overlay */}
+        {!isKycVerified && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-white">
+            <Lock size={36} />
+            <p className="mt-2 text-sm font-medium">KYC Required</p>
+          </div>
+        )}
+
+        {/* Gradient Overlay */}
+        {isKycVerified && (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        )}
       </div>
 
-      {showPrice && (
-        <div className="flex items-center justify-between">
-          <div
-            className={`flex items-center gap-1 font-bold text-lg ${
-              isKycVerified ? "text-blue-600" : "text-gray-400"
+      {/* Bottom Section */}
+      <div className="h-full w-full bg-gradient-to-br from-blue-500 to-indigo-600 px-4 py-4 shadow-inner">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-base font-semibold leading-snug text-white">
+            {name}
+          </h3>
+
+          <ArrowRight
+            size={18}
+            className={`transition-transform ${
+              isKycVerified
+                ? "text-white opacity-90 group-hover:translate-x-1"
+                : "text-gray-300"
             }`}
-          >
-            <IndianRupee size={16} />
-            {(retailerPrice || 0).toFixed(2)}
-          </div>
-          <motion.button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (isKycVerified) onClick(e);
-            }}
-            whileHover={isKycVerified ? { scale: 1.05 } : {}}
-            whileTap={isKycVerified ? { scale: 0.95 } : {}}
-            disabled={!isKycVerified}
-            className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            Apply Now
-          </motion.button>
+          />
         </div>
-      )}
-    </div>
-  </motion.div>
-);
+
+        {showPrice && (
+          <div className="flex items-center justify-between">
+            {/* Price */}
+            <div
+              className={`flex items-center gap-1 text-lg font-bold ${
+                isKycVerified ? "text-white" : "text-gray-300"
+              }`}
+            >
+              <IndianRupee size={16} />
+              {(retailerPrice || 0).toFixed(2)}
+            </div>
+
+            {/* Button */}
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isKycVerified) onClick(e);
+              }}
+              whileHover={isKycVerified ? { scale: 1.05 } : {}}
+              whileTap={isKycVerified ? { scale: 0.95 } : {}}
+              disabled={!isKycVerified}
+              className={`rounded-lg px-4 py-2 text-xs font-semibold shadow-md transition-all
+                ${
+                  isKycVerified
+                    ? "bg-white text-blue-700 hover:bg-gray-100"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }
+              `}
+            >
+              Apply Now
+            </motion.button>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+/* -------------------------------------------------------------------
+ 🧩 Required Documents Card Component
+------------------------------------------------------------------- */
+const RequiredDocumentsCard = ({ serviceName, documents, isVisible }) => {
+  if (!isVisible || !documents || documents.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="bg-gradient-to-br from-blue-50 to-amber-100 text-black rounded-3xl p-8 sticky top-24 shadow-2xl shadow-gray-900/20"
+    >
+      <div className="flex items-start gap-4 mb-5">
+        <div className="bg-white/10 p-3 rounded-xl">
+          <FileText size={35} className="text-blue-600" />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-black">
+            Required Documents
+          </h3>
+          <p className="text-sm text-gray-700">For <span className="font-semibold text-blue-600">{serviceName}</span></p>
+        </div>
+      </div>
+      <p className="text-sm text-gray-900 mb-6">Please keep the following documents ready for a smooth application process:</p>
+      <ul className="space-y-4">
+        {documents.map((doc, index) => (
+          <li key={index} className="flex items-center gap-4 text-base font-medium text-gray-900">
+            <CheckCircle size={20} className="text-green-400 flex-shrink-0" />
+            <span>{doc}</span>
+          </li>
+        ))}
+      </ul>
+    </motion.div>
+  );
+};
 
 /* -------------------------------------------------------------------
  🚀 Main Services Page Component
@@ -179,7 +229,7 @@ const Services = () => {
 
     fetchKycData();
   }, [user, navigate]);
-  
+
   useEffect(() => {
     if (user && !user.isKycVerified && kycData) {
       if (kycData.kycStatus === 'pending') {
@@ -225,6 +275,8 @@ const Services = () => {
     }
   };
 
+  const showDocumentsCard = !!serviceSlug && data?.service?.requiredDocuments?.length > 0;
+
   /* -------------------------------------------------------------------
    🎨 Render Dynamic Cards
   ------------------------------------------------------------------- */
@@ -264,7 +316,12 @@ const Services = () => {
     return (
       <AnimatePresence>
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          className={`grid grid-cols-1 sm:grid-cols-2 gap-6 ${showDocumentsCard
+            // If document card is visible, use 3 columns to fit in the smaller space.
+            ? 'lg:grid-cols-3'
+            // If no document card, expand to 4 columns to use the full width.
+            : 'lg:grid-cols-4'
+            }`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
@@ -323,8 +380,20 @@ const Services = () => {
       {/* KYC Prompt Notice */}
       {!user?.isKycVerified && <KycPromptNotice kycData={kycData} />}
 
-      {/* Grid Content */}
-      {renderContent()}
+      <div className={`grid grid-cols-1 ${showDocumentsCard ? 'lg:grid-cols-3 lg:gap-8' : ''}`}>
+        <div className={showDocumentsCard ? 'lg:col-span-2' : 'col-span-1 lg:col-span-3'}>
+          {renderContent()}
+        </div>
+        {showDocumentsCard && (
+          <div className="lg:col-span-1">
+            <RequiredDocumentsCard
+              isVisible={showDocumentsCard}
+              serviceName={data?.service?.name}
+              documents={data?.service?.requiredDocuments}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

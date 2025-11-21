@@ -10,11 +10,12 @@ import {
   UploadCloud,
   Image as ImageIcon,
   FileText,
-  Type,
-  AlignLeft,
+  Type,  
   Loader2,
   ChevronLeft,
   Save,
+  Plus,
+  X,
 } from "lucide-react";
 
 const AddServices = () => {
@@ -22,14 +23,15 @@ const AddServices = () => {
   const navigate = useNavigate();
   const isEditMode = Boolean(slugParam);
   const [loading, setLoading] = useState(false);
-  const [serviceId, setServiceId] = useState(null);
   const [preview, setPreview] = useState(null);
   const [svc, setSvc] = useState({
     name: "",
     slug: "",
-    description: "",
     image: null,
   });
+  // New state for managing the list of required documents
+  const [documents, setDocuments] = useState([]);
+  const [currentDoc, setCurrentDoc] = useState("");
 
   useEffect(() => {
     async function fetchServiceData() {
@@ -41,10 +43,10 @@ const AddServices = () => {
           setSvc({
             _id: serviceData._id,
             name: serviceData.name,
-            slug: serviceData.slug,
-            description: serviceData.description,
+            slug: serviceData.slug,            
             image: serviceData.image, // This is the URL
           });
+          setDocuments(serviceData.requiredDocuments || []);
           setPreview(serviceData.image);
         } catch (error) {
           toast.error("Failed to fetch service details.");
@@ -76,12 +78,33 @@ const AddServices = () => {
     }
   };
 
+  // Handlers for the new document list UI
+  const handleAddDocument = () => {
+    if (currentDoc && !documents.includes(currentDoc)) {
+      setDocuments([...documents, currentDoc.trim()]);
+      setCurrentDoc("");
+    } else if (documents.includes(currentDoc)) {
+      toast.error("This document is already in the list.");
+    }
+  };
+
+  const handleRemoveDocument = (docToRemove) => {
+    setDocuments(documents.filter(doc => doc !== docToRemove));
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddDocument();
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!svc.name || !svc.description || !svc.image) {
+    if (!svc.name || !svc.image) {
       Swal.fire({
         icon: "warning",
         title: "Missing Fields",
-        text: "Please fill name, description and choose an image.",
+        text: "Please fill in the service name and choose an image.",
       });
       return;
     }
@@ -99,8 +122,8 @@ const AddServices = () => {
       const payload = {
         name: svc.name,
         slug: svc.slug,
-        description: svc.description,
         image: imageUrl,
+        requiredDocuments: documents,
       };
 
       if (isEditMode) {
@@ -168,16 +191,40 @@ const AddServices = () => {
           </div>
 
           <div>
-            <label className="text-gray-700 font-medium flex items-center gap-2 mb-1">
-              <AlignLeft size={18} /> Description
+            <label className="text-gray-700 font-medium flex items-center gap-2 mb-2">
+              <FileText size={18} /> Required Documents
             </label>
-            <textarea
-              rows="4"
-              value={svc.description}
-              onChange={(e) => setSvc({ ...svc, description: e.target.value })}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="Enter a detailed description for the service"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={currentDoc}
+                onChange={(e) => setCurrentDoc(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                placeholder="e.g., Aadhaar Card, PAN Card"
+              />
+              <button
+                type="button"
+                onClick={handleAddDocument}
+                className="px-4 py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition font-semibold flex-shrink-0"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {documents.map((doc, index) => (
+                <div key={index} className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 text-sm font-medium text-gray-800">
+                  <span>{doc}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveDocument(doc)}
+                    className="p-0.5 rounded-full hover:bg-red-200 text-red-600"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div>

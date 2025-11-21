@@ -215,7 +215,7 @@ export const updateKycStatus = asyncHandler(async (req, res) => {
 
 // ===================== CREATE SERVICE =====================
 export const createService = asyncHandler(async (req, res) => {
-  const { name, slug, description, image, imageMeta, isActive = true } = req.body;
+  const { name, slug, requiredDocuments, image, imageMeta, isActive = true } = req.body;
 
   const existingService = await Service.findOne({ name: name.trim() });
   if (existingService) {
@@ -235,7 +235,7 @@ export const createService = asyncHandler(async (req, res) => {
   const svc = await Service.create({
     name: name.trim(),
     slug: generatedSlug,
-    description,
+    requiredDocuments,
     image,
     imageMeta,
     isActive,
@@ -256,7 +256,7 @@ export const getAllServices = asyncHandler(async (req,res)=>{
 // ===================== UPDATE SERVICE =====================
 export const updateService = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { name, slug, description, image, imageMeta, isActive } = req.body;
+  const { name, slug, requiredDocuments, image, imageMeta, isActive } = req.body;
 
   const service = await Service.findById(id);
   if (!service) {
@@ -276,7 +276,7 @@ export const updateService = asyncHandler(async (req, res) => {
     slug ||
     name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") ||
     service.slug;
-  service.description = description ?? service.description;
+  service.requiredDocuments = requiredDocuments ?? service.requiredDocuments;
   service.image = image ?? service.image;
   service.imageMeta = imageMeta ?? service.imageMeta;
   if (typeof isActive === "boolean") service.isActive = isActive;
