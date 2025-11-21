@@ -408,70 +408,70 @@ const AdminViewSubmission = () => {
         {/* Right: Actions */}
         <div className="space-y-6 h-fit sticky top-6">
           <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
-            Manage Status
-          </h2>
-          <form onSubmit={handleUpdate} className="space-y-4">
-            <div>
-              <label
-                htmlFor="status"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Status
-              </label>
-              <select
-                id="status"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
-              >
-                <option value="Applied">Applied</option>
-                <option value="Verified">Verified</option>
-                <option value="Reject | Failed">Reject | Failed</option>
-                <option value="On Process">On Process</option>
-                <option value="On Hold">On Hold</option>
-                <option value="Success">Success</option>
-                <option value="Objection">Objection</option>
-                <option value="Hold for Customer">Hold for Customer</option>
-                <option value="Document Required">Document Required</option>
-                <option value="Document Re-uploaded" disabled>Document Re-uploaded</option>
-                <option value="Completed">Completed</option>
-                <option value="Payment Failed">Payment Failed</option>
+            <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
+              Manage Status
+            </h2>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="status"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Status
+                </label>
+                <select
+                  id="status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                >
+                  <option value="Applied">Applied</option>
+                  <option value="Verified">Verified</option>
+                  <option value="Reject | Failed">Reject | Failed</option>
+                  <option value="On Process">On Process</option>
+                  <option value="On Hold">On Hold</option>
+                  <option value="Success">Success</option>
+                  <option value="Objection">Objection</option>
+                  <option value="Hold for Customer">Hold for Customer</option>
+                  <option value="Document Required">Document Required</option>
+                  <option value="Document Re-uploaded" disabled>Document Re-uploaded</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Payment Failed">Payment Failed</option>
 
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="adminRemarks"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="adminRemarks"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Admin Remarks
+                </label>
+                <textarea
+                  id="adminRemarks"
+                  rows="4"
+                  value={adminRemarks}
+                  onChange={(e) => setAdminRemarks(e.target.value)}
+                  placeholder="Add remarks for the retailer (optional)"
+                  className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                ></textarea>
+              </div>
+              <button
+                type="submit"
+                disabled={isUpdating}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition disabled:bg-gray-400"
               >
-                Admin Remarks
-              </label>
-              <textarea
-                id="adminRemarks"
-                rows="4"
-                value={adminRemarks}
-                onChange={(e) => setAdminRemarks(e.target.value)}
-                placeholder="Add remarks for the retailer (optional)"
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
-              ></textarea>
-            </div>
-            <button
-              type="submit"
-              disabled={isUpdating}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition disabled:bg-gray-400"
-            >
-              {isUpdating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                "Update Status"
-              )}
-            </button>
-          </form>
-        </div>
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Status"
+                )}
+              </button>
+            </form>
+          </div>
 
           {/* Final PDF Upload Section */}
           <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
@@ -479,7 +479,12 @@ const AdminViewSubmission = () => {
               Upload Final Document
             </h2>
             <div className="space-y-4">
-              <input type="file" accept=".pdf" onChange={handleFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+              <input
+                type="file"
+                accept=".pdf, image/*"
+                onChange={handleFileChange}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
 
               {finalPdf && (
                 <div className="flex items-center justify-between bg-gray-100 p-2 rounded-md text-sm">

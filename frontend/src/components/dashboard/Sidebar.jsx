@@ -36,6 +36,7 @@ import {
   FileSearch,
   FolderSearch,
   Search,
+  MessageSquareWarning,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Swal from "sweetalert2";
@@ -74,6 +75,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { id: "services", to: "/retailer/services", text: "Services", icon: BriefcaseBusiness },
     { id: "submissions", to: "/retailer/submission-history", text: "Submissions", icon: History },
     { id: "findDocuments", to: "/retailer/find-documents", text: "Find Documents", icon: FileSearch },
+    { id: "raise-complaint", to: "/retailer/raise-complaint", text: "Raise Complaint", icon: MessageSquareWarning },
     { id: "transactions", to: "/retailer/transaction", text: "Transactions", icon: ArrowRightLeft },
     {
       id: "wallet",
