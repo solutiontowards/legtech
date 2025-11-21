@@ -55,7 +55,7 @@ const Home = () => {
           }}
         >
           <div className="mx-auto w-full">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div >
 
               {/* LEFT TEXT CONTENT */}
               <div className="text-white space-y-7">
@@ -74,7 +74,7 @@ const Home = () => {
 
 
                   {/* STATIC TITLE */}
-                  <span className="text-blue-400 block pt-3">
+                  <span className="text-blue-400 block pt-3 text-3xl md:text-5xl lg:text-6xl">
                     LegTech Solutions
                   </span>
                 </h1>
