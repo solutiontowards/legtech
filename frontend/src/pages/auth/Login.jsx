@@ -180,7 +180,7 @@ export default function Login() {
 
     return (
         <div className="flex min-h-screen py-5 items-center justify-center bg-gray-50">
-            <div className="flex md:flex-row flex-col-reverse w-full max-w-7xl rounded-2xl shadow-2xl bg-white overflow-hidden">
+            <div className="flex md:flex-row flex-col-reverse w-full max-w-6xl rounded-2xl shadow-2xl bg-white overflow-hidden">
                 {/* Left Side: Form */}
                 <div className="md:w-1/2 w-full p-10 flex flex-col justify-center">
                     <h2 className="text-4xl font-extrabold text-gray-900 mb-8">Retailer Login</h2>

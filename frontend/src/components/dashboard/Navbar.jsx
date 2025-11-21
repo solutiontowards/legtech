@@ -172,7 +172,7 @@ const Navbar = ({ toggleSidebar }) => {
           <div className="flex items-center gap-4 sm:gap-6">
 
             {/* 🌐 CUSTOM LANGUAGE DROPDOWN */}
-            <div className="relative" ref={langRef}>
+            <div className="relative sm:block hidden" ref={langRef}>
               <button
                 onClick={() => setLanguageOpen(!languageOpen)}
                 className="px-4 py-2 border rounded-full text-sm flex items-center gap-2 hover:bg-gray-100"
