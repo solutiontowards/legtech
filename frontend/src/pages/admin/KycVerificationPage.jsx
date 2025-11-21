@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getKycRequestById, updateKycStatus } from '../../api/admin';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
-import { Loader2, ArrowLeft, User, Mail, Phone, Calendar, CheckCircle, XCircle, Download, FileText } from 'lucide-react';
+import { Loader2, ArrowLeft, User, Mail, Phone, Calendar, CheckCircle, XCircle, Download, FileText, Building, MapPin } from 'lucide-react';
 
 // Reusable component for displaying details
 const DetailItem = ({ icon: Icon, label, value }) => (
@@ -36,7 +36,7 @@ const KycVerificationPage = () => {
   const navigate = useNavigate();
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(null); // 'approved' or 'rejected'
 
   useEffect(() => {
     const fetchRequest = async () => {
@@ -53,6 +53,7 @@ const KycVerificationPage = () => {
   }, [id]);
 
   const handleUpdate = async (status) => {
+    setUpdatingStatus(status);
     let payload = { status };
 
     if (status === 'rejected') {
@@ -71,20 +72,22 @@ const KycVerificationPage = () => {
         }
       });
 
-      if (!reason) return; // User cancelled
+      if (!reason) {
+        setUpdatingStatus(null); // Reset loading state if user cancels
+        return;
+      }
       payload.rejectionReason = reason;
     }
 
-    setIsUpdating(true);
     try {
       await updateKycStatus(id, payload);
       toast.success(`KYC has been ${status}.`);
       navigate('/st-admin/kyc-requests');
     } catch (error) {
       toast.error("Failed to update status.");
-    } finally {
-      setIsUpdating(false);
     }
+    // No finally block needed, as we navigate away on success. Reset on error/cancel.
+    setUpdatingStatus(null);
   };
 
   if (loading) {
@@ -121,9 +124,16 @@ const KycVerificationPage = () => {
             {/* KYC Details */}
             <section>
               <h2 className="text-xl font-bold text-gray-800 border-b pb-3 mb-6">Submitted KYC Details</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-8">
+                <DetailItem icon={Building} label="Outlet Name" value={details.outletName} />
                 <DetailItem icon={FileText} label="Aadhaar Number" value={details.aadhaarNumber} />
                 <DetailItem icon={FileText} label="PAN Number" value={details.panNumber} />
+                <DetailItem icon={MapPin} label="State" value={details.state} />
+                <DetailItem icon={MapPin} label="District" value={details.district} />
+                <DetailItem icon={MapPin} label="Post Office" value={details.postOffice} />
+                <DetailItem icon={MapPin} label="PIN Code" value={details.pinCode} />
+                <DetailItem icon={MapPin} label="Full Address" value={details.address} />
+                <DetailItem icon={MapPin} label="Live Location (Lat, Long)" value={details.plusCode} />
               </div>
             </section>
 
@@ -135,7 +145,9 @@ const KycVerificationPage = () => {
                 <DocumentViewer label="Aadhaar Back" url={details.aadhaarBack} />
                 <DocumentViewer label="PAN Card" url={details.panCardImage} />
                 <DocumentViewer label="Retailer Photo" url={details.photo} />
-                <DocumentViewer label="Bank Document" url={details.bankDocument} />
+                {details.bankDocument && (
+                  <DocumentViewer label="Bank Document (Optional)" url={details.bankDocument} />
+                )}
               </div>
             </section>
           </div>
@@ -147,19 +159,19 @@ const KycVerificationPage = () => {
               <div className="space-y-4">
                 <button
                   onClick={() => handleUpdate('approved')}
-                  disabled={isUpdating}
+                  disabled={!!updatingStatus}
                   className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-all disabled:bg-green-400"
                 >
-                  {isUpdating ? <Loader2 className="animate-spin" /> : <CheckCircle size={18} />}
-                  Approve KYC
+                  {updatingStatus === 'approved' ? <Loader2 className="animate-spin" /> : <CheckCircle size={18} />}
+                  {updatingStatus === 'approved' ? 'Approving...' : 'Approve KYC'}
                 </button>
                 <button
                   onClick={() => handleUpdate('rejected')}
-                  disabled={isUpdating}
+                  disabled={!!updatingStatus}
                   className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-all disabled:bg-red-400"
                 >
-                  {isUpdating ? <Loader2 className="animate-spin" /> : <XCircle size={18} />}
-                  Reject KYC
+                  {updatingStatus === 'rejected' ? <Loader2 className="animate-spin" /> : <XCircle size={18} />}
+                  {updatingStatus === 'rejected' ? 'Rejecting...' : 'Reject KYC'}
                 </button>
               </div>
             </div>

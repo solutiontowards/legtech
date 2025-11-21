@@ -68,13 +68,14 @@ const KycRequests = () => {
               <th className="px-5 py-3 font-semibold">Retailer Name</th>
               <th className="px-5 py-3 font-semibold">Contact</th>
               <th className="px-5 py-3 font-semibold">Submitted On</th>
+              <th className="px-5 py-3 font-semibold text-center">KYC Status</th>
               <th className="px-5 py-3 font-semibold text-center">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan="5" className="text-center py-10 text-gray-500">
+                <td colSpan="6" className="text-center py-10 text-gray-500">
                   <div className="flex justify-center items-center gap-2">
                     <Loader2 className="animate-spin text-blue-600" />
                     Loading Requests...
@@ -92,6 +93,9 @@ const KycRequests = () => {
                   </td>
                   <td className="px-5 py-4 text-gray-600">{new Date(req.createdAt).toLocaleDateString()}</td>
                   <td className="px-5 py-4 text-center">
+                    <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 capitalize">{req.status}</span>
+                  </td>
+                  <td className="px-5 py-4 text-center">
                     <button onClick={() => navigate(`/st-admin/kyc-verification/${req._id}`)} className="flex items-center justify-center gap-2 mx-auto px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-xs font-semibold">
                       <Eye size={14} /> Review
                     </button>
@@ -100,7 +104,7 @@ const KycRequests = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center py-16 text-gray-500">
+                <td colSpan="6" className="text-center py-16 text-gray-500">
                   <Inbox className="mx-auto h-12 w-12 text-gray-400" />
                   <h3 className="mt-2 text-lg font-medium">No Pending Requests</h3>
                   <p className="text-sm">All KYC submissions are up to date.</p>

@@ -5,13 +5,14 @@ import { useNavigate } from 'react-router-dom';
 import { FileUpload } from '../../components/FileUpload';
 import { submitKyc, getMyKycDetails } from '../../api/retailer';
 import { uploadSingle } from '../../api/upload';
-import { Loader2, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle, Info, MapPin } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const KycPage = () => {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm();
   const [pageLoading, setPageLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [kycData, setKycData] = useState(null);
   const navigate = useNavigate();
 
@@ -20,7 +21,7 @@ const KycPage = () => {
       try {
         const { data } = await getMyKycDetails();
         setKycData(data);
-        const fileFields = ['aadhaarFront', 'aadhaarBack', 'panCardImage', 'photo', 'bankDocument'];
+        const fileFields = ['aadhaarFront', 'aadhaarBack', 'panCardImage', 'photo', 'bankDocument']; // Keep bankDocument here for pre-filling logic
         if (data.details) {
           // Pre-fill form if details exist (for resubmission)
           Object.keys(data.details).forEach(key => {
@@ -39,6 +40,27 @@ const KycPage = () => {
     fetchKycStatus();
   }, [setValue]);
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser.");
+      return;
+    }
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const latLongString = `${latitude}, ${longitude}`;
+        setValue('plusCode', latLongString, { shouldValidate: true });
+        setLocationLoading(false);
+        toast.success("Location captured successfully!");
+      },
+      () => {
+        toast.error("Unable to retrieve your location. Please enable location services.");
+        setLocationLoading(false);
+      }
+    );
+  };
+
   const onSubmit = async (formData) => {
     setIsSubmitting(true);
     Swal.fire({
@@ -49,7 +71,7 @@ const KycPage = () => {
     });
 
     try {
-      const fileFields = ['aadhaarFront', 'aadhaarBack', 'panCardImage', 'photo', 'bankDocument'];
+      const fileFields = ['aadhaarFront', 'aadhaarBack', 'panCardImage', 'photo', 'bankDocument']; // bankDocument is optional but needs to be in the upload loop if present
       const uploadPromises = [];
       const payload = { ...formData };
 
@@ -61,7 +83,10 @@ const KycPage = () => {
           uploadPromises.push(uploadPromise);
         } else {
           // If no new file is uploaded but a URL already exists (from a rejected submission), keep it.
-          payload[field] = kycData?.details?.[field] || undefined;
+          payload[field] = kycData?.details?.[field] || null;
+        }
+        if (field === 'bankDocument' && !payload[field]) {
+          delete payload[field]; // Remove optional field if it's empty
         }
       }
 
@@ -127,17 +152,67 @@ const KycPage = () => {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Aadhaar Number <span className="text-red-500">*</span></label>
-              <input type="text" {...register('aadhaarNumber', { required: 'Aadhaar number is required' })} placeholder='Aadhaar Number' className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-              {errors.aadhaarNumber && <p className="text-red-500 text-xs mt-1">{errors.aadhaarNumber.message}</p>}
+          {/* Personal & Outlet Info */}
+          <div className="border-b border-gray-200 pb-6">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">Outlet & Personal Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Outlet Name <span className="text-red-500">*</span></label>
+                <input type="text" {...register('outletName', { required: 'Outlet name is required' })} placeholder='Your Shop or Business Name' className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+                {errors.outletName && <p className="text-red-500 text-xs mt-1">{errors.outletName.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Aadhaar Number <span className="text-red-500">*</span></label>
+                <input type="text" {...register('aadhaarNumber', { required: 'Aadhaar number is required', pattern: { value: /^\d{12}$/, message: 'Aadhaar must be 12 digits' } })} placeholder='12-digit Aadhaar Number' className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+                {errors.aadhaarNumber && <p className="text-red-500 text-xs mt-1">{errors.aadhaarNumber.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">PAN Number <span className="text-red-500">*</span></label>
+                <input type="text" {...register('panNumber', { required: 'PAN number is required', pattern: { value: /[A-Z]{5}[0-9]{4}[A-Z]{1}/, message: 'Invalid PAN format' } })} placeholder='Permanent Account Number' className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border uppercase" />
+                {errors.panNumber && <p className="text-red-500 text-xs mt-1">{errors.panNumber.message}</p>}
+              </div>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">PAN Number <span className="text-red-500">*</span></label>
-              <input type="text" {...register('panNumber', { required: 'PAN number is required' })}  placeholder='PAN Number' className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-              {errors.panNumber && <p className="text-red-500 text-xs mt-1">{errors.panNumber.message}</p>}
+          {/* Address Info */}
+          <div className="border-b border-gray-200 pb-6">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">Outlet Address</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">State <span className="text-red-500">*</span></label>
+                <input type="text" {...register('state', { required: 'State is required' })} placeholder='e.g., West Bengal' className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+                {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">District <span className="text-red-500">*</span></label>
+                <input type="text" {...register('district', { required: 'District is required' })} placeholder='e.g., Kolkata' className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+                {errors.district && <p className="text-red-500 text-xs mt-1">{errors.district.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Post Office <span className="text-red-500">*</span></label>
+                <input type="text" {...register('postOffice', { required: 'Post Office is required' })} placeholder='Your nearest Post Office' className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+                {errors.postOffice && <p className="text-red-500 text-xs mt-1">{errors.postOffice.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">PIN Code <span className="text-red-500">*</span></label>
+                <input type="text" {...register('pinCode', { required: 'PIN Code is required', pattern: { value: /^\d{6}$/, message: 'PIN Code must be 6 digits' } })} placeholder='6-digit PIN Code' className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+                {errors.pinCode && <p className="text-red-500 text-xs mt-1">{errors.pinCode.message}</p>}
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Full Address <span className="text-red-500">*</span></label>
+                <textarea {...register('address', { required: 'Full address is required' })} placeholder='House No, Street, Landmark...' rows="3" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"></textarea>
+                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Live Location (Plus Code) <span className="text-red-500">*</span></label>
+                <div className="flex items-center gap-2 mt-1">
+                  <input type="text" {...register('plusCode', { required: 'Live location is required' })} readOnly placeholder='Click button to capture ->' className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-gray-100" />
+                  <button type="button" onClick={handleGetLocation} disabled={locationLoading} className="flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition text-sm font-semibold disabled:opacity-50">
+                    {locationLoading ? <Loader2 size={16} className="animate-spin" /> : <MapPin size={16} />} Capture
+                  </button>
+                </div>
+                {errors.plusCode && <p className="text-red-500 text-xs mt-1">{errors.plusCode.message}</p>}
+              </div>
             </div>
           </div>
 
@@ -146,7 +221,7 @@ const KycPage = () => {
             <FileUpload label="Aadhaar Back Page" name="aadhaarBack" register={register} error={errors.aadhaarBack} watch={watch} setValue={setValue} required={!kycData?.details?.aadhaarBack} existingFileUrl={kycData?.details?.aadhaarBack} />
             <FileUpload label="PAN Card Image" name="panCardImage" register={register} error={errors.panCardImage} watch={watch} setValue={setValue} required={!kycData?.details?.panCardImage} existingFileUrl={kycData?.details?.panCardImage} />
             <FileUpload label="Your Photo" name="photo" register={register} error={errors.photo} watch={watch} setValue={setValue} required={!kycData?.details?.photo} existingFileUrl={kycData?.details?.photo} />
-            <FileUpload label="Bank Cheque / Passbook" name="bankDocument" register={register} error={errors.bankDocument} watch={watch} setValue={setValue} required={!kycData?.details?.bankDocument} existingFileUrl={kycData?.details?.bankDocument} />
+            <FileUpload label="Bank Cheque / Passbook (Optional)" name="bankDocument" register={register} error={errors.bankDocument} watch={watch} setValue={setValue} required={false} existingFileUrl={kycData?.details?.bankDocument} />
           </div>
 
           <div className="pt-4">

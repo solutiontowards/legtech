@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getKycDetailsByRetailerId } from '../../../api/admin';
 import toast from 'react-hot-toast';
-import { Loader2, ArrowLeft, User, Mail, Phone, Calendar, FileText, Download } from 'lucide-react';
+import { Loader2, ArrowLeft, User, Mail, Phone, Calendar, FileText, Download, Building, MapPin } from 'lucide-react';
 
 // Reusable component for displaying details
 const DetailItem = ({ icon: Icon, label, value }) => (
@@ -91,9 +91,16 @@ const ViewKycDetails = () => {
             {/* KYC Details */}
             <section>
               <h2 className="text-xl font-bold text-gray-800 border-b pb-3 mb-6">Submitted KYC Details</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-8">
+                <DetailItem icon={Building} label="Outlet Name" value={details.outletName} />
                 <DetailItem icon={FileText} label="Aadhaar Number" value={details.aadhaarNumber} />
                 <DetailItem icon={FileText} label="PAN Number" value={details.panNumber} />
+                <DetailItem icon={MapPin} label="State" value={details.state} />
+                <DetailItem icon={MapPin} label="District" value={details.district} />
+                <DetailItem icon={MapPin} label="Post Office" value={details.postOffice} />
+                <DetailItem icon={MapPin} label="PIN Code" value={details.pinCode} />
+                <DetailItem icon={MapPin} label="Full Address" value={details.address} />
+                <DetailItem icon={MapPin} label="Live Location (Lat, Long)" value={details.plusCode} />
               </div>
             </section>
 
@@ -105,7 +112,9 @@ const ViewKycDetails = () => {
                 <DocumentViewer label="Aadhaar Back" url={details.aadhaarBack} />
                 <DocumentViewer label="PAN Card" url={details.panCardImage} />
                 <DocumentViewer label="Retailer Photo" url={details.photo} />
-                <DocumentViewer label="Bank Document" url={details.bankDocument} />
+                {details.bankDocument && (
+                  <DocumentViewer label="Bank Document (Optional)" url={details.bankDocument} />
+                )}
               </div>
             </section>
           </div>

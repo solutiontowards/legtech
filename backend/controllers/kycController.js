@@ -8,10 +8,25 @@ import { sendGenericWhatsAppMessage } from './authController.js';
 // @access  Private (Retailer)
 export const submitKyc = asyncHandler(async (req, res) => {
   const retailerId = req.user._id;
-  const { aadhaarNumber, panNumber, aadhaarFront, aadhaarBack, panCardImage, photo, bankDocument } = req.body;
+  const { 
+    aadhaarNumber, panNumber, outletName, state, district, postOffice, address, pinCode, plusCode,
+    aadhaarFront, aadhaarBack, panCardImage, photo 
+  } = req.body;
 
-  if (!aadhaarNumber || !panNumber || !aadhaarFront || !aadhaarBack || !panCardImage || !photo || !bankDocument) {
-    return res.status(400).json({ message: 'All KYC fields are required.' });
+  // All fields are required except bankDocument
+  const requiredFields = {
+    aadhaarNumber, panNumber, outletName, state, district, postOffice, address, pinCode, plusCode,
+    aadhaarFront, aadhaarBack, panCardImage, photo
+  };
+
+  for (const [key, value] of Object.entries(requiredFields)) {
+    if (!value) {
+      // Convert camelCase to Title Case for user-friendly error message
+      const fieldName = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+      return res.status(400).json({
+        message: `${fieldName} is required.`
+      });
+    }
   }
 
   let kycDetails = await KycDetail.findOne({ retailerId });

@@ -17,7 +17,9 @@ export const getPendingRetailers = asyncHandler(async (req,res)=>{
 
 // Get all retailers Retailer
 export const getRetailers = asyncHandler(async (req,res)=>{
-  const retailers = await User.find({ role: 'retailer',  isKycVerified: true }).populate('kycDetails', 'status');
+  const retailers = await User.find({ role: 'retailer',  isKycVerified: true })
+    .populate('kycDetails')
+    .populate('walletId', 'balance');
   res.json({ ok:true, retailers });
 });
 
