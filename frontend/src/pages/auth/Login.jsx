@@ -168,9 +168,19 @@ export default function Login() {
         }
     }
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            if (step === 'credentials') {
+                sendOtp();
+            } else if (step === 'verify') {
+                verifyOtp();
+            }
+        }
+    };
+
     return (
         <div className="flex min-h-screen py-5 items-center justify-center bg-gray-50">
-            <div className="flex md:flex-row flex-col-reverse w-full max-w-6xl rounded-2xl shadow-2xl bg-white overflow-hidden">
+            <div className="flex md:flex-row flex-col-reverse w-full max-w-7xl rounded-2xl shadow-2xl bg-white overflow-hidden">
                 {/* Left Side: Form */}
                 <div className="md:w-1/2 w-full p-10 flex flex-col justify-center">
                     <h2 className="text-4xl font-extrabold text-gray-900 mb-8">Retailer Login</h2>
@@ -185,6 +195,7 @@ export default function Login() {
                                     placeholder="Enter 10-digit mobile number"
                                     value={form.mobile}
                                     onChange={handleMobileChange}
+                                    onKeyDown={handleKeyDown}
                                     maxLength={10}
                                     disabled={step !== 'credentials'}
                                 />
@@ -209,6 +220,7 @@ export default function Login() {
                                     setForm({ ...form, password: e.target.value });
                                     setErrors({ ...errors, password: '' });
                                 }}
+                                onKeyDown={handleKeyDown}
                                 disabled={step !== 'credentials'}
 
                             />
@@ -231,6 +243,7 @@ export default function Login() {
                                         placeholder="Enter 6-digit OTP"
                                         value={otp}
                                         onChange={handleOtpChange}
+                                        onKeyDown={handleKeyDown}
                                         maxLength={6}
                                     />
                                     {errors.otp && <p className="text-red-500 text-sm mt-2">{errors.otp}</p>}

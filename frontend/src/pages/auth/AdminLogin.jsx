@@ -173,6 +173,16 @@ export default function AdminLogin() {
         }
     }
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            if (step === 'credentials') {
+                sendOtp();
+            } else if (step === 'verify') {
+                verifyOtp();
+            }
+        }
+    };
+
     // Show a loading spinner while checking auth status to prevent form flash
     if (authLoading) {
         return (
@@ -197,6 +207,7 @@ export default function AdminLogin() {
                                     placeholder="Enter 10-digit mobile number"
                                     value={form.mobile}
                                     onChange={handleMobileChange}
+                                    onKeyDown={handleKeyDown}
                                     maxLength={10}
                                     disabled={step !== 'credentials'}
                                 />
@@ -220,6 +231,7 @@ export default function AdminLogin() {
                                     setForm({ ...form, password: e.target.value });
                                     setErrors({ ...errors, password: '' });
                                 }}
+                                onKeyDown={handleKeyDown}
                                 disabled={step !== 'credentials'}
                             />
                             <button
@@ -241,6 +253,7 @@ export default function AdminLogin() {
                                         placeholder="Enter 6-digit OTP"
                                         value={otp}
                                         onChange={handleOtpChange}
+                                        onKeyDown={handleKeyDown}
                                         maxLength={6}
                                     />
                                     {errors.otp && <p className="text-red-500 text-sm mt-2">{errors.otp}</p>}
