@@ -3,7 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getKycRequestById, updateKycStatus } from '../../api/admin';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
-import { Loader2, ArrowLeft, User, Mail, Phone, Calendar, CheckCircle, XCircle, Download, FileText, Building, MapPin } from 'lucide-react';
+import { Loader2, ArrowLeft, User, Mail, Phone, Calendar, CheckCircle, XCircle, Download, FileText, Building, MapPin, Eye } from 'lucide-react';
+
+const isImage = (url = "") => /\.(jpeg|jpg|gif|png|webp|svg|avif|bmp)$/i.test(url);
+const isPdf = (url = "") => /\.pdf$/i.test(url);
 
 // Reusable component for displaying details
 const DetailItem = ({ icon: Icon, label, value }) => (
@@ -17,19 +20,68 @@ const DetailItem = ({ icon: Icon, label, value }) => (
 );
 
 // Reusable component for displaying documents
-const DocumentViewer = ({ label, url }) => (
-  <div className="border border-gray-200 rounded-xl overflow-hidden group transition-all hover:shadow-xl hover:border-blue-400">
-    <a href={url} target="_blank" rel="noopener noreferrer" className="block p-4 bg-gray-50 text-center">
-      <img src={url} alt={label} className="h-48 w-full object-contain" onError={(e) => { e.target.onerror = null; e.target.src="/path/to/fallback-image.png" }} />
-    </a>
-    <div className="p-4 bg-white">
-      <p className="font-semibold text-gray-800 text-sm">{label}</p>
-      <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline font-medium flex items-center gap-1 mt-1">
-        <Download size={12} /> View Full Document
-      </a>
+const DocumentViewer = ({ label, url }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handlePreview = () => {
+    if (isImage(url)) {
+      Swal.fire({
+        imageUrl: url,
+        imageAlt: label,
+        showConfirmButton: false,
+        customClass: { popup: 'p-0 rounded-lg', image: 'm-0 rounded-lg' },
+        backdrop: `rgba(0,0,0,0.8)`,
+      });
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    toast.loading('Starting download...');
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = objectUrl;
+      a.download = label.replace(/\s+/g, '_') + '.' + url.split('.').pop();
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(objectUrl);
+      toast.dismiss();
+      toast.success('Download complete!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Download failed. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden group transition-all hover:shadow-xl hover:border-blue-400">
+      <div onClick={handlePreview} className=" p-4 bg-gray-50 text-center cursor-pointer h-48 flex items-center justify-center">
+        {isImage(url) ? (
+          <img src={url} alt={label} className="max-h-full max-w-full object-contain" />
+        ) : (
+          <FileText className="w-12 h-12 text-gray-400" />
+        )}
+      </div>
+      <div className="p-4 bg-white">
+        <p className="font-semibold text-gray-800 text-sm truncate mb-3">{label}</p>
+        <div className="flex items-center justify-between gap-2">
+          <button onClick={handlePreview} className="flex items-center gap-1.5 text-xs text-blue-700 font-semibold hover:underline"><Eye size={14} /> Preview</button>
+          <button onClick={handleDownload} disabled={isDownloading} className="flex items-center gap-1.5 text-xs text-green-700 font-semibold hover:underline disabled:opacity-50">
+            {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} Download
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const KycVerificationPage = () => {
   const { id } = useParams();

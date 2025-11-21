@@ -7,10 +7,12 @@ import {
 } from "../../api/admin";
 import { uploadSingle } from "../../api/upload";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import {
   UploadCloud,
   ArrowLeft,
   Download,
+  Eye,
   FileText,
   User,
   Tag,
@@ -55,10 +57,85 @@ const ActivityItem = ({ item }) => (
 
 
 
-const isImage = (url = "") => /\.(jpeg|jpg|gif|png|webp)$/i.test(url);
+const isImage = (url = "") => /\.(jpeg|jpg|gif|png|webp|svg|avif|bmp)$/i.test(url);
 const isPdf = (url = "") => /\.pdf$/i.test(url);
 const isFileUrl = (value) => {
   return typeof value === 'string' && value.startsWith('http');
+};
+
+// New component for displaying files with preview and download
+const FileCard = ({ fileName, fileUrl }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handlePreview = () => {
+    if (isImage(fileUrl)) {
+      Swal.fire({
+        imageUrl: fileUrl,
+        imageAlt: fileName,
+        showConfirmButton: false,
+        customClass: {
+          popup: 'p-0 rounded-lg',
+          image: 'm-0 rounded-lg',
+        },
+        backdrop: `rgba(0,0,0,0.8)`,
+      });
+    } else {
+      // For PDFs and other files, open in a new tab
+      window.open(fileUrl, '_blank');
+    }
+  };
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    toast.loading('Starting download...');
+    try {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.dismiss();
+      toast.success('Download complete!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Download failed. Please try again.');
+      console.error("Download error:", error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white border rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden">
+      <div className="h-48 flex items-center justify-center bg-gray-50 cursor-pointer" onClick={handlePreview}>
+        {isImage(fileUrl) ? (
+          <img src={fileUrl} alt={fileName} className="w-full h-full object-contain" />
+        ) : (
+          <div className="flex flex-col items-center text-center text-gray-600">
+            <FileText className={`w-12 h-12 ${isPdf(fileUrl) ? "text-red-500" : "text-gray-400"}`} />
+            <p className="text-xs mt-2">{isPdf(fileUrl) ? "PDF Document" : "Other File"}</p>
+          </div>
+        )}
+      </div>
+      <div className="p-4 bg-gray-50/50">
+        <p className="text-sm font-medium text-gray-800 truncate" title={fileName}>{fileName}</p>
+        <div className="flex items-center justify-between mt-3">
+          <button onClick={handlePreview} className="flex items-center gap-1.5 text-xs text-blue-700 font-semibold hover:underline">
+            <Eye size={14} /> Preview
+          </button>
+          <button onClick={handleDownload} disabled={isDownloading} className="flex items-center gap-1.5 text-xs text-green-700 font-semibold hover:underline disabled:opacity-50">
+            {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+            Download
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const AdminViewSubmission = () => {
@@ -264,53 +341,7 @@ const AdminViewSubmission = () => {
             </h3>
             {attachedFiles.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {attachedFiles.map(([fileName, fileUrl], index) => (
-                  <div
-                    key={index}
-                    className="bg-white border rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden"
-                  >
-                    <div className="h-48 flex items-center justify-center bg-gray-50">
-                      {isImage(fileUrl) ? (
-                        <img
-                          src={fileUrl}
-                          alt={fileName}
-                          className="w-full h-full object-contain"
-                        />
-                      ) : (
-                        <div className="flex flex-col items-center text-center text-gray-600">
-                          <FileText
-                            className={`w-12 h-12 ${isPdf(fileUrl)
-                              ? "text-red-500"
-                              : "text-gray-400"
-                              }`}
-                          />
-                          <p className="text-xs mt-2">
-                            {isPdf(fileUrl)
-                              ? "PDF Document"
-                              : "Other File"}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <p
-                        className="text-sm font-medium text-gray-800 truncate"
-                        title={fileName}
-                      >
-                        {fileName}
-                      </p>
-                      <a
-                        href={fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center text-xs text-green-700 font-medium mt-1 hover:underline"
-                      >
-                        <Download size={14} className="mr-1" />
-                        View / Download File
-                      </a>
-                    </div>
-                  </div>
-                ))}
+                {attachedFiles.map(([fileName, fileUrl], index) => <FileCard key={index} fileName={fileName} fileUrl={fileUrl} />)}
               </div>
             ) : (
               <p className="text-sm text-gray-500">No files were attached.</p>
@@ -324,27 +355,7 @@ const AdminViewSubmission = () => {
                 Re-uploaded Documents
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {reUploadedFiles.map((file, index) => (
-                  <div key={index} className="bg-white border rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden">
-                    <div className="h-48 flex items-center justify-center bg-gray-50">
-                      {isImage(file.url) ? (
-                        <img src={file.url} alt={file.originalname} className="w-full h-full object-contain" />
-                      ) : (
-                        <div className="flex flex-col items-center text-center text-gray-600">
-                          <FileText className={`w-12 h-12 ${isPdf(file.url) ? "text-red-500" : "text-gray-400"}`} />
-                          <p className="text-xs mt-2">{isPdf(file.url) ? "PDF Document" : "Other File"}</p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <p className="text-sm font-medium text-gray-800 truncate" title={file.originalname}>{file.originalname}</p>
-                      <a href={file.url} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs text-green-700 font-medium mt-1 hover:underline">
-                        <Download size={14} className="mr-1" />
-                        View / Download File
-                      </a>
-                    </div>
-                  </div>
-                ))}
+                {reUploadedFiles.map((file, index) => <FileCard key={index} fileName={file.originalname} fileUrl={file.url} />)}
               </div>
             </div>
           )}

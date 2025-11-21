@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getKycDetailsByRetailerId } from '../../../api/admin';
 import toast from 'react-hot-toast';
-import { Loader2, ArrowLeft, User, Mail, Phone, Calendar, FileText, Download, Building, MapPin } from 'lucide-react';
+import Swal from 'sweetalert2';
+import { Loader2, ArrowLeft, User, Mail, Phone, Calendar, FileText, Download, Building, MapPin, Eye } from 'lucide-react';
 
+const isImage = (url = "") => /\.(jpeg|jpg|gif|png|webp)$/i.test(url);
+const isPdf = (url = "") => /\.pdf$/i.test(url);
 // Reusable component for displaying details
 const DetailItem = ({ icon: Icon, label, value }) => (
   <div>
@@ -17,6 +20,7 @@ const DetailItem = ({ icon: Icon, label, value }) => (
 
 // Reusable component for displaying documents
 const DocumentViewer = ({ label, url }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
   if (!url) {
     return (
       <div className="border border-gray-200 rounded-xl flex items-center justify-center h-56 bg-gray-50">
@@ -25,16 +29,57 @@ const DocumentViewer = ({ label, url }) => {
     );
   }
 
+  const handlePreview = () => {
+    if (isImage(url)) {
+      Swal.fire({
+        imageUrl: url,
+        imageAlt: label,
+        showConfirmButton: false,
+        customClass: { popup: 'p-0 rounded-lg', image: 'm-0 rounded-lg' },
+        backdrop: `rgba(0,0,0,0.8)`,
+      });
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    toast.loading('Starting download...');
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = objectUrl;
+      a.download = label.replace(/\s+/g, '_') + '.' + url.split('.').pop(); // Create a filename
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(objectUrl);
+      toast.dismiss();
+      toast.success('Download complete!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Download failed. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden group transition-all hover:shadow-xl hover:border-blue-400">
-      <a href={url} target="_blank" rel="noopener noreferrer" className="block p-4 bg-gray-50 text-center">
+      <div onClick={handlePreview} className="block p-4 bg-gray-50 text-center cursor-pointer">
         <img src={url} alt={label} className="h-48 w-full object-contain" onError={(e) => { e.target.onerror = null; e.target.src="/path/to/fallback-image.png" }} />
-      </a>
-      <div className="p-4 bg-white">
+      </div>
+      <div className="p-4 bg-white flex items-center justify-between">
         <p className="font-semibold text-gray-800 text-sm">{label}</p>
-        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline font-medium flex items-center gap-1 mt-1">
-          <Download size={12} /> View Full Document
-        </a>
+        <div className="flex items-center gap-4">
+          <button onClick={handlePreview} className="flex items-center gap-1.5 text-xs text-blue-700 font-semibold hover:underline"><Eye size={14} /> Preview</button>
+          <button onClick={handleDownload} disabled={isDownloading} className="flex items-center gap-1.5 text-xs text-green-700 font-semibold hover:underline disabled:opacity-50">
+            {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} Download
+          </button>
+        </div>
       </div>
     </div>
   );

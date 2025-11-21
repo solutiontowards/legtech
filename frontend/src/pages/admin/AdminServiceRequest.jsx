@@ -133,7 +133,7 @@ const AdminServiceRequest = () => {
       "Payment Status": s.paymentStatus || "N/A",
       "Sub-Status": s.adminRemarks || "-",
       "Application No": s.applicationNumber || "N/A",
-      "PDF Status": "No",
+      "PDF Status": s.finalDocument ? "Yes" : "No",
       "Apply Date & Time": new Date(s.createdAt).toLocaleString(),
       "Month": new Date(s.createdAt).toLocaleString("default", {
         month: "long",
@@ -360,7 +360,13 @@ const AdminServiceRequest = () => {
                   <td className="p-4 text-gray-600 whitespace-nowrap font-mono">
                     {sub.applicationNumber || "N/A"}
                   </td>
-                  <td className="p-4 text-gray-600 whitespace-nowrap">No</td>
+                  <td className="p-4 text-gray-600 whitespace-nowrap">
+                     <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                        sub.finalDocument ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                      }`}>
+                        {sub.finalDocument ? "Yes" : "No"}
+                      </span>
+                  </td>
                   <td className="p-4 text-gray-500 whitespace-nowrap">
                     {new Date(sub.createdAt).toLocaleString()}
                   </td>
