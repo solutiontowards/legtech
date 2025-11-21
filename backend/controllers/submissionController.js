@@ -7,7 +7,13 @@ import axios from 'axios';
 
 export const createSubmission = asyncHandler(async (req,res)=>{
   const { optionId, data, files, paymentMethod } = req.body;
-  const option = await Option.findById(optionId).populate({ path: 'subServiceId', select: 'serviceId' });
+  const option = await Option.findById(optionId).populate({ 
+    path: 'subServiceId', 
+    populate: {
+      path: 'serviceId',
+      select: 'name'
+    } 
+  });
   if (!option) return res.status(404).json({ error: 'Option not found' });
   const amount = option.retailerPrice || 0;
 
@@ -16,8 +22,21 @@ export const createSubmission = asyncHandler(async (req,res)=>{
     const hasSufficientFunds = wallet && wallet.balance >= amount;
 
     if (hasSufficientFunds) {
-      wallet.balance -= amount; await wallet.save();
-      const tx = await Transaction.create({ walletId: wallet._id, type: 'debit', amount, meta: { reason: 'service purchase', optionId } });
+      const previousBalance = wallet.balance;
+      wallet.balance -= amount;
+      const updatedBalance = wallet.balance;
+      await wallet.save();
+      const serviceName = option.subServiceId?.serviceId?.name || option.name;
+
+      const tx = await Transaction.create({
+        walletId: wallet._id,
+        type: 'debit',
+        amount,
+        meta: { reason: 'service purchase', optionId, serviceName: serviceName },
+        previousBalance,
+        updatedBalance,
+      });
+
       wallet.transactions.push(tx._id); await wallet.save();
       const submission = await Submission.create({ 
         retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'paid', status: 'Applied',
@@ -139,8 +158,24 @@ export const retrySubmissionPayment = asyncHandler(async (req, res) => {
     if (!wallet || wallet.balance < amount) {
       return res.status(400).json({ error: 'Insufficient wallet balance' });
     }
+    const previousBalance = wallet.balance;
     wallet.balance -= amount;
-    const tx = await Transaction.create({ walletId: wallet._id, type: 'debit', amount, meta: { reason: 'service purchase retry', submissionId: submission._id } });
+    const updatedBalance = wallet.balance;
+
+    const option = await Option.findById(submission.optionId).populate({
+      path: 'subServiceId',
+      populate: { path: 'serviceId', select: 'name' }
+    });
+    const serviceName = option?.subServiceId?.serviceId?.name || option?.name || 'a service';
+
+    const tx = await Transaction.create({
+      walletId: wallet._id,
+      type: 'debit',
+      amount,
+      meta: { reason: 'service purchase retry', submissionId: submission._id, serviceName },
+      previousBalance,
+      updatedBalance,
+    });
     wallet.transactions.push(tx._id);
     await wallet.save();
 
@@ -199,6 +234,7 @@ export const retrySubmissionPayment = asyncHandler(async (req, res) => {
 
 export const listRetailerSubmissions = asyncHandler(async (req,res)=>{
   const subs = await Submission.find({ retailerId: req.user._id })
+    .populate('retailerId', 'name mobile')
     .populate('serviceId', 'name')
     .populate({
       path: 'optionId',
@@ -214,7 +250,7 @@ export const listRetailerSubmissions = asyncHandler(async (req,res)=>{
 
 export const adminListSubmissions = asyncHandler(async (req,res)=>{
   const subs = await Submission.find()
-    .populate('retailerId', 'name')
+    .populate('retailerId', 'name mobile')
     .populate('serviceId', 'name')
     .populate({
       path: 'optionId',

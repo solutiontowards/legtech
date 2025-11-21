@@ -95,3 +95,24 @@ export async function verifyOtp(mobile, code, purpose) {
   await otp.save();
   return true;
 }
+
+/**
+ * Verifies an OTP and marks it as used, returning a single-use reset token.
+ * This prevents the same OTP from being used for the final password reset step.
+ */
+export async function consumeOtpAndGetToken(mobile, code, purpose) {
+  const otp = await Otp.findOne({ mobile, purpose, used: false }).sort({ createdAt: -1 });
+
+  if (!otp || otp.locked || otp.expiresAt < new Date()) {
+    throw new Error("Invalid or expired OTP. Please try again.");
+  }
+
+  const isMatch = await bcrypt.compare(code, otp.codeHash);
+  if (!isMatch) throw new Error("Invalid OTP provided.");
+
+  otp.used = true;
+  await otp.save();
+
+  // This token is a simple, temporary credential for the next step.
+  return bcrypt.hash(`${mobile}-${otp.codeHash}`, 5);
+}

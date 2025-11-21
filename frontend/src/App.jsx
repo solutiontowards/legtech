@@ -47,6 +47,7 @@ import KycRequests from "./pages/admin/KycRequests";
 import KycVerificationPage from "./pages/admin/KycVerificationPage";
 import KycPage from "./pages/retailer/KycPage";
 import ViewKycDetails from "./pages/admin/retailer/ViewKycDetails";
+import ForgotPassword from "./pages/auth/ForgotPassword";
 
 const App = () => {
   useEffect(() => {
@@ -64,6 +65,7 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/st-admin" element={<AdminLogin />} />
       </Route>
 

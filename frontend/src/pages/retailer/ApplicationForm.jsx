@@ -9,82 +9,139 @@ import { uploadSingle } from "../../api/upload";
 import Swal from "sweetalert2";
 import { Loader2, File, Wallet, AlertCircle, CreditCard, Trash2, CheckCircle2, ArrowLeft } from "lucide-react";
 
+// This component is now rewritten to handle all specified field types.
 const FieldRenderer = ({ field, register, errors, watch, setValue }) => {
     const fieldName = field.name;
     const errorMessage = errors[fieldName]?.message;
-    const fileList = watch(fieldName);
-    const selectedFile = fileList?.[0];
-    if (field.type === "file") {
-        return (
-            <div className="sm:col-span-2">
-                <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    {field.label}
-                    {field.required && <span className="text-red-500 ml-1">*</span>}
-                </label>
-                <input
-                    type="file"
-                    id={fieldName}
-                    accept={field.accept || "*"}
-                    {...register(fieldName, { required: field.required ? `${field.label} is required` : false })}
-                    className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all ${errorMessage ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-300"}`}
-                />
-                {selectedFile && (
-                     <div className="mt-3 p-3 rounded-lg border border-green-200 bg-green-50">
-                         <div className="flex items-center justify-between gap-3">
-                             <div className="flex items-center gap-3 min-w-0">
-                                 <File className="w-5 h-5 text-green-600 flex-shrink-0" />
-                                 <div className="min-w-0">
-                                     <p className="text-sm font-semibold text-gray-900 truncate">{selectedFile.name}</p>
-                                     <p className="text-xs text-gray-600">{(selectedFile.size / 1024).toFixed(2)} KB</p>
-                                 </div>
-                             </div>
-                             <button type="button" onClick={() => setValue(fieldName, null, { shouldValidate: true })} className="p-1.5 text-red-600 hover:bg-red-100 rounded-full transition-colors">
-                                 <Trash2 className="w-4 h-4" />
-                             </button>
-                         </div>
-                     </div>
-                )}
-                {errorMessage && (
-                    <div className="mt-2 flex items-center gap-1.5 text-red-600">
-                        <AlertCircle className="w-4 h-4" />
-                        <p className="text-sm">{errorMessage}</p>
-                    </div>
-                )}
-            </div>
-        );
-    }
-    if (field.type === "textarea") {
-        return (
-            <div className="sm:col-span-2">
-                <label htmlFor={fieldName} className="block text-sm font-semibold text-gray-800 mb-2">
-                    {field.label}
-                    {field.required && <span className="text-red-500 ml-1">*</span>}
-                </label>
-                <textarea id={fieldName} {...register(fieldName, { required: field.required ? `${field.label} is required` : false })} rows={4} className={`w-full px-4 py-3 rounded-lg border-2 transition-all focus:outline-none font-medium ${errorMessage ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-300 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200"}`} placeholder={field.placeholder} />
-                {errorMessage && (
-                    <div className="mt-2 flex items-center gap-1.5 text-red-600">
-                        <AlertCircle className="w-4 h-4" />
-                        <p className="text-sm">{errorMessage}</p>
-                    </div>
-                )}
-            </div>
-        );
-    }
-    return (
-        <div className="sm:col-span-1">
-            <label htmlFor={fieldName} className="block text-sm font-semibold text-gray-800 mb-2">
-                {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <input type={field.type} id={fieldName} {...register(fieldName, { required: field.required ? `${field.label} is required` : false })} className={`w-full px-4 py-3 rounded-lg border-2 transition-all focus:outline-none font-medium ${errorMessage ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-300 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200"}`} placeholder={field.placeholder} />
-            {errorMessage && (
-                <div className="mt-2 flex items-center gap-1.5 text-red-600">
-                    <AlertCircle className="w-4 h-4" />
-                    <p className="text-sm">{errorMessage}</p>
-                </div>
-            )}
+
+    const commonLabel = (
+        <label htmlFor={fieldName} className="block text-sm font-semibold text-gray-800 mb-2">
+            {field.label}
+            {field.required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+    );
+
+    const errorDisplay = errorMessage && (
+        <div className="mt-2 flex items-center gap-1.5 text-red-600">
+            <AlertCircle className="w-4 h-4" />
+            <p className="text-sm">{errorMessage}</p>
         </div>
     );
+
+    switch (field.type) {
+        case "file":
+            const fileList = watch(fieldName);
+            const selectedFile = fileList?.[0];
+            return (
+                <div className="sm:col-span-2">
+                    {commonLabel}
+                    <input type="file" id={fieldName} accept={field.accept || "*"} {...register(fieldName, { required: field.required ? `${field.label} is required` : false })} className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all ${errorMessage ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-300"}`} />
+                    {selectedFile && (
+                        <div className="mt-3 p-3 rounded-lg border border-green-200 bg-green-50">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <File className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-gray-900 truncate">{selectedFile.name}</p>
+                                        <p className="text-xs text-gray-600">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                                    </div>
+                                </div>
+                                <button type="button" onClick={() => setValue(fieldName, null, { shouldValidate: true })} className="p-1.5 text-red-600 hover:bg-red-100 rounded-full transition-colors">
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    {errorDisplay}
+                </div>
+            );
+
+        case "textarea":
+            return (
+                <div className="sm:col-span-2">
+                    {commonLabel}
+                    <textarea id={fieldName} {...register(fieldName, { required: field.required ? `${field.label} is required` : false })} rows={4} className={`w-full px-4 py-3 rounded-lg border-2 transition-all focus:outline-none font-medium ${errorMessage ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-300 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200"}`} placeholder={field.placeholder} />
+                    {errorDisplay}
+                </div>
+            );
+
+        case "select":
+            return (
+                <div className="sm:col-span-1">
+                    {commonLabel}
+                    <select id={fieldName} {...register(fieldName, { required: field.required ? `${field.label} is required` : false })} className={`w-full px-4 py-3 rounded-lg border-2 transition-all focus:outline-none font-medium ${errorMessage ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-300 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200"}`}>
+                        <option value="">{field.placeholder || `Select ${field.label}`}</option>
+                        {(field.options || []).map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                    </select>
+                    {errorDisplay}
+                </div>
+            );
+
+        case "radio":
+            return (
+                <div className="sm:col-span-2">
+                    <fieldset>
+                        <legend className="block text-sm font-semibold text-gray-800 mb-3">{field.label}{field.required && <span className="text-red-500 ml-1">*</span>}</legend>
+                        <div className="flex flex-wrap gap-x-6 gap-y-3">
+                            {(field.options || []).map(opt => (
+                                <div key={opt.value} className="flex items-center gap-2">
+                                    <input
+                                        type="radio"
+                                        id={`${fieldName}-${opt.value}`}
+                                        value={opt.value}
+                                        {...register(fieldName, { required: field.required ? `${field.label} is required` : false })}
+                                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                    />
+                                    <label htmlFor={`${fieldName}-${opt.value}`} className="text-sm font-medium text-gray-700">{opt.label}</label>
+                                </div>
+                            ))}
+                        </div>
+                    </fieldset>
+                    {errorDisplay}
+                </div>
+            );
+
+        case "checkbox":
+            return (
+                <div className="sm:col-span-2">
+                    <fieldset>
+                        <legend className="block text-sm font-semibold text-gray-800 mb-3">{field.label}{field.required && <span className="text-red-500 ml-1">*</span>}</legend>
+                        <div className="flex flex-wrap gap-x-6 gap-y-3">
+                            {(field.options || []).map(opt => (
+                                <div key={opt.value} className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id={`${fieldName}-${opt.value}`}
+                                        value={opt.value}
+                                        {...register(fieldName, { required: field.required ? `${field.label} is required` : false })}
+                                        className="h-4 w-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500"
+                                    />
+                                    <label htmlFor={`${fieldName}-${opt.value}`} className="text-sm font-medium text-gray-700">{opt.label}</label>
+                                </div>
+                            ))}
+                        </div>
+                    </fieldset>
+                    {errorDisplay}
+                </div>
+            );
+
+        default: // Handles text, email, number, date
+            return (
+                <div className="sm:col-span-1">
+                    {commonLabel}
+                    <input
+                        type={field.type}
+                        id={fieldName}
+                        {...register(fieldName, { required: field.required ? `${field.label} is required` : false })}
+                        className={`w-full px-4 py-3 rounded-lg border-2 transition-all focus:outline-none font-medium ${errorMessage ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-300 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200"}`}
+                        placeholder={field.placeholder}
+                    />
+                    {errorDisplay}
+                </div>
+            );
+    }
 };
 const ApplicationForm = () => {
     const { serviceSlug, subServiceSlug, optionSlug } = useParams();
@@ -95,7 +152,7 @@ const ApplicationForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [walletBalance, setWalletBalance] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState("wallet");
-    const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm({ mode: "onBlur" });    
+    const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm({ mode: "onBlur" });
 
     useEffect(() => {
         const fetchOption = async () => {
@@ -236,7 +293,7 @@ const ApplicationForm = () => {
     if (!option) {
         return (
             <div className="flex h-screen items-center justify-center bg-gray-50 p-4">
-                <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+                <div className="bg-white rounded-2xl shadow-lg p-8  mx-auto w-full text-center">
                     <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Service Not Found</h2>
                     <p className="text-gray-600 mb-6">The service you're looking for is no longer available.</p>
@@ -252,7 +309,7 @@ const ApplicationForm = () => {
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
             <header className="bg-white shadow-sm sticky top-0 z-20">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="py-4 flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <button onClick={() => navigate(-1)} className="p-2 rounded-full text-gray-600 hover:bg-gray-100 transition-all">
@@ -267,7 +324,7 @@ const ApplicationForm = () => {
                 </div>
             </header>
 
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <form onSubmit={handleSubmit(onSubmit)} noValidate>
                     <div className="lg:grid lg:grid-cols-3 lg:gap-12">
                         {/* Left Section - Form Fields */}
@@ -279,7 +336,7 @@ const ApplicationForm = () => {
                                 </div>
 
                                 {option.formFields?.length > 0 ? (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-8">
+                                    <div className="grid grid-cols-1 sm:grid-cols-1 gap-x-6 gap-y-8">
                                         {option.formFields.map((field) => (
                                             <FieldRenderer key={field._id} field={field} register={register} errors={errors} watch={watch} setValue={setValue} />
                                         ))}

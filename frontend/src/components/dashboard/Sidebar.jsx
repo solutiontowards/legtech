@@ -123,7 +123,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       submenu: [
 
         { to: "/st-admin/verify-retailers", text: "Kyc Pending Retailers", icon: UserCheck },
-        {to:"/st-admin/kyc-requests",text:"KYC Requests",icon:UserCog},
+        { to: "/st-admin/kyc-requests", text: "KYC Requests", icon: UserCog },
         { to: "/st-admin/retailers", text: "Active Retailers", icon: Users },
       ],
     },
@@ -179,6 +179,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               <div>
                 <h1 className="font-semibold text-lg leading-tight">{user?.name}</h1>
                 <p className="text-xs text-gray-300 capitalize">{user?.role || "Admin"}</p>
+                <p className="text-xs text-gray-300 capitalize">{user?.mobile}</p>
               </div>
             )}
           </div>

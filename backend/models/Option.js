@@ -1,19 +1,25 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
+const ChoiceSchema = new Schema({
+  label: { type: String },
+  value: { type: String }
+}, { _id: false });
+
 const FieldSchema = new Schema(
   {
     label: String,
     name: String,
     type: {
       type: String,
-      enum: ["text","email", "number", "date", "file", "textarea", "select"],
+      enum: ["text","email", "number", "date", "file", "textarea", "select","radio","checkbox"],
       default: "text",
     },
     placeholder: String,
     required: { type: Boolean, default: false },
     accept: String,
     isPdf: { type: Boolean, default: false },
+    options: [ChoiceSchema],
   },
   { _id: true }
 );

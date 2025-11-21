@@ -9,7 +9,10 @@ import {
   retailerLoginInit,
   retailerVerifyLoginOtp,
   adminLoginInit,
-  adminVerifyLoginOtp
+  adminVerifyLoginOtp,
+  forgotPassword,
+  verifyForgotPasswordOtp,
+  resetPassword
 } from '../controllers/authController.js';
 import { auth } from '../middlewares/auth.js';
 import { authLimiter } from '../middlewares/rateLimit.js';
@@ -33,6 +36,11 @@ router.post('/verify-adminlogin-otp', authLimiter, adminVerifyLoginOtp);
 // Authenticated routes
 router.post('/logout', auth, logout);
 router.get('/me', auth, me);
+
+// Forgot Password routes
+router.post('/forgot-password', authLimiter, forgotPassword);
+router.post('/verify-forgot-password-otp', authLimiter, verifyForgotPasswordOtp);
+router.post('/reset-password', authLimiter, resetPassword);
 
 
 

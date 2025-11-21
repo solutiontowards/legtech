@@ -4,7 +4,7 @@ import { FaPhoneAlt, FaFacebookF, FaLinkedinIn, FaInstagram } from "react-icons/
 const TopNavbar = () => {
   return (
     <div className="bg-[#082c4c] text-white text-sm px-4 md:px-8 lg:px-20 py-2">
-      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div className="w-full mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
         
         {/* Left: Phone Number */}
         <div className="flex items-center gap-2">

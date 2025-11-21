@@ -276,6 +276,13 @@ export default function AdminLogin() {
                         )}
 
 
+                        <div className="text-sm text-right">
+                            <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+                                Forgot password?
+                            </Link>
+                        </div>
+
+
                     </div>
                 </div>
 

@@ -5,7 +5,7 @@ import { createOption, updateOption, getOptionBySlug, } from "../../../api/admin
 import { listServices } from "../../../api/services";
 import toast from "react-hot-toast";
 import {
-  UploadCloud, Image as ImageIcon, Type, Loader2, ChevronLeft, Save, List, DollarSign, Link as LinkIcon, PlusCircle, Trash2, ToggleLeft, ToggleRight, FileText, AlertCircle,
+  UploadCloud, Image as ImageIcon, Type, Loader2, ChevronLeft, Save, List, DollarSign, Link as LinkIcon, PlusCircle, Trash2, ToggleLeft, ToggleRight, FileText, AlertCircle, CheckSquare, Dot,
 } from "lucide-react";
 
 const AddSubServicesOption = () => {
@@ -55,6 +55,12 @@ const AddSubServicesOption = () => {
             setSubServices(parentService.subServices);
           }
 
+          // **FIX**: Ensure every form field has an 'options' array to prevent crashes.
+          const sanitizedFormFields = (fetchedOption.formFields || []).map(field => ({
+            ...field,
+            options: field.options || [],
+          }));
+
           setOption({
             subServiceId: fetchedOption.subServiceId,
             name: fetchedOption.name,
@@ -64,7 +70,7 @@ const AddSubServicesOption = () => {
             image: fetchedOption.image,
             isExternal: fetchedOption.isExternal,
             externalLink: fetchedOption.externalLink,
-            formFields: fetchedOption.formFields || [],
+            formFields: sanitizedFormFields,
           });
           setOptionId(fetchedOption._id);
           setPreview(fetchedOption.image);
@@ -113,7 +119,12 @@ const AddSubServicesOption = () => {
   const addFormField = () => {
     setOption(prev => ({
       ...prev,
-      formFields: [...prev.formFields, { label: "", name: "", type: "text", placeholder: "", required: false }]
+      formFields: [
+        ...prev.formFields,
+        {
+          label: "", name: "", type: "text", placeholder: "", required: false, options: []
+        },
+      ],
     }));
   };
 
@@ -135,6 +146,51 @@ const AddSubServicesOption = () => {
       updatedFields[index]['name'] = value;
     }
 
+    // When changing type, adjust the field structure
+    if (name === 'type') {
+      if (['radio', 'checkbox', 'select'].includes(val)) {
+        if (!updatedFields[index].options || updatedFields[index].options.length === 0) {
+          updatedFields[index].options = [{ label: '', value: '' }];
+        }
+        delete updatedFields[index].placeholder;
+      } else {
+        delete updatedFields[index].options;
+        updatedFields[index].placeholder = '';
+      }
+    }
+
+    setOption(prev => ({ ...prev, formFields: updatedFields }));
+  };
+
+  const handleChoiceChange = (fieldIndex, choiceIndex, e) => {
+    const { name, value } = e.target;
+    setOption(prev => {
+      const updatedFields = [...prev.formFields];
+      const currentChoice = updatedFields[fieldIndex].options[choiceIndex];
+      currentChoice[name] = value;
+
+      // **FEATURE**: Auto-generate the 'value' from the 'label'
+      if (name === 'label') {
+        currentChoice.value = value
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
+          .replace(/\s+/g, "-"); // Replace spaces with hyphens
+      }
+
+      return { ...prev, formFields: updatedFields };
+    });
+  };
+
+  const addChoice = (fieldIndex) => {
+    const updatedFields = [...option.formFields];
+    updatedFields[fieldIndex].options.push({ label: '', value: '' });
+    setOption(prev => ({ ...prev, formFields: updatedFields }));
+  };
+
+  const removeChoice = (fieldIndex, choiceIndex) => {
+    const updatedFields = [...option.formFields];
+    updatedFields[fieldIndex].options = updatedFields[fieldIndex].options.filter((_, i) => i !== choiceIndex);
     setOption(prev => ({ ...prev, formFields: updatedFields }));
   };
 
@@ -153,6 +209,17 @@ const AddSubServicesOption = () => {
       ) {
         fieldErrors.placeholder = "Placeholder is required.";
         isValid = false;
+      }
+      if (["radio", "checkbox", "select"].includes(field.type)) {
+        if (!field.options || field.options.length === 0) {
+          fieldErrors.options = "At least one choice is required.";
+          isValid = false;
+        } else {
+          field.options.forEach(choice => {
+            if (!choice.label.trim() || !choice.value.trim()) isValid = false;
+          });
+          if (!isValid) fieldErrors.options = "All choice labels and values are required.";
+        }
       }
       errors[index] = fieldErrors;
     });
@@ -295,7 +362,15 @@ const AddSubServicesOption = () => {
                     <div>
                       <label className="text-sm font-medium text-gray-600">Field Type</label>
                       <select name="type" value={field.type} onChange={e => handleFormFieldChange(index, e)} className="p-2.5 border border-gray-300 rounded-md w-full mt-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                        <option value="text">Text</option> <option value="number">Number</option> <option value="email">Email</option> <option value="date">Date</option> <option value="file">File</option> <option value="textarea">Text Area</option>
+                        <option value="text">Text</option>
+                        <option value="number">Number</option>
+                        <option value="email">Email</option>
+                        <option value="date">Date</option>
+                        <option value="file">File</option>
+                        <option value="textarea">Text Area</option>
+                        <option value="radio">Radio Button</option>
+                        <option value="select">Select Dropdown</option>
+                        <option value="checkbox">Checkbox</option>
                       </select>
                     </div>
                     {/* Field Label */}
@@ -313,6 +388,29 @@ const AddSubServicesOption = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Choices for Radio/Checkbox */}
+                  {(['radio', 'checkbox', 'select'].includes(field.type)) && (
+                    <div className="pt-4">
+                      <label className="text-sm font-medium text-gray-600 mb-2 block">Choices</label>
+                      <div className="space-y-3">
+                        {field.options.map((choice, choiceIndex) => (
+                          <div key={choiceIndex} className="flex items-center gap-3">
+                            <div className="flex-1 grid grid-cols-2 gap-3">
+                              <input type="text" name="label" value={choice.label} onChange={e => handleChoiceChange(index, choiceIndex, e)} placeholder="Choice Label (e.g., Yes)" className="p-2 border border-gray-300 rounded-md w-full text-sm" />
+                              <input type="text" name="value" value={choice.value} placeholder="auto-generated-value" className="p-2 border border-gray-300 rounded-md w-full text-sm bg-gray-100 cursor-not-allowed" readOnly />
+                            </div>
+                            <button onClick={() => removeChoice(index, choiceIndex)} className="p-2 text-red-500 hover:bg-red-100 rounded-full transition-colors"><Trash2 size={16} /></button>
+                          </div>
+                        ))}
+                      </div>
+                      <button onClick={() => addChoice(index)} className="mt-3 flex items-center gap-2 text-xs text-blue-600 font-semibold hover:text-blue-800">
+                        <PlusCircle size={16} /> Add Choice
+                      </button>
+                      {errors.options && <p className="text-red-500 text-xs mt-2 flex items-center gap-1"><AlertCircle size={14} /> {errors.options}</p>}
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between pt-2">
                     <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" name="required" checked={field.required} onChange={e => handleFormFieldChange(index, e)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" /> Required</label>
                     <button onClick={() => removeFormField(index)} className="p-2 text-red-500 hover:bg-red-100 rounded-full transition-colors"><Trash2 size={18} /></button>

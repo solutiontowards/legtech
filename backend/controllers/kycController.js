@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import KycDetail from '../models/KycDetail.js';
 import User from '../models/User.js';
+import { sendGenericWhatsAppMessage } from './authController.js';
 
 // @desc    Submit or update KYC details for a retailer
 // @route   POST /api/kyc
@@ -30,6 +31,22 @@ export const submitKyc = asyncHandler(async (req, res) => {
   if (!user.kycDetails) {
     user.kycDetails = kycDetails._id;
     await user.save();
+  }
+
+  // Send a WhatsApp notification to the retailer
+  const kycSubmissionMessage = `Hello ${req.user.name},
+
+Thank you for submitting your KYC documents. Your application is now under review by our team.
+
+We will notify you once the verification process is complete. This usually takes 24-48 hours.
+
+Best regards,
+The Legtech Team`;
+
+  try {
+    await sendGenericWhatsAppMessage(req.user.mobile, kycSubmissionMessage);
+  } catch (error) {
+    console.error("❌ Failed to send KYC submission confirmation message:", error);
   }
 
   res.status(201).json({ message: 'KYC details submitted successfully. Awaiting admin review.', kycDetails });

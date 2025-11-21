@@ -508,8 +508,8 @@ export const getServiceCount = asyncHandler(async (req, res) => {
 });
 
 // get pending reatiler count
-export const getPendingRetailerCount = asyncHandler(async (req, res) => {
-  const count = await User.countDocuments({ role: 'retailer', isVerified: false });
+export const getPendingRetailerCount  = asyncHandler(async (req, res) => {
+  const count = await KycDetail.countDocuments({ status: 'pending' });
   res.json({ ok: true, count });
 });
 

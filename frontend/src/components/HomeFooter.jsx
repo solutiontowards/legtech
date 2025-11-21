@@ -13,7 +13,7 @@ import {
 const HomeFooter = () => {
     return (
         <footer className="bg-gray-950 text-gray-300 border-t border-gray-800">
-            <div className="max-w-7xl mx-auto px-6 py-12">
+            <div className="w-full mx-auto  px-6 md:px-12 lg:px-20 py-12">
                 {/* Main Footer Content */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
                     {/* Company Info */}

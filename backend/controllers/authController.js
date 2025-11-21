@@ -2,8 +2,9 @@ import asyncHandler from 'express-async-handler';
 import axios from 'axios';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
+import Otp from '../models/Otp.js';
 import Wallet from '../models/Wallet.js';
-import { createAndSendOtp, resendOtp, verifyOtp } from '../utils/otp.js';
+import { createAndSendOtp, resendOtp, verifyOtp, consumeOtpAndGetToken } from '../utils/otp.js';
 import { signToken, verifyToken } from '../utils/jwt.js';
 
 const WA_API_URL = 'https://wbapi.in/api/send-text';
@@ -20,6 +21,18 @@ Legtech Team`;  // The new API requires a generic message sending function.
   // We will call it and throw an error if it fails, so the OTP process is halted.
   await sendGenericWhatsAppMessage(mobile, msg, true);
 }
+
+// Helper function for sending Forgot Password OTP WhatsApp message
+async function sendForgotPasswordWhatsApp(mobile, code) {
+  const msg = `Dear User,
+Your One-Time Password (OTP) for resetting your password is ${code}.
+For your security, please do not share this code with anyone.
+If you did not request this, please secure your account or contact Legtech Support immediately at 7029-9595-52.
+Thank you,
+Legtech Team`;
+  await sendGenericWhatsAppMessage(mobile, msg, true);
+}
+
 
 // Helper function for sending a generic WhatsApp message
 export async function sendGenericWhatsAppMessage(mobile, msg, throwOnError = false) {
@@ -68,7 +81,7 @@ export async function sendGenericWhatsAppMessage(mobile, msg, throwOnError = fal
 export const sendOtp = asyncHandler(async (req, res) => {
   const { mobile, purpose } = req.body;
   if (!mobile || !purpose) return res.status(400).json({ error: 'Mobile and purpose required' });
-  if (!['register', 'login'].includes(purpose)) return res.status(400).json({ error: 'Invalid purpose' });
+  if (!['register', 'login', 'forgot-password'].includes(purpose)) return res.status(400).json({ error: 'Invalid purpose' });
 
   if (purpose === 'register') {
     const exists = await User.findOne({ mobile });
@@ -100,7 +113,7 @@ export const resendOtpController = asyncHandler(async (req, res) => {
 export const verifyOtpController = asyncHandler(async (req, res) => {
   const { mobile, code, purpose } = req.body;
   if (!mobile || !code || !purpose) return res.status(400).json({ error: 'Mobile, code, and purpose required' });
-  if (!['register', 'login'].includes(purpose)) return res.status(400).json({ error: 'Invalid purpose' });
+  if (!['register', 'login', 'forgot-password'].includes(purpose)) return res.status(400).json({ error: 'Invalid purpose' });
 
   try {
     await verifyOtp(mobile, code, purpose);
@@ -182,7 +195,10 @@ export const retailerLoginInit = asyncHandler(async (req, res) => {
   
 
   const user = await User.findOne({ mobile });
-  if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+  // Check if user exists first
+  if (!user) {
+    return res.status(404).json({ error: 'User with this mobile number is not registered.' });
+  }
 
 if (!user.isActive) {
   return res.status(403).json({
@@ -196,7 +212,10 @@ if (!user.isActive) {
   }
 
   const ok = await user.comparePassword(password);
-  if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
+  // Then, check if password is correct
+  if (!ok) {
+    return res.status(400).json({ error: 'Invalid password. Please try again.' });
+  }
 
   try {
     const otp = await createAndSendOtp(mobile, 'login', (m, code) => sendWhatsApp(m, code));
@@ -212,7 +231,10 @@ export const adminLoginInit = asyncHandler(async (req, res) => {
   if (!mobile || !password) return res.status(400).json({ error: 'Mobile and password required' });
 
   const user = await User.findOne({ mobile });
-  if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+  // Check if user exists first
+  if (!user) {
+    return res.status(404).json({ error: 'User with this mobile number is not registered.' });
+  }
 
 if (!user.isActive) {
   return res.status(403).json({
@@ -226,7 +248,10 @@ if (!user.isActive) {
   }
 
   const ok = await user.comparePassword(password);
-  if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
+  // Then, check if password is correct
+  if (!ok) {
+    return res.status(400).json({ error: 'Invalid password. Please try again.' });
+  }
 
   try {
     const otp = await createAndSendOtp(mobile, 'login', (m, code) => sendWhatsApp(m, code));
@@ -336,4 +361,77 @@ export const me = asyncHandler(async (req, res) => {
   }
 
   res.json({ ok: true, user });
+});
+
+// Forgot Password Step 1: Send OTP
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { mobile } = req.body;
+  if (!mobile) {
+    return res.status(400).json({ error: 'Mobile number is required' });
+  }
+
+  const user = await User.findOne({ mobile });
+  if (!user) {
+    // To prevent user enumeration, you might want to send a generic success message
+    // but for development, an error is clearer.
+    return res.status(404).json({ error: 'User with this mobile number not found' });
+  }
+
+  try {
+    const otp = await createAndSendOtp(mobile, 'forgot-password', (m, code) => sendForgotPasswordWhatsApp(m, code));
+    res.json({ ok: true, message: 'OTP for password reset has been sent.', expiresAt: otp.expiresAt });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to send OTP for password reset.' });
+  }
+});
+
+// Forgot Password Step 2: Verify OTP
+export const verifyForgotPasswordOtp = asyncHandler(async (req, res) => {
+  const { mobile, code } = req.body;
+  if (!mobile || !code) {
+    return res.status(400).json({ error: 'Mobile and OTP code are required' });
+  }
+
+  try {
+    // It now returns a single-use token for the next step
+    const resetToken = await consumeOtpAndGetToken(mobile, code, 'forgot-password');
+    res.json({ ok: true, message: 'OTP verified successfully. You can now reset your password.', resetToken });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Invalid OTP.' });
+  }
+});
+
+// Forgot Password Step 3: Reset Password
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { mobile, otp, password, resetToken } = req.body;
+  if (!mobile || !otp || !password || !resetToken) {
+    return res.status(400).json({ error: 'Mobile, OTP, new password, and reset token are required' });
+  }
+
+  // Find the original OTP to validate the resetToken
+  const originalOtp = await Otp.findOne({ mobile, purpose: 'forgot-password', used: true }).sort({ createdAt: -1 });
+
+  if (!originalOtp) {
+    return res.status(400).json({ error: 'No password reset request found. Please start over.' });
+  }
+
+  // Check if the provided resetToken matches the one derived from the used OTP
+  const isTokenValid = await bcrypt.compare(`${mobile}-${originalOtp.codeHash}`, resetToken);
+
+  if (!isTokenValid) {
+    return res.status(400).json({ error: 'Invalid reset token. Please verify OTP again.' });
+  }
+
+  const user = await User.findOne({ mobile });
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  await user.setPassword(password);
+  user.accessToken = null; // Invalidate any existing sessions
+  await user.save();
+
+  // Invalidate the OTP record completely to prevent reuse of the token
+  originalOtp.codeHash = 'used';
+  await originalOtp.save();
+
+  res.json({ ok: true, message: 'Password has been reset successfully. Please log in with your new password.' });
 });

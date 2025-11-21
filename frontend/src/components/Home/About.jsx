@@ -4,7 +4,7 @@ import CountUp from "react-countup";
 const About = () => {
   return (
     <section id="about" className="py-16 md:pt-24 pb-0 bg-white">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
+      <div className="w-full mx-auto px-6 md:px-12 lg:px-20">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
             About <span className="text-blue-400">LegTech</span>

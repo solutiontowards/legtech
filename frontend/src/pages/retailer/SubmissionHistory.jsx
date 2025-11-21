@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import RetryPaymentModal from "./RetryPaymentModal";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Eye, FileDown, FilterX, Search, Filter, RefreshCw, Loader2, Inbox } from "lucide-react";
+import { Eye, FileDown, FilterX, Search, Filter, RefreshCw, Loader2, Inbox, Globe } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -162,16 +162,25 @@ const SubmissionHistory = () => {
       toast.error("No data to export");
       return;
     }
-    const exportData = filteredSubmissions.map((s) => ({
-      Service: s.serviceId?.name || "N/A",
+    const exportData = filteredSubmissions.map((s, index) => ({
+      "Serial No": (currentPage - 1) * itemsPerPage + index + 1,
+      "Service": s.serviceId?.name || "N/A",
       "Sub-Service": s.optionId?.subServiceId?.name || "N/A",
-      Option: s.optionId?.name || "N/A",
-      Amount: `₹${s.amount?.toFixed(2) || "0.00"}`,
+      "Option": s.optionId?.name || "N/A",
+      "Mode": "Web",
+      "User Name": s.retailerId?.name || "N/A",
+      "User ID": s.retailerId?.mobile || "N/A",
+      "Amount": `₹${s.amount?.toFixed(2) || "0.00"}`,
       "Payment Method": s.paymentMethod || "N/A",
+      "Status": s.status || "N/A",
       "Payment Status": s.paymentStatus || "N/A",
-      Status: s.status || "N/A",
-      Date: new Date(s.createdAt).toLocaleDateString(),
-      "Admin Remarks": s.adminRemarks || "-",
+      "Sub-Status": s.adminRemarks || "-",
+      "Application No": "N/A",
+      "PDF Status": "No",
+      "Apply Date & Time": new Date(s.createdAt).toLocaleString(),
+      "Month": new Date(s.createdAt).toLocaleString("default", {
+        month: "long",
+      }),
     }));
 
     if (type === "excel") {
@@ -290,8 +299,8 @@ const SubmissionHistory = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden overflow-x-auto">
-        <div className="p-4 flex justify-between items-center flex-wrap gap-3 border-b border-gray-200">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="p-4 flex justify-between items-center flex-wrap gap-3 border-b border-gray-200 sticky top-0 bg-white z-10">
           <h3 className="font-semibold text-gray-800 text-base">
             Your Submissions ({filteredSubmissions.length})
           </h3>
@@ -310,111 +319,141 @@ const SubmissionHistory = () => {
           </div>
         </div>
 
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              {[
-                "Action",
-                "Service",
-                "Sub-Service",
-                "Option",
-                "Amount",
-                "Payment Status",
-                "Application Status",
-                "Date",
-              ].map((col) => (
-                <th key={col} className="p-4 font-semibold whitespace-nowrap tracking-wider">
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {loading ? (
+        <div className="overflow-auto" style={{ maxHeight: '60vh' }}>
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gray-50 text-gray-600 sticky top-0 z-50">
               <tr>
-                <td colSpan="8" className="text-center p-10">
-                  <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
-                  <p className="mt-2 text-gray-500">Loading submissions...</p>
-                </td>
+                {[
+                  "Serial No",
+                  "Action",
+                  "Service",
+                  "Sub-Service",
+                  "Option",
+                  "Mode",
+                  "User Name",
+                  "User ID",
+                  "Amount",
+                  "Payment Method",
+                  "Status",
+                  "Payment Status",
+                  "Sub-Status",
+                  "Application No",
+                  "PDF Status",
+                  "Apply Date & Time",
+                  "Month",
+                ].map((col) => (
+                  <th key={col} className="p-4 font-semibold whitespace-nowrap tracking-wider"
+                  >
+                    {col}
+                  </th>
+                ))}
               </tr>
-            ) : currentData.length > 0 ? (
-              currentData.map((sub) => (
-                <tr key={sub._id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="p-4 text-center">
-                    <Link to={`/retailer/view-submission/${sub._id}`}
-                      className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 inline-block transition-colors" title="View Details">
-                      <Eye size={18} />
-                    </Link>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {loading ? (
+                <tr>
+                  <td colSpan="17" className="text-center p-10">
+                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
+                    <p className="mt-2 text-gray-500">Loading submissions...</p>
                   </td>
-                  <td className="p-4 text-gray-800 whitespace-nowrap">
-                    {sub.serviceId?.name || "N/A"}
-                  </td>
-                  <td className="p-4 text-gray-600 whitespace-nowrap">
-                    {sub.optionId?.subServiceId?.name || "N/A"}
-                  </td>
-                  <td className="p-4 text-gray-600 font-bold whitespace-nowrap">
-                    {sub.optionId?.name || "N/A"}
-                  </td>
-                  <td className="p-4 text-gray-800 font-bold whitespace-nowrap">
-                    ₹{sub.amount?.toFixed(2) || "0.00"}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex flex-col items-start gap-1">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${sub.paymentStatus === "paid"
-                          ? "bg-green-100 text-green-700"
-                          : sub.paymentStatus === "failed"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-700"
-                          }`}
-                      >
-                        {sub.paymentStatus || "N/A"}
-                      </span>
-                      {sub.paymentStatus === "failed" && (
-                        <button
-                          onClick={() => handleRetryClick(sub)}
-                          className="flex items-center gap-1 mt-1.5 text-red-600 hover:text-red-800 transition text-xs font-semibold cursor-pointer"
-                          title="Retry Payment now"
-                        >
-                          <RefreshCw size={12} />
-                          Retry Payment
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${sub.status === "Submitted"
-                        ? "bg-blue-100 text-blue-700"
-                        : sub.status === "Completed"
-                          ? "bg-green-100 text-green-700"
-                          : sub.status === "Rejected"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                    >
-                      {sub.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-gray-500 whitespace-nowrap">
-                    {new Date(sub.createdAt).toLocaleDateString()}
-                  </td>
-
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="8" className="text-center p-10">
-                  <Inbox className="w-12 h-12 text-gray-400 mx-auto" />
-                  <p className="mt-3 font-semibold text-gray-700">No Submissions Found</p>
-                  <p className="text-sm text-gray-500">
-                    Try adjusting your filters or search term.
-                  </p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              ) : currentData.length > 0 ? (
+                currentData.map((sub, index) => (
+                  <tr key={sub._id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="p-4 text-gray-600 whitespace-nowrap">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    <td className="p-4 text-center">
+                      <Link to={`/retailer/view-submission/${sub._id}`}
+                        className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 inline-block transition-colors" title="View Details">
+                        <Eye size={18} />
+                      </Link>
+                    </td>
+                    <td className="p-4 text-gray-800 whitespace-nowrap">
+                      {sub.serviceId?.name || "N/A"}
+                    </td>
+                    <td className="p-4 text-gray-600 whitespace-nowrap">
+                      {sub.optionId?.subServiceId?.name || "N/A"}
+                    </td>
+                    <td className="p-4 text-gray-600 whitespace-nowrap">
+                      {sub.optionId?.name || "N/A"}
+                    </td>
+                    <td className="p-4 text-gray-700 whitespace-nowrap">
+                      <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full backdrop-blur-md bg-white/40 text-gray-800 border border-gray-200 shadow-sm">
+                        <Globe size={12} className="opacity-80" />
+                        Web
+                      </span>
+                    </td>
+
+
+                    <td className="p-4 text-gray-600 whitespace-nowrap">
+                      {sub.retailerId?.name || "N/A"}
+                    </td>
+                    <td className="p-4 text-gray-600 whitespace-nowrap">
+                      {sub.retailerId?.mobile || "N/A"}
+                    </td>
+                    <td className="p-4 text-gray-800 font-bold whitespace-nowrap">
+                      ₹{sub.amount?.toFixed(2) || "0.00"}
+                    </td>
+                    <td className="p-4 text-gray-600 whitespace-nowrap capitalize">
+                      {sub.paymentMethod || "N/A"}
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${sub.status === "Submitted" ? "bg-blue-100 text-blue-700" : sub.status === "Completed" ? "bg-green-100 text-green-700" : sub.status === "Rejected" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`} >
+                        {sub.status}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex flex-col items-start gap-1">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${sub.paymentStatus === "paid"
+                            ? "bg-green-100 text-green-700"
+                            : sub.paymentStatus === "failed"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
+                            }`}
+                        >
+                          {sub.paymentStatus || "N/A"}
+                        </span>
+                        {sub.paymentStatus === "failed" && (
+                          <button
+                            onClick={() => handleRetryClick(sub)}
+                            className="flex items-center gap-1 mt-1.5 text-red-600 hover:text-red-800 transition text-xs font-semibold cursor-pointer"
+                            title="Retry Payment now"
+                          >
+                            <RefreshCw size={12} />
+                            Retry Payment
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4 text-gray-600 whitespace-nowrap">
+                      {sub.adminRemarks || "-"}
+                    </td>
+                    <td className="p-4 text-gray-600 whitespace-nowrap">N/A</td>
+                    <td className="p-4 text-gray-600 whitespace-nowrap">No</td>
+                    <td className="p-4 text-gray-500 whitespace-nowrap">
+                      {new Date(sub.createdAt).toLocaleString()}
+                    </td>
+                    <td className="p-4 text-gray-500 whitespace-nowrap">
+                      {new Date(sub.createdAt).toLocaleString("default", { month: "long", })}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="17" className="text-center p-10">
+                    <Inbox className="w-12 h-12 text-gray-400 mx-auto" />
+                    <p className="mt-3 font-semibold text-gray-700">No Submissions Found</p>
+                    <p className="text-sm text-gray-500">
+                      Try adjusting your filters or search term.
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination */}

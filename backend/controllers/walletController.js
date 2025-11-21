@@ -137,10 +137,18 @@ const creditWalletAndLogTransaction = async (retailerId, amount, orderId) => {
     console.log(`⚠️ Wallet transaction already credited: ${orderId}`);
   } else {
     const txnAmount = Number(amount) || 0;
+    const previousBalance = wallet.balance;
+    const updatedBalance = wallet.balance + txnAmount;
+
     const transaction = await Transaction.create({
-      walletId: wallet._id, type: "credit", amount: txnAmount, meta: orderId,
+      walletId: wallet._id,
+      type: "credit",
+      amount: txnAmount,
+      meta: orderId,
+      previousBalance,
+      updatedBalance,
     });
-    wallet.balance += txnAmount;
+    wallet.balance = updatedBalance;
     wallet.transactions.push(transaction._id);
     await wallet.save();
     console.log(`✅ Wallet credited for retailer ${retailerId}: ₹${txnAmount}`);
@@ -203,11 +211,17 @@ export const checkOrderStatus = asyncHandler(async (req, res) => {
             // Check if debit already logged to prevent duplicates
             const alreadyDebited = await Transaction.findOne({ 'meta.orderId': order.order_id });
             if (!alreadyDebited) {
+              const previousBalance = wallet.balance;
+              // Note: For online service payments, the wallet balance itself doesn't change,
+              // but we log the transaction for auditing. So, updatedBalance is same as previous.
+              const updatedBalance = wallet.balance;
               await Transaction.create({
                 walletId: wallet._id,
                 type: 'debit',
                 amount: Number(order.txn_amount) || 0,
                 meta: { reason: 'Online Service Payment', orderId: order.order_id, submissionId: submissionId },
+                previousBalance,
+                updatedBalance,
               });
               console.log(`✅ Created debit transaction for online payment: ${order.order_id}`);
             }
@@ -252,6 +266,8 @@ export const checkOrderStatus = asyncHandler(async (req, res) => {
         const retailerObjectId = new mongoose.Types.ObjectId(retailerId);
         const wallet = await Wallet.findOne({ retailerId: retailerObjectId });
         if (wallet) {
+          const previousBalance = wallet.balance;
+          const updatedBalance = wallet.balance; // Balance doesn't change on a failed transaction
           await Transaction.create({
             walletId: wallet._id,
             type: 'failed', // A new type for failed transactions
@@ -260,6 +276,8 @@ export const checkOrderStatus = asyncHandler(async (req, res) => {
               reason: `Payment${order.status}`,
               orderId: order.order_id,
             },
+            previousBalance,
+            updatedBalance,
           });
           console.log(`🔶 Created 'failed' transaction record for order: ${order.order_id}`);
         }
@@ -293,14 +311,19 @@ export const creditWallet = asyncHandler(async (req, res) => {
   if (!wallet)
     return res.status(404).json({ ok: false, message: "Wallet not found" });
 
+  const previousBalance = wallet.balance;
+  const updatedBalance = wallet.balance + amount;
+
   const tx = await Transaction.create({
     walletId: wallet._id,
     type: "credit",
     amount,
     meta: { reason: meta }, // Store the reason in a structured object
+    previousBalance,
+    updatedBalance,
   });
 
-  wallet.balance += amount;
+  wallet.balance = updatedBalance;
   wallet.transactions.push(tx._id);
   await wallet.save();
 

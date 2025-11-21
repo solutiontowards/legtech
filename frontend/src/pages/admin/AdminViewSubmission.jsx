@@ -127,7 +127,7 @@ const AdminViewSubmission = () => {
     <div className="p-6 space-y-6">
       {/* Header Navigation */}
       <Link
-        to="/admin/service-requests"
+        to="/st-admin/service-requests"
         className="inline-flex items-center text-green-700 font-medium hover:underline"
       >
         <ArrowLeft size={18} className="mr-2" />

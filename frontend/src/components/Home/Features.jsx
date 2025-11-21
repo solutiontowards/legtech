@@ -43,7 +43,7 @@ const Features = () => {
 
   return (
     <section id="features" className="py-16 md:pt-24 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full mx-auto  px-6 md:px-12 lg:px-20">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="inline-block px-4 py-1.5 text-xs font-semibold tracking-wider text-blue-600 uppercase bg-blue-50 rounded-full mb-4">
             Why Choose Us

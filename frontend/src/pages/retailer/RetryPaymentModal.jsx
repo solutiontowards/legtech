@@ -34,18 +34,22 @@ const RetryPaymentModal = ({ submission, onClose, onSuccess }) => {
     }
 
     setIsSubmitting(true);
-    const toastId = toast.loading("Processing wallet payment...");
+    Swal.fire({
+      title: "Processing Wallet Payment...",
+      text: "Please wait.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
 
     try {
       await retrySubmissionPayment(submission._id, { paymentMethod: "wallet" });
-      toast.success("Payment successful!", { id: toastId });
       await Swal.fire("Success!", "Payment completed successfully.", "success");
       refreshUser();
-      onSuccess();
+      onSuccess(); // This will close the modal and refresh the data
     } catch (error) {
       const errorMessage = error.response?.data?.error || "Payment failed. Please try again.";
-      toast.error(errorMessage, { id: toastId });
       await Swal.fire("Payment Failed", errorMessage, "error");
+      onClose(); // Close the modal on failure
     } finally {
       setIsSubmitting(false);
     }
@@ -53,27 +57,32 @@ const RetryPaymentModal = ({ submission, onClose, onSuccess }) => {
 
   const handleOnlinePayment = async () => {
     setIsSubmitting(true);
-    const toastId = toast.loading("Initializing online payment...");
+    Swal.fire({
+      title: "Initializing Online Payment...",
+      text: "Redirecting you to the payment gateway.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
 
     try {
       const { data } = await retrySubmissionPayment(submission._id, { paymentMethod: "online" });
       
       if (data.payment_url) {
-        toast.success("Redirecting to payment gateway...", { id: toastId });
         window.location.href = data.payment_url;
       } else {
-        toast.error("Could not retrieve payment link.", { id: toastId });
+        throw new Error("Could not retrieve payment link.");
       }
-
     } catch (error) {
       const errorMessage = error.response?.data?.error || "Failed to initialize payment.";
-      toast.error(errorMessage, { id: toastId });
+      await Swal.fire("Initialization Failed", errorMessage, "error");
+      onClose(); // Close the modal on failure
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleSubmit = () => {
+    onClose(); // Instantly close the modal
     if (paymentMethod === "wallet") {
       handleWalletPayment();
     } else {

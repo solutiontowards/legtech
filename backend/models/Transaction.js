@@ -7,6 +7,8 @@ const TransactionSchema = new Schema(
     type: { type: String, enum: ["debit", "credit", "failed"] },
     amount: Number,
     meta: Schema.Types.Mixed,
+    previousBalance: { type: Number, default: 0 },
+    updatedBalance: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

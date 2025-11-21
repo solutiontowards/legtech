@@ -6,7 +6,7 @@ const otpSchema = new Schema(
   {
     mobile: { type: String, required: true, index: true },
     codeHash: { type: String, required: true },
-    purpose: { type: String, enum: ["register", "login"], required: true },
+    purpose: { type: String, enum: ["register", "login","forgot-password"], required: true },
     attempts: { type: Number, default: 0 }, // wrong attempts
     resendCount: { type: Number, default: 0 }, // resend count
     maxResend: {
