@@ -27,6 +27,12 @@ export const getRetailerSubmissionById = (id) => api.get(`/submissions/${id}`); 
 // Re-upload documents for a submission
 export const reUploadDocuments = (id, payload) => api.put(`/submissions/${id}/re-upload`, payload);
 
+export const findDocument = (applicationNumber) =>
+  api.get(`/retailer/find-document/${applicationNumber}`);
+export const processDownloadPayment = (submissionId) =>
+  api.post(`/retailer/download-payment/${submissionId}`);
+
+
 // retrySubmissionPayment
 export const retrySubmissionPayment = (id, payload) => api.put(`/submissions/${id}/retry-payment`, payload);
 

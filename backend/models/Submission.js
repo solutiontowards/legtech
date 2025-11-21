@@ -49,6 +49,7 @@ const SubmissionSchema = new Schema(
     },
     adminRemarks: String,
     finalDocument: { type: String }, // URL to the final PDF uploaded by admin
+    isFinalDocumentDownloaded: { type: Boolean, default: false },
     statusHistory: [StatusHistorySchema],
   },
   { timestamps: true }

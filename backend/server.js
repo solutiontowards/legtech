@@ -16,6 +16,7 @@ import paymentRoutes from './routes/paymentRoutes.js'; // 1. Import the new paym
 import noticesRoutes from './routes/notices.js';
 import wishesRoutes from './routes/wishes.js';
 import kycRoutes from './routes/kycRoutes.js';
+import retailerRoutes from './routes/retailer.js';
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/notices', noticesRoutes);
 app.use('/api/wishes', wishesRoutes)
 app.use('/api/kyc', kycRoutes);
+app.use('/api/retailer', retailerRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true, time: new Date() }));
 app.get("/", (req, res) => res.send("Server is running"));

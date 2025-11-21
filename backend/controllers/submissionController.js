@@ -835,3 +835,66 @@ export const reUploadDocuments = asyncHandler(async (req, res) => {
   await submission.save();
   res.json({ ok: true, submission });
 });
+
+
+export const findDocumentByApplicationNumber = asyncHandler(async (req, res) => {
+  const { applicationNumber } = req.params;
+  const retailerId = req.user._id;
+
+  const submission = await Submission.findOne({
+    applicationNumber: applicationNumber.trim(),
+    retailerId: retailerId,
+  }).populate('serviceId', 'name');
+
+  if (!submission) {
+    return res.status(404).json({ message: "No submission found with this application number for your account." });
+  }
+
+  if (!submission.finalDocument) {
+    return res.status(404).json({ message: "The final document for this application has not been uploaded by the admin yet." });
+  }
+
+  res.json({ ok: true, submission });
+});
+
+export const processDocumentDownloadPayment = asyncHandler(async (req, res) => {
+  const { submissionId } = req.params;
+  const retailerId = req.user._id;
+  const downloadFee = 1; // The fee is ₹1
+
+  const submission = await Submission.findOne({ _id: submissionId, retailerId });
+
+  if (!submission) {
+    return res.status(404).json({ message: "Submission not found." });
+  }
+
+  // If already paid, just return success
+  if (submission.isFinalDocumentDownloaded) {
+    return res.json({ ok: true, message: "Already paid. You can download the document." });
+  }
+
+  const wallet = await Wallet.findOne({ retailerId });
+  if (!wallet || wallet.balance < downloadFee) {
+    return res.status(400).json({ message: "Insufficient wallet balance. Please add funds to download." });
+  }
+
+  // Deduct fee and create transaction
+  const previousBalance = wallet.balance;
+  wallet.balance -= downloadFee;
+  const updatedBalance = wallet.balance;
+
+  await Transaction.create({
+    walletId: wallet._id,
+    type: 'debit',
+    amount: downloadFee,
+    meta: { reason: 'Fee for final document download', applicationNumber: submission.applicationNumber },
+    previousBalance,
+    updatedBalance,
+  });
+
+  submission.isFinalDocumentDownloaded = true;
+  await submission.save();
+  await wallet.save();
+
+  res.json({ ok: true, message: "Payment successful. Document is now available for download." });
+});
