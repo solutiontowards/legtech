@@ -175,7 +175,7 @@ const SubmissionHistory = () => {
       "Status": s.status || "N/A",
       "Payment Status": s.paymentStatus || "N/A",
       "Sub-Status": s.adminRemarks || "-",
-      "Application No": "N/A",
+      "Application No": s.applicationNumber || "N/A",
       "PDF Status": "No",
       "Apply Date & Time": new Date(s.createdAt).toLocaleString(),
       "Month": new Date(s.createdAt).toLocaleString("default", {
@@ -430,7 +430,9 @@ const SubmissionHistory = () => {
                     <td className="p-4 text-gray-600 whitespace-nowrap">
                       {sub.adminRemarks || "-"}
                     </td>
-                    <td className="p-4 text-gray-600 whitespace-nowrap">N/A</td>
+                    <td className="p-4 text-gray-600 whitespace-nowrap font-mono">
+                      {sub.applicationNumber || "N/A"}
+                    </td>
                     <td className="p-4 text-gray-600 whitespace-nowrap">No</td>
                     <td className="p-4 text-gray-500 whitespace-nowrap">
                       {new Date(sub.createdAt).toLocaleString()}

@@ -10,6 +10,7 @@ const StatusHistorySchema = new Schema({
 
 const SubmissionSchema = new Schema(
   {
+    applicationNumber: { type: String, unique: true, sparse: true },
     retailerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     serviceId: { type: Schema.Types.ObjectId, ref: "Service" },
     subServiceId: { type: Schema.Types.ObjectId, ref: "SubService" },

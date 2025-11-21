@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf"; 
+import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ArrowDownCircle, ArrowUpCircle, XCircle, Search, FileDown, Loader2, Inbox } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -41,6 +41,9 @@ const TransactionHistory = () => {
         if (meta?.reason === "service purchase") return `Payment for ${meta.serviceName || 'Service'}`;
         if (meta?.reason === "Online Service Payment") return `Online Payment for ${meta.serviceName || 'Service'}`;
         if (meta?.reason === "service purchase retry") return `Retry Payment for ${meta.serviceName || 'Submission'}`;
+        if (meta?.reason === "Refund for cancelled service") {
+            return `Refund for ${meta.serviceName || "Service"} (Cancelled Service)`;
+        }
         if (meta?.reason) return `Manual Credit: ${meta.reason}`;
         // Fallback for any other string-based meta
         if (typeof meta === 'string') return meta;

@@ -18,6 +18,7 @@ import {
   Wallet,
   History,
   UploadCloud,
+  Hash,
   X,
 } from "lucide-react";
 
@@ -159,6 +160,11 @@ const ViewSubmission = () => {
             Submission Overview
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <DetailItem
+              icon={Hash}
+              label="Application No"
+              value={submission.applicationNumber || 'N/A'}
+            />
             <DetailItem
               icon={Tag}
               label="Service"

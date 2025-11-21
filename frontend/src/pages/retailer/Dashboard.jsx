@@ -102,6 +102,9 @@ const TransactionItem = ({ transaction }) => {
     if (meta?.reason === "service purchase") return `Wallet Payment for Service`;
     if (meta?.reason === "Online Service Payment") return `Online Payment for Service`;
     if (meta?.reason === "service purchase retry") return "Retry Payment for Submission";
+    if (meta?.reason === "Refund for cancelled service") {
+      return `Refund for Cancelled ${meta.serviceName || "Service"} `;
+    }
     if (meta?.reason) return `Manual Credit: ${meta.reason}`;
     if (typeof meta === 'string') return meta;
     return "Transaction";
@@ -122,11 +125,11 @@ const TransactionItem = ({ transaction }) => {
           <Icon className={`${iconColor} w-5 h-5`} />
         </div>
         <div>
-          <div className="text-sm font-medium text-gray-800">{getTransactionDescription(transaction.meta)}</div>
+          <div className="text-xs font-medium text-gray-800">{getTransactionDescription(transaction.meta)}</div>
           <div className="text-xs text-gray-500">{new Date(transaction.createdAt).toLocaleString()}</div>
         </div>
       </div>
-      <div className={`text-sm font-semibold ${amountColor}`}>
+      <div className={`text-xs font-semibold ${amountColor}`}>
         {amountPrefix}₹{transaction.amount.toFixed(2)}
       </div>
     </div>
@@ -625,13 +628,13 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-<style jsx>
-  {`
+      <style jsx>
+        {`
     .recharts-pie-label-text {
       font-size: 12px !important;
     }
   `}
-</style>
+      </style>
     </div>
   );
 }

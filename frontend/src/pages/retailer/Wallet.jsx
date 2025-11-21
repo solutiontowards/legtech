@@ -155,6 +155,9 @@ const Wallet = () => {
     if (meta?.reason === "Online Service Payment") return `Online Payment for Service`;
     if (meta?.reason?.startsWith("Payment Failed")) return `Failed: ${meta.reason}`;
     if (meta?.reason === "service purchase retry") return "Retry Payment for Submission";
+    if (meta?.reason === "Refund for cancelled service") {
+      return `Refund for ${meta.serviceName || "Service"} (Cancelled Service)`;
+    }
     if (meta?.reason) return `Manual Credit: ${meta.reason}`;
     return "Transaction";
   };
@@ -224,11 +227,10 @@ const Wallet = () => {
                     key={val}
                     type="button"
                     onClick={() => setRechargeAmount(val.toString())}
-                    className={`flex-1 py-3 rounded-xl font-semibold transition-all border ${
-                      rechargeAmount === val.toString()
+                    className={`flex-1 py-3 rounded-xl font-semibold transition-all border ${rechargeAmount === val.toString()
                         ? "bg-blue-600 text-white border-blue-600"
                         : "bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200"
-                    }`}
+                      }`}
                   >
                     ₹{val}
                   </button>
@@ -321,9 +323,8 @@ const Wallet = () => {
                       </div>
                     </td>
                     <td
-                      className={`py-4 px-4 text-right font-semibold ${
-                        tx.type === "credit" ? "text-green-600" : tx.type === 'debit' ? "text-red-600" : "text-gray-500"
-                      }`}
+                      className={`py-4 px-4 text-right font-semibold ${tx.type === "credit" ? "text-green-600" : tx.type === 'debit' ? "text-red-600" : "text-gray-500"
+                        }`}
                     >
                       {tx.type === "credit" ? "+" : tx.type === 'debit' ? "-" : ""}₹{tx.amount.toFixed(2)}
                     </td>

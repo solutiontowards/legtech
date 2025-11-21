@@ -5,6 +5,24 @@ import Transaction from '../models/Transaction.js';
 import Option from '../models/Option.js';
 import axios from 'axios';
 
+// Helper function to generate a unique application number
+async function generateUniqueApplicationNumber() {
+  let applicationNumber;
+  let isUnique = false;
+  while (!isUnique) {
+    // Generate an 8-digit random number
+    const randomNumber = Math.floor(10000000 + Math.random() * 90000000);
+    applicationNumber = `SRI${randomNumber}`;
+    
+    // Check if it already exists
+    const existingSubmission = await Submission.findOne({ applicationNumber });
+    if (!existingSubmission) {
+      isUnique = true;
+    }
+  }
+  return applicationNumber;
+}
+
 export const createSubmission = asyncHandler(async (req,res)=>{
   const { optionId, data, files, paymentMethod } = req.body;
   const option = await Option.findById(optionId).populate({ 
@@ -37,8 +55,9 @@ export const createSubmission = asyncHandler(async (req,res)=>{
         updatedBalance,
       });
 
+      const applicationNumber = await generateUniqueApplicationNumber();
       wallet.transactions.push(tx._id); await wallet.save();
-      const submission = await Submission.create({ 
+      const submission = await Submission.create({ applicationNumber,
         retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'paid', status: 'Applied',
         statusHistory: [{
           status: 'Applied',
@@ -49,7 +68,8 @@ export const createSubmission = asyncHandler(async (req,res)=>{
       return res.json({ ok:true, submission });
     } else {
       // **THE FIX**: Insufficient funds. Create submission and explicitly set both paymentStatus and status to 'failed'.
-      const submission = await Submission.create({ 
+      const applicationNumber = await generateUniqueApplicationNumber();
+      const submission = await Submission.create({ applicationNumber,
         retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod: 'wallet', paymentStatus: 'failed', status: 'Payment Failed',
         statusHistory: [{
           status: 'Payment Failed',
@@ -62,7 +82,8 @@ export const createSubmission = asyncHandler(async (req,res)=>{
   }
   
   // For online payment, first create the submission record
-  const submission = await Submission.create({
+  const applicationNumber = await generateUniqueApplicationNumber();
+  const submission = await Submission.create({ applicationNumber,
     retailerId: req.user._id, optionId, serviceId: option.subServiceId.serviceId, subServiceId: option.subServiceId._id, data, files, amount, paymentMethod, paymentStatus: 'failed', status: 'Payment Failed',
     statusHistory: [{
       status: 'Payment Failed',
@@ -308,8 +329,43 @@ export const getSubmissionById = asyncHandler(async (req,res)=>{
 export const updateSubmissionStatus = asyncHandler(async (req,res)=>{
   const { submissionId } = req.params;
   const { status, adminRemarks } = req.body;
-  const submission = await Submission.findById(submissionId);
+  const submission = await Submission.findById(submissionId).populate([
+    { path: 'optionId', select: 'name' },
+    { path: 'serviceId', select: 'name' }
+  ]);
+
   if (!submission) return res.status(404).json({ error: 'Not found' });
+
+  // --- REFUND LOGIC ---
+  // If status is being updated to 'Reject | Failed' and the submission was paid for but not yet refunded
+  if (status === 'Reject | Failed' && submission.paymentStatus === 'paid' && !submission.isRefunded) {
+    const wallet = await Wallet.findOne({ retailerId: submission.retailerId });
+
+    if (wallet) {
+      const previousBalance = wallet.balance;
+      wallet.balance += submission.amount; // Add the amount back to the wallet
+      const updatedBalance = wallet.balance;
+
+      // Create a credit transaction for the refund
+      const refundTransaction = await Transaction.create({
+        walletId: wallet._id,
+        type: 'credit',
+        amount: submission.amount,
+        meta: {
+          reason: 'Refund for cancelled service',
+          serviceName: submission.serviceId?.name || submission.optionId?.name || 'N/A',
+          submissionId: submission._id,
+        },
+        previousBalance,
+        updatedBalance,
+      });
+
+      wallet.transactions.push(refundTransaction._id);
+      await wallet.save();
+      submission.isRefunded = true; // Mark as refunded
+    }
+  }
+
   submission.status = status || submission.status;
   submission.adminRemarks = adminRemarks || submission.adminRemarks; // Update main remarks
 

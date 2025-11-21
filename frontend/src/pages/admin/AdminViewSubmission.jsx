@@ -18,6 +18,7 @@ import {
   XCircle,
   Loader2,
   History,
+  Hash,
 } from "lucide-react";
 
 const DetailItem = ({ icon: Icon, label, value }) => (
@@ -143,6 +144,11 @@ const AdminViewSubmission = () => {
               Submission Overview
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <DetailItem
+                icon={Hash}
+                label="Application No"
+                value={submission.applicationNumber || 'N/A'}
+              />
               <DetailItem
                 icon={User}
                 label="Retailer"
