@@ -22,6 +22,7 @@ import {
   UploadCloud,
   Hash,
   X,
+  MessageCircle,
   User,
 } from "lucide-react";
 
@@ -35,6 +36,19 @@ const DetailItem = ({ icon: Icon, label, value }) => (
       <p className="text-base text-gray-800 font-semibold">{value}</p>
     </div>
   </div>
+);
+
+const ComplaintStatusBadge = ({ status }) => (
+  <span
+    className={`px-2.5 py-1 text-xs font-semibold rounded-full capitalize ${
+      status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+      status === 'Viewed' ? 'bg-blue-100 text-blue-800' :
+      status === 'Closed' ? 'bg-green-100 text-green-800' :
+      'bg-gray-100 text-gray-800'
+    }`}
+  >
+    {status}
+  </span>
 );
 
 const ActivityItem = ({ item }) => (
@@ -340,6 +354,27 @@ const ViewSubmission = () => {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {reUploadedFiles.map((file, index) => <FileCard key={index} fileName={file.originalname} fileUrl={file.url} />)}
+              </div>
+            </div>
+          )}
+
+          {/* Complaint History */}
+          {submission.complaints && submission.complaints.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-red-600 border-b border-red-200 pb-2 mb-4 flex items-center gap-2">
+                <MessageCircle size={20} /> Complaint History
+              </h3>
+              <div className="space-y-4">
+                {submission.complaints.slice().reverse().map((complaint, index) => (
+                  <div key={complaint._id || index} className="p-4 rounded-lg bg-red-50/50 border border-red-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-sm font-semibold text-gray-800">Complaint on {new Date(complaint.createdAt).toLocaleDateString()}</p>
+                      <ComplaintStatusBadge status={complaint.status} />
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">"{complaint.text}"</p>
+                    {complaint.adminRemarks && <p className="text-xs text-gray-500 pt-2 border-t border-dashed">Admin Response: <span className="text-gray-700 font-medium">"{complaint.adminRemarks}"</span></p>}
+                  </div>
+                ))}
               </div>
             </div>
           )}

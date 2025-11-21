@@ -28,6 +28,7 @@ export const adminListSubmissions = () => api.get('/admin/submissions');
 export const getSubmissionById = (id) => api.get(`/admin/submission/${id}`);
 export const updateSubmissionStatus = (id, payload) => api.put(`/admin/submission/${id}/status`, payload);
 export const uploadFinalDocument = (id, payload) => api.put(`/admin/submission/${id}/upload-final`, payload);
+export const updateComplaintStatus = (id, payload) => api.put(`/admin/submission/${id}/complaint/status`, payload);
 
 // KYC Management
 export const getPendingKycRequests = () => api.get('/admin/kyc-pending');

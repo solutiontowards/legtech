@@ -42,6 +42,7 @@ router.get('/submissions', admin.adminListSubmissions);
 router.get('/submission/:submissionId', admin.getSubmissionById);
 router.put('/submission/:submissionId/status', admin.updateSubmissionStatus);
 router.put('/submission/:submissionId/upload-final', admin.uploadFinalDocument);
+router.put('/submission/:submissionId/complaint/status', admin.updateComplaintStatus);
 
 // KYC Management
 router.get('/kyc-pending', admin.getPendingKycRequests);

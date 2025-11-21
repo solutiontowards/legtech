@@ -898,3 +898,34 @@ export const processDocumentDownloadPayment = asyncHandler(async (req, res) => {
 
   res.json({ ok: true, message: "Payment successful. Document is now available for download." });
 });
+
+
+
+
+export const raiseComplaint = asyncHandler(async (req, res) => {
+  const { submissionId } = req.params;
+  const { text } = req.body;
+  const retailerId = req.user._id;
+
+  if (!text) {
+    return res.status(400).json({ message: "Complaint text cannot be empty." });
+  }
+
+  const submission = await Submission.findOne({ _id: submissionId, retailerId });
+
+  if (!submission) {
+    return res.status(404).json({ message: "Submission not found or you do not have permission." });
+  }
+
+  const openComplaint = submission.complaints.find(c => c.status !== 'Closed');
+  if (openComplaint) {
+    return res.status(400).json({ message: "You already have an open complaint for this submission." });
+  }
+
+  // Push a new complaint into the array
+  submission.complaints.push({ text });
+
+  await submission.save();
+
+  res.status(201).json({ ok: true, message: "Your complaint has been successfully submitted.", submission });
+});

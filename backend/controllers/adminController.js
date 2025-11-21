@@ -546,3 +546,37 @@ export const uploadFinalDocument = asyncHandler(async (req, res) => {
 
 // ===================== SUBMISSIONS =====================
 export { adminListSubmissions, getSubmissionById, updateSubmissionStatus };
+
+
+
+
+export const updateComplaintStatus = asyncHandler(async (req, res) => {
+  const { submissionId } = req.params;
+  const { status, adminRemarks } = req.body;
+
+  const submission = await Submission.findById(submissionId);
+
+  if (!submission) {
+    return res.status(404).json({ message: "Submission not found." });
+  }
+
+  if (!submission.complaints || submission.complaints.length === 0) {
+    return res.status(400).json({ message: "No complaint found for this submission." });
+  }
+
+  // Get the last complaint in the array to update it
+  const latestComplaint = submission.complaints[submission.complaints.length - 1];
+
+  if (status) {
+    latestComplaint.status = status;
+  }
+  // Allow updating remarks even if they are empty
+  if (adminRemarks !== undefined) {
+    latestComplaint.adminRemarks = adminRemarks;
+  }
+  latestComplaint.updatedAt = Date.now();
+
+  await submission.save();
+
+  res.json({ ok: true, message: "Complaint status updated successfully.", submission });
+});

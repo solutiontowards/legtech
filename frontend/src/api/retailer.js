@@ -32,6 +32,9 @@ export const findDocument = (applicationNumber) =>
 export const processDownloadPayment = (submissionId) =>
   api.post(`/retailer/download-payment/${submissionId}`);
 
+// Raise a complaint for a submission
+export const raiseComplaint = (submissionId, payload) => api.post(`/retailer/submissions/${submissionId}/complaint`, payload);
+
 
 // retrySubmissionPayment
 export const retrySubmissionPayment = (id, payload) => api.put(`/submissions/${id}/retry-payment`, payload);
@@ -67,3 +70,6 @@ export const getTotalRevenue = () => api.get('/submissions/stats/revenue');
 export const getActiveWishes = () => api.get('/wishes');
 export const submitKyc = (payload) => api.post('/kyc', payload);
 export const getMyKycDetails = () => api.get('/kyc');
+
+// findDocumentByApplicationNumber
+export const findDocumentByApplicationNumber = (applicationNumber) => api.get(`/retailer/find-document/${applicationNumber}`);

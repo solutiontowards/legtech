@@ -3,6 +3,7 @@ import { auth } from '../middlewares/auth.js';
 import {
   findDocumentByApplicationNumber,
   processDocumentDownloadPayment,
+  raiseComplaint,
 } from '../controllers/submissionController.js';
 
 const router = express.Router();
@@ -17,5 +18,9 @@ router.get('/find-document/:applicationNumber', auth, findDocumentByApplicationN
 // @access  Private (Retailer)
 router.post('/download-payment/:submissionId', auth, processDocumentDownloadPayment);
 
+// @route   POST /api/retailer/submissions/:submissionId/complaint
+// @desc    Raise a complaint for a specific submission
+// @access  Private (Retailer)
+router.post('/submissions/:submissionId/complaint', auth, raiseComplaint);
 
 export default router;

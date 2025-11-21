@@ -4,6 +4,7 @@ import {
   getSubmissionById,
   updateSubmissionStatus,
   uploadFinalDocument,
+  updateComplaintStatus,
 } from "../../api/admin";
 import { uploadSingle } from "../../api/upload";
 import toast from "react-hot-toast";
@@ -25,6 +26,7 @@ import {
   History,
   Hash,
   X,
+  MessageCircle,
 } from "lucide-react";
 
 const DetailItem = ({ icon: Icon, label, value }) => (
@@ -37,6 +39,19 @@ const DetailItem = ({ icon: Icon, label, value }) => (
       <p className="text-base text-gray-800 font-semibold">{value}</p>
     </div>
   </div>
+);
+
+const ComplaintStatusBadge = ({ status }) => (
+  <span
+    className={`px-2.5 py-1 text-xs font-semibold rounded-full capitalize ${
+      status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+      status === 'Viewed' ? 'bg-blue-100 text-blue-800' :
+      status === 'Closed' ? 'bg-green-100 text-green-800' :
+      'bg-gray-100 text-gray-800'
+    }`}
+  >
+    {status}
+  </span>
 );
 
 const ActivityItem = ({ item }) => (
@@ -147,6 +162,9 @@ const AdminViewSubmission = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [finalPdf, setFinalPdf] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [complaintStatus, setComplaintStatus] = useState("");
+  const [complaintRemarks, setComplaintRemarks] = useState("");
+  const [isUpdatingComplaint, setIsUpdatingComplaint] = useState(false);
 
   const loadSubmission = async () => {
     try {
@@ -155,6 +173,10 @@ const AdminViewSubmission = () => {
       setSubmission(data.submission);
       setStatus(data.submission.status);
       setAdminRemarks(data.submission.adminRemarks || "");
+      if (data.submission.complaint) {
+        setComplaintStatus(data.submission.complaint.status);
+        setComplaintRemarks(data.submission.complaint.adminRemarks || "");
+      }
     } catch (err) {
       toast.error("Failed to load submission details.");
       console.error(err);
@@ -205,6 +227,20 @@ const AdminViewSubmission = () => {
       toast.error("Failed to upload final document.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleComplaintUpdate = async (e) => {
+    e.preventDefault();
+    setIsUpdatingComplaint(true);
+    try {
+      await updateComplaintStatus(id, { status: complaintStatus, adminRemarks: complaintRemarks });
+      toast.success("Complaint status updated successfully!");
+      loadSubmission();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update complaint status.");
+    } finally {
+      setIsUpdatingComplaint(false);
     }
   };
 
@@ -379,8 +415,31 @@ const AdminViewSubmission = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
                 >
-                  <Download size={14} /> View
+                  <Download size={14} /> Download
                 </a>
+              </div>
+            </div>
+          )}
+
+          {/* Complaint Details */}
+          {submission.complaints && submission.complaints.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-red-600 border-b border-red-200 pb-2 mb-4 flex items-center gap-2">
+                <MessageCircle size={20} /> Complaint Details
+              </h3>
+              <div className="space-y-4">
+                {submission.complaints.slice().reverse().map((complaint, index) => (
+                  <div key={complaint._id || index} className="p-4 rounded-lg bg-red-50/50 border border-red-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-sm font-semibold text-gray-800">Complaint on {new Date(complaint.createdAt).toLocaleDateString()}</p>
+                      <ComplaintStatusBadge status={complaint.status} />
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">
+                      <span className="font-medium">Retailer's Message:</span> "{complaint.text}"
+                    </p>
+                    {complaint.adminRemarks && <p className="text-xs text-gray-500 pt-2 border-t border-dashed">Your Response: <span className="text-gray-700 font-medium">"{complaint.adminRemarks}"</span></p>}
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -472,6 +531,56 @@ const AdminViewSubmission = () => {
               </button>
             </form>
           </div>
+
+          {/* Complaint Management Section */}
+          {submission.complaints && submission.complaints.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
+                Manage Complaint
+              </h2>
+              <form onSubmit={handleComplaintUpdate} className="space-y-4">
+                <div>
+                  <label htmlFor="complaintStatus" className="block text-sm font-medium text-gray-700 mb-1">
+                    Complaint Status
+                  </label>
+                  <select
+                    id="complaintStatus"
+                    value={complaintStatus}
+                    onChange={(e) => setComplaintStatus(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Viewed">Viewed</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="complaintRemarks" className="block text-sm font-medium text-gray-700 mb-1">
+                    Remarks for Complaint
+                  </label>
+                  <textarea
+                    id="complaintRemarks"
+                    rows="3"
+                    value={complaintRemarks}
+                    onChange={(e) => setComplaintRemarks(e.target.value)}
+                    placeholder="Add remarks for the retailer's complaint"
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
+                  ></textarea>
+                </div>
+                <button
+                  type="submit"
+                  disabled={isUpdatingComplaint}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition disabled:bg-gray-400"
+                >
+                  {isUpdatingComplaint ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Updating...</>
+                  ) : (
+                    "Update Complaint"
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
 
           {/* Final PDF Upload Section */}
           <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
